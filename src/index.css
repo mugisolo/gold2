@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: 'Cinzel', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --color-obsidian: #0B0F17;
+  --color-slate-surface: #111722;
+  --color-slate-card: #182232;
+  --color-gold: #D4AF37;
+  --color-gold-champagne: #FEF3C7;
+  --color-gold-dark: #A27B20;
+}
+
+.font-cinzel {
+  font-family: 'Cinzel', Georgia, serif;
+}
+
+.font-sans-ui {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+.font-mono-data {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Subtle gold shimmer line */
+.gold-gradient-border {
+  border-image: linear-gradient(to right, rgba(212, 175, 55, 0.4), rgba(212, 175, 55, 0.05), rgba(212, 175, 55, 0.3)) 1;
+}
+
+/* Custom scrollbar for institutional feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0B0F17;
+}
+::-webkit-scrollbar-thumb {
+  background: #232D3F;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #D4AF37;
+}
+
+/* Global Justified Text Boundaries & Compact Line Spacing Across All Pages */
+p,
+li,
+blockquote,
+dd,
+.justify-copy {
+  text-align: justify;
+  text-justify: inter-word;
+  line-height: 1.48;
+}
+
+section[id] {
+  scroll-margin-top: 5.5rem;
+}
+
+

@@ -1,0 +1,8 @@
+{
+  "name": "Remix Uganda Gold Expedition",
+  "description": "East Africa\u0027s premier physical gold supply chain due diligence and anti-fraud immersion expedition.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
