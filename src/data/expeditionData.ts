@@ -205,7 +205,7 @@ export const EXPEDITION_PACKAGES: PackageTier[] = [
     name: "Sovereign Executive · Diplomatic VIP",
     tierNumber: "Tier 03",
     tagline: "For sovereign wealth funds, central bank observers, and diplomatic VIP principals.",
-    priceUsd: 45000,
+    priceUsd: 25000,
     idealFor: "Sovereign fund trustees, central bank delegations, billionaire family offices, and mining chairmen.",
     accommodation: "Presidential Lake Villa Suite at Lake Victoria Serena Golf Resort & Spa",
     transport: "Dedicated B6 armored executive motorcade & close-protection tactical detail for all field movements (Chartered helicopter transfers available on request at USD 3,000 per flight hour.)",
@@ -321,9 +321,9 @@ export const LEGAL_CHARTER_PILLARS = [
   },
   {
     number: "02",
-    title: "Mandatory KYC & Sanctions Screening",
+    title: "Statutory KYC & Sanctions Screening",
     subtitle: "OFAC, UN, UK HMT, EU Sanctions & PEP Screening",
-    content: "Every expedition package includes the mandatory USD 1,000 KYC & Client Vetting Allocation covering background screening, OFAC, UN, UK HMT, EU sanctions and PEP screening, and government liaison processing. This allocation is strictly non-refundable once vetting commences; should an applicant not pass vetting, the full balance above the $1,000 allocation is refunded within 14 business days."
+    content: "Every expedition package includes statutory background screening, OFAC, UN, UK HMT, EU sanctions and PEP screening, and government liaison processing at no additional standalone fee—delegates simply select and pay for the package or verification service they require."
   },
   {
     number: "03",

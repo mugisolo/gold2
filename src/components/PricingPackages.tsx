@@ -63,10 +63,10 @@ export const PricingPackages: React.FC<PricingPackagesProps> = ({
           </div>
         </div>
 
-        {/* Mandatory One Payment / One Price Statutory Rule Banner */}
-        <div className="mb-6 p-4 sm:p-5 rounded-xl bg-amber-950/30 border border-amber-600/50 flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-          <p className="text-xs sm:text-sm text-amber-100 leading-relaxed text-justify">
+        {/* Transparent VAT-Inclusive Pricing & Service Selection Banner */}
+        <div className="mb-6 p-4 sm:p-5 rounded-xl bg-[#111722] border border-[#D4AF37]/40 flex items-start gap-3">
+          <Shield className="w-5 h-5 text-[#D4AF37] shrink-0 mt-0.5" />
+          <p className="text-xs sm:text-sm text-slate-200 leading-relaxed text-justify">
             {t.packagesKycWarning}
           </p>
         </div>
@@ -152,7 +152,7 @@ export const PricingPackages: React.FC<PricingPackagesProps> = ({
                       </span>
                     </div>
                     <div className="mt-1 text-[11px] text-[#D4AF37] font-mono-data">
-                      USD {pkg.priceUsd.toLocaleString()}, inclusive of applicable Ugandan VAT
+                      USD {pkg.priceUsd.toLocaleString()} per person, inclusive of applicable Ugandan VAT
                     </div>
                     <div className="mt-2 flex items-center gap-1.5 text-[11px] text-emerald-400 font-mono-data">
                       <Shield className="w-3.5 h-3.5 shrink-0" />
@@ -298,7 +298,7 @@ export const PricingPackages: React.FC<PricingPackagesProps> = ({
               >
                 <CreditCard className="w-3.5 h-3.5 text-[#D4AF37]" />
                 <span>
-                  {t.packagesPayDepositBtn} ({formatCurrencyPrice(45000, selectedCurrency)})
+                  {t.packagesPayDepositBtn} ({formatCurrencyPrice(25000, selectedCurrency)} {t.packagesPerDelegate})
                 </span>
               </button>
             </div>

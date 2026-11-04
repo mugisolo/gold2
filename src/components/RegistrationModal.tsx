@@ -66,10 +66,6 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
       setErrorMsg('You must agree to the Non-Transaction Guarantee.');
       return;
     }
-    if (!formData.kycAcknowledged) {
-      setErrorMsg('You must acknowledge the mandatory USD $1,000 KYC & Client Vetting Allocation and full-payment terms.');
-      return;
-    }
 
     const randomCode = Math.floor(1000 + Math.random() * 9000);
     const refCode = `REG-2027-${randomCode}`;
@@ -110,14 +106,13 @@ EXPEDITION PARAMETERS:
 
 STATUTORY DECLARATIONS & TERMS:
 - Non-Transaction Guarantee Confirmed: YES
-- One Payment / One Price Terms & USD 1,000 Non-Refundable KYC Allocation Acknowledged: YES
-  (Covers OFAC, UN, UK HMT, EU sanctions and PEP screening, background vetting, and DGSM registration. Balance above USD 1,000 refunded within 14 business days if applicant does not pass vetting.)
+- OFAC, UN, UK HMT, EU Sanctions & PEP Screening Included: YES
 
 ACTIVE PROPOSAL NOTES:
 ${formData.activeProposalDetails || 'None submitted.'}
 
 PAYMENT METHODS ACCEPTED:
-- Full Payment Due on Booking (No Instalments) via Encrypted Online Settlement & Institutional Treasury Clearance
+- Encrypted Online Settlement & Institutional Treasury Clearance (Pay for your selected package or service)
 =====================================================`;
 
     const blob = new Blob([textContent], { type: 'text/plain' });
@@ -160,15 +155,15 @@ PAYMENT METHODS ACCEPTED:
         {!isSubmitted ? (
           <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6 max-h-[80vh] overflow-y-auto">
             
-            {/* MANDATORY ONE PAYMENT / ONE PRICE & KYC ALLOCATION BANNER */}
-            <div className="p-4 rounded-xl bg-amber-950/40 border border-amber-600/60 text-xs text-amber-200 flex items-start gap-3 shadow-md">
-              <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            {/* TRANSPARENT PRICING & SANCTIONS SCREENING NOTICE */}
+            <div className="p-4 rounded-xl bg-[#182232]/80 border border-[#D4AF37]/40 text-xs text-slate-200 flex items-start gap-3 shadow-md">
+              <ShieldCheck className="w-5 h-5 text-[#D4AF37] shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <span className="font-bold text-white uppercase tracking-wider block font-mono-data">
-                  Mandatory Statutory Notice — One Payment. One Price:
+                  Transparent Package Selection — Pay Only for What You Choose:
                 </span>
                 <p className="leading-relaxed text-justify">
-                  All prices in <strong className="text-white">USD, inclusive of applicable Ugandan VAT</strong>. Every package includes the mandatory <strong className="text-white underline">KYC & Client Vetting Allocation (USD 1,000)</strong>, covering background screening, <strong className="text-amber-300">OFAC, UN, UK HMT, EU sanctions and PEP screening</strong>, and government liaison processing. This allocation is <strong className="text-amber-300 font-bold">strictly non-refundable once vetting commences</strong>. Should an applicant not pass vetting, the full balance above the $1,000 allocation is refunded within 14 business days. We do not offer instalment plans; seats are confirmed on full payment only.
+                  All prices are in <strong className="text-white">USD, inclusive of applicable Ugandan VAT</strong>. There is no separate standalone KYC fee—statutory <strong className="text-[#D4AF37]">OFAC, UN, UK HMT, EU sanctions and PEP screening</strong> and government liaison accreditation are included in every expedition package. Select the exact tier or service you wish to book and proceed at your convenience.
                 </p>
               </div>
             </div>
@@ -320,13 +315,13 @@ PAYMENT METHODS ACCEPTED:
                         {pkg.name}
                       </div>
                       <div className="text-xs font-mono-data text-slate-200 font-semibold mt-1">
-                        USD {pkg.priceUsd.toLocaleString()}
+                        USD {pkg.priceUsd.toLocaleString()} / person
                       </div>
                       <div className="text-[10px] text-emerald-400 mt-0.5">
                         USD, inclusive of applicable Ugandan VAT
                       </div>
                       <div className="text-[10px] text-slate-400 mt-1">
-                        Incl. $1,000 KYC & Vetting Allocation
+                        KYC & Sanctions Vetting Included
                       </div>
                     </div>
                   );
@@ -377,33 +372,19 @@ PAYMENT METHODS ACCEPTED:
             {/* Section 3: Statutory Checkboxes */}
             <div className="space-y-3 pt-2">
               <div className="text-xs font-mono-data uppercase tracking-wider text-[#D4AF37] font-bold border-b border-slate-800 pb-1">
-                3. Mandatory Statutory Confirmations
+                3. Statutory Confirmations
               </div>
-
-              {/* NON-REFUNDABLE USD 1000 KYC ALLOCATION CONFIRMATION */}
-              <label className="flex items-start gap-3 text-xs text-amber-200 bg-amber-950/20 p-3 rounded-lg border border-amber-800/40 cursor-pointer">
-                <input
-                  type="checkbox"
-                  required
-                  checked={formData.kycAcknowledged}
-                  onChange={e => setFormData({ ...formData, kycAcknowledged: e.target.checked })}
-                  className="mt-0.5 rounded border-amber-700 text-[#D4AF37] focus:ring-[#D4AF37]"
-                />
-                <span>
-                  <strong className="text-white">Full Payment & USD $1,000 KYC Allocation Acknowledgment:</strong> I explicitly acknowledge that full package payment (<strong className="text-[#D4AF37]">USD {selectedPackage.priceUsd.toLocaleString()}, inclusive of applicable Ugandan VAT</strong>) is due on booking with no instalments, and that <strong className="text-amber-400">USD $1,000</strong> is allocated to background screening, <strong>OFAC, UN, UK HMT, EU sanctions and PEP screening</strong>, and government liaison processing. This $1,000 allocation is <strong>strictly non-refundable once vetting commences</strong>; should an applicant not pass vetting, the full balance above $1,000 is refunded within 14 business days.
-                </span>
-              </label>
 
               <label className="flex items-start gap-3 text-xs text-slate-300 cursor-pointer">
                 <input
                   type="checkbox"
                   required
                   checked={formData.nonTransactionAgreed}
-                  onChange={e => setFormData({ ...formData, nonTransactionAgreed: e.target.checked })}
+                  onChange={e => setFormData({ ...formData, nonTransactionAgreed: e.target.checked, kycAcknowledged: e.target.checked })}
                   className="mt-0.5 rounded border-slate-700 text-[#D4AF37] focus:ring-[#D4AF37]"
                 />
                 <span>
-                  <strong>Strict Non-Transaction Agreement:</strong> I acknowledge that the Uganda Gold Expedition is exclusively an independent due diligence, metallurgical verification, and anti-fraud mission. The organization does NOT sell gold or broker mineral sales.
+                  <strong>Strict Non-Transaction & Sanctions Compliance Agreement:</strong> I acknowledge that the Uganda Gold Expedition is exclusively an independent due diligence, metallurgical verification, and anti-fraud mission (which does NOT sell gold or broker mineral sales), and I consent to standard OFAC, UN, UK HMT, EU sanctions and PEP screening included with my selected package.
                 </span>
               </label>
             </div>

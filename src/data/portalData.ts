@@ -1,4 +1,4 @@
-import { ContentPost, PhotoItem, StaffMember, FieldLog, PaymentRecord, ExpeditionRegistration, DocumentVerification, BoardMember, AboutContent } from '../types';
+import { ContentPost, PhotoItem, StaffMember, FieldLog, PaymentRecord, ExpeditionRegistration, DocumentVerification, BoardMember, AboutContent, AdminAuditLog } from '../types';
 
 export const INITIAL_ABOUT_CONTENT: AboutContent = {
   headline: 'Sovereign Physical Due Diligence & Anti-Fraud Intelligence Across East Africa',
@@ -10,7 +10,7 @@ export const INITIAL_ABOUT_CONTENT: AboutContent = {
     'Operating under a strict Non-Transaction Charter, our independence guarantees zero commercial conflict of interest. Every verification dossier, laboratory cupellation test, and 7-day field immersion is governed by empirical evidence, statutory registry verification, and chain-of-custody discipline.'
   ],
   statutoryMandate: 'Aligned with the Uganda Mining and Minerals Act 2022, ICGLR Regional Certification Mechanism (RCM), URA ASYCUDA World Customs Protocols, and OECD Due Diligence Guidance for Responsible Supply Chains of Minerals from Conflict-Affected and High-Risk Areas.',
-  headquarters: 'Amber House Secretariat, Kampala & DGSM Inspection Liaison Office, Entebbe, Republic of Uganda',
+  headquarters: 'Uganda Gold Expeditions, P.O Box 122234, Bugonga, Entebbe, Uganda (URA TIN 1019482710) & Amber House Secretariat, Kampala',
   establishedYear: '2019'
 };
 
@@ -174,6 +174,7 @@ export const INITIAL_STAFF: StaffMember[] = [
     name: 'Staff Officer 1: Lt. Col. (Rtd) Arthur Mwesigye',
     email: 'mwesigye@ugandagold.org',
     role: 'Senior Due Diligence Officer',
+    accessLevel: 'staff',
     phone: '+256 772 400 119',
     activeCasesCount: 6
   },
@@ -182,6 +183,7 @@ export const INITIAL_STAFF: StaffMember[] = [
     name: 'Dr. Michael Ssemwogerere',
     email: 'ssemwogerere@ugandagold.org',
     role: 'Metallurgical Forensic Lead',
+    accessLevel: 'staff',
     phone: '+256 701 332 890',
     activeCasesCount: 4
   },
@@ -190,6 +192,7 @@ export const INITIAL_STAFF: StaffMember[] = [
     name: 'Adv. David Kigozi',
     email: 'kigozi@ugandagold.org',
     role: 'Legal Compliance Counsel',
+    accessLevel: 'staff',
     phone: '+256 782 551 240',
     activeCasesCount: 6
   },
@@ -198,6 +201,7 @@ export const INITIAL_STAFF: StaffMember[] = [
     name: 'Eng. Sarah Nakato',
     email: 'nakato@ugandagold.org',
     role: 'Field Logistics Lead',
+    accessLevel: 'staff',
     phone: '+256 754 118 702',
     activeCasesCount: 3
   }
@@ -318,7 +322,7 @@ export const INITIAL_REGISTRATIONS: ExpeditionRegistration[] = [
     kycPaymentStatus: 'paid',
     status: 'approved',
     assignedStaff: 'Staff Officer 1: Lt. Col. (Rtd) Arthur Mwesigye',
-    internalNotes: 'OFAC, UN, UK HMT, EU sanctions and PEP screening clear. Corporate trade license validated in Dubai DMCC registry. Full package payment (USD 45,000 per delegate, inclusive of applicable Ugandan VAT and USD 1,000 KYC & Client Vetting Allocation) confirmed.',
+    internalNotes: 'OFAC, UN, UK HMT, EU sanctions and PEP screening clear. Corporate trade license validated in Dubai DMCC registry. Full package payment (USD 25,000 per person, inclusive of applicable Ugandan VAT) confirmed.',
     registeredAt: '2026-04-20',
     passportVerified: true,
     sanctionsPepClear: true,
@@ -338,7 +342,7 @@ export const INITIAL_REGISTRATIONS: ExpeditionRegistration[] = [
       typedSignatureText: 'Alexander Vance',
       clausesAccepted: [
         'Article I (Strict Non-Transaction Covenant): I acknowledge that Uganda Gold Expedition is strictly an educational, forensic inspection, and due diligence mission under the Uganda Mining and Minerals Act 2022, and does not broker, buy, or sell physical bullion during field operations.',
-        'Article II (Statutory KYC & Client Vetting Allocation): I confirm that every package is paid in full (USD, inclusive of applicable Ugandan VAT) and includes the mandatory USD 1,000 KYC & Client Vetting Allocation for OFAC, UN, UK HMT, EU sanctions and PEP screening, which is strictly non-refundable once vetting commences (with the full balance above $1,000 refunded within 14 business days if vetting is not passed).',
+        'Article II (Statutory KYC & Sanctions Screening Compliance): I consent to OFAC, UN, UK HMT, EU sanctions and PEP screening included with my selected expedition package for DGSM Entebbe and bonded refinery security accreditation.',
         'Article III (Field Security & Chain-of-Custody Compliance): I agree to abide by all safety directives issued by the Operations & Strategy Directorate during dedicated B6 armored executive motorcade ground transfers and active mine pithead inspections.'
       ],
       sha256SealHash: 'SHA256:9F84A2C1E77B3409D1128AF04E7C88B2',
@@ -364,7 +368,7 @@ export const INITIAL_REGISTRATIONS: ExpeditionRegistration[] = [
     kycPaymentStatus: 'paid',
     status: 'under_review',
     assignedStaff: 'Adv. David Kigozi',
-    internalNotes: 'Paid in Full (USD 15,000, inclusive of applicable Ugandan VAT and USD 1,000 KYC & Client Vetting Allocation). OFAC, UN, UK HMT, EU sanctions and PEP screening complete; awaiting DGSM security registry cross-match.',
+    internalNotes: 'Paid in Full (USD 15,000, inclusive of applicable Ugandan VAT). OFAC, UN, UK HMT, EU sanctions and PEP screening complete; awaiting DGSM security registry cross-match.',
     registeredAt: '2026-04-27',
     passportVerified: true,
     sanctionsPepClear: true,
@@ -388,7 +392,7 @@ export const INITIAL_REGISTRATIONS: ExpeditionRegistration[] = [
     kycPaymentStatus: 'pending',
     status: 'pending_kyc',
     assignedStaff: 'Eng. Sarah Nakato',
-    internalNotes: 'Registration received. Pending full package payment (inclusive of USD 1,000 KYC & Client Vetting Allocation) before OFAC, UN, UK HMT, EU sanctions and PEP screening commences.',
+    internalNotes: 'Registration received. Pending package settlement before OFAC, UN, UK HMT, EU sanctions and PEP screening commences.',
     registeredAt: '2026-05-01',
     passportVerified: false,
     sanctionsPepClear: false,
@@ -438,7 +442,7 @@ export const INITIAL_PAYMENTS: PaymentRecord[] = [
     reference: 'UGE-PAY-8812',
     customerName: 'Alexander Vance',
     email: 'a.vance@apexmetals.ae',
-    amount: 45000,
+    amount: 25000,
     currency: 'USD',
     type: 'full_payment',
     status: 'Completed',
@@ -473,3 +477,57 @@ export const INITIAL_PAYMENTS: PaymentRecord[] = [
     tier: 'Professional Trader (Paid in Full, VAT Incl.)'
   }
 ];
+
+export const INITIAL_AUDIT_LOGS: AdminAuditLog[] = [
+  {
+    id: 'AUDIT-2026-9012',
+    timestamp: '2026-05-02 10:15:24 UTC',
+    actorEmail: 'mugisolo@gmail.com',
+    actorRole: 'admin',
+    category: 'content_update',
+    action: 'Published Intelligence Article',
+    targetId: 'post-1',
+    details: 'Published article "Forensic Deconstruction: Why 15%–25% Gold Discounts in East Africa Are Always Advance-Fee Traps" to public Insights library.'
+  },
+  {
+    id: 'AUDIT-2026-9011',
+    timestamp: '2026-05-01 16:42:10 UTC',
+    actorEmail: 'mwesigye@ugandagold.org',
+    actorRole: 'staff',
+    category: 'document_approval',
+    action: 'Approved & Dispatched 24–72h Verification Report',
+    targetId: 'DOC-VER-2026-3910',
+    details: 'Released certified DGSM Mineral License verification report for Jean-Luc Moreau (Geneva Sovereign Partners) following physical Entebbe registry audit.'
+  },
+  {
+    id: 'AUDIT-2026-9010',
+    timestamp: '2026-04-28 14:08:51 UTC',
+    actorEmail: 'mugisolo@gmail.com',
+    actorRole: 'admin',
+    category: 'user_role_change',
+    action: 'Updated Staff Access Role',
+    targetId: 'staff-1',
+    details: 'Verified Staff Officer 1 (Lt. Col. Rtd. Arthur Mwesigye) access level as Senior Due Diligence Officer (staff) with full dossier clearance privileges.'
+  },
+  {
+    id: 'AUDIT-2026-9009',
+    timestamp: '2026-04-25 09:30:12 UTC',
+    actorEmail: 'mugisolo@gmail.com',
+    actorRole: 'admin',
+    category: 'kyc_clearance',
+    action: 'Approved Delegate KYC & DGSM Clearance',
+    targetId: 'REG-2026-8812',
+    details: 'Approved Sovereign Executive registration for Alexander Vance (Apex Precious Metals DMCC) after OFAC, UN, UK HMT, EU & PEP screening.'
+  },
+  {
+    id: 'AUDIT-2026-9008',
+    timestamp: '2026-04-22 11:19:05 UTC',
+    actorEmail: 'mugisolo@gmail.com',
+    actorRole: 'admin',
+    category: 'ux_config',
+    action: 'Synchronized Global UX/UI Configuration',
+    targetId: 'uiConfig/global',
+    details: 'Enforced Zero-Trust Firestore Security Rules for per-user /uxPreferences/{userId} and /uiConfig/global.'
+  }
+];
+

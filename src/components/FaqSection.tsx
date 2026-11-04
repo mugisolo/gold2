@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 import {
   ChevronDown,
   Search,
-  MessageSquare,
   FileSearch,
-  Award,
-  ShieldCheck
+  Award
 } from 'lucide-react';
 import { FaqItem, Language, Currency } from '../types';
 import { translations, getLocalizedFaqs } from '../data/translations';
@@ -14,7 +12,6 @@ import { formatCurrencyPrice } from '../data/expeditionData';
 interface FaqSectionProps {
   currentLang?: Language;
   selectedCurrency?: Currency;
-  onOpenChatAndWaba: (defaultMode?: 'chat' | 'waba') => void;
   onOpenDocVerification: () => void;
   onOpenRegistration: () => void;
 }
@@ -69,10 +66,10 @@ const FAQ_ITEMS: FaqItem[] = [
     id: 'faq-dd-2',
     category: 'due_diligence',
     categoryLabel: 'Due Diligence Process',
-    question: 'How does the $2,500 One-Off 24-Hour Document Verification service work?',
+    question: 'How does the $2,500 24–72 Hour Forensic Document Verification service work?',
     answer:
-      'When you submit a Full Corporate Offer (FCO), Sales & Purchase Agreement (SPA), DGSM license, or URA customs document with the USD $2,500 verification fee, our Gemini AI Forensic Engine performs an immediate structural deconstruction and routes the dossier to Staff Officer 1 (Lt. Col. Rtd. Arthur Mwesigye). Within 24 hours, our field team physically cross-checks the license serials at the DGSM Mineral Cadastre in Entebbe and verifies URA ASYCUDA records. Per strict compliance rules, no reports (including AI findings) are unlocked for client view or download until Staff Officer 1 completes verification and approves release.',
-    statutoryRef: '24-Hour Forensic Dossier SLA & Staff Officer 1 Embargo Protocol'
+      'When you submit a Full Corporate Offer (FCO), Sales & Purchase Agreement (SPA), DGSM license, or URA customs document with the USD 2,500 verification fee (USD, inclusive of applicable Ugandan VAT), our forensic engine performs an immediate structural deconstruction and routes the dossier to Staff Officer 1 (Lt. Col. Rtd. Arthur Mwesigye). Within 24–72 hours, our field team physically cross-checks the license serials at the DGSM Mineral Cadastre in Entebbe and verifies URA ASYCUDA records. USD 1,000 of your verification fee is credited toward any expedition package booked within 90 days. Per strict compliance rules, no reports are unlocked for client view or download until Staff Officer 1 completes verification and approves release.',
+    statutoryRef: '24–72 Hour Forensic Dossier SLA & Staff Officer 1 Embargo Protocol'
   },
   {
     id: 'faq-dd-3',
@@ -89,17 +86,17 @@ const FAQ_ITEMS: FaqItem[] = [
     categoryLabel: 'Due Diligence Process',
     question: 'How do we verify if a seller holds a genuine Mineral Dealer License (MDL) or Mining Lease?',
     answer:
-      'During Day 2 of the expedition (or within 24 hours via our Document Verification service), our legal and trade compliance desk led by Kamanzai Kaijuka conducts a direct biometric and serial lookup inside the Ministry of Energy and Mineral Development’s Directorate of Geological Survey and Mines (DGSM) online Mineral Cadastre Registry in Entebbe. Over 95% of PDF licenses circulated on WhatsApp use expired quarry numbers or digitally forged Commissioner stamps.',
+      'During Day 2 of the expedition (or within 24–72 hours via our Forensic Document Verification service), our legal and trade compliance desk led by Kamanzai Kaijuka conducts a direct biometric and serial lookup inside the Ministry of Energy and Mineral Development’s Directorate of Geological Survey and Mines (DGSM) online Mineral Cadastre Registry in Entebbe. Over 95% of PDF licenses circulated on WhatsApp use expired quarry numbers or digitally forged Commissioner stamps.',
     statutoryRef: 'DGSM National Mineral Cadastre Registry · Entebbe Headquarters'
   },
   {
     id: 'faq-tl-1',
     category: 'travel_logistics',
     categoryLabel: 'Travel Logistics',
-    question: 'Why is USD $1,000 of the expedition registration fee strictly non-refundable?',
+    question: 'How does sanctions, PEP, and statutory KYC vetting work for expedition delegates?',
     answer:
-      'Because our delegates enter sovereign government ministries, bonded customs vaults, high-security gold refineries, and active mining concessions, every applicant must undergo mandatory background vetting prior to arrival. Upon registration, USD $1,000 is immediately allocated to international KYC screening, Interpol clearance verification, and Ministry of Energy diplomatic security accreditations. Consequently, the USD $1,000 KYC fee is strictly non-refundable under all circumstances.',
-    statutoryRef: 'Mandatory Sovereign KYC & Ministry Security Accreditation Protocol'
+      'Because our delegates enter sovereign government ministries, bonded customs vaults, high-security gold refineries, and active mining concessions, every applicant undergoes OFAC, UN, UK HMT, EU sanctions and PEP screening alongside Ministry of Energy diplomatic security accreditation. KYC & Sanctions Vetting is included in every expedition package with no separate standalone KYC deposit—delegates simply select and pay for the exact service or expedition tier they require.',
+    statutoryRef: 'OFAC, UN, UK HMT, EU Sanctions & PEP Screening Protocol'
   },
   {
     id: 'faq-tl-2',
@@ -107,40 +104,29 @@ const FAQ_ITEMS: FaqItem[] = [
     categoryLabel: 'Travel Logistics',
     question: 'What security, transport, and accommodation logistics are provided during the 7-day expedition?',
     answer:
-      'Orchestrated by Board Director Ronnie Mugarura (Operations, Logistics and Strategy), all delegates receive VIP fast-track diplomatic clearance upon landing at Entebbe International Airport (EBB). Five-star accommodation is arranged at the Kampala Serena Hotel or Lake Victoria Serena Golf Resort & Spa. Ground movements utilize GPS-tracked executive convoys (upgraded to B6 armored vehicles and chartered Bell 412 twin-engine helicopters for Tier 3 Sovereign Executive delegations) with dedicated close-protection security officers.',
+      'Orchestrated by Board Director Ronnie Mugarura (Operations, Logistics and Strategy), all delegates receive VIP fast-track diplomatic clearance upon landing at Entebbe International Airport (EBB). Five-star accommodation is arranged at the Kampala Serena Hotel or Lake Victoria Serena Golf Resort & Spa. Ground movements utilize GPS-tracked executive convoys (upgraded to a dedicated B6 armored executive motorcade & close-protection tactical detail for Tier 03 Sovereign Executive · Diplomatic VIP delegations) with dedicated close-protection security officers.',
     statutoryRef: 'Directorate of Operations & High-Security Field Protocol'
   },
   {
     id: 'faq-tl-3',
     category: 'travel_logistics',
     categoryLabel: 'Travel Logistics',
-    question: 'What payment methods are accepted for KYC deposits, expedition packages, and document audits?',
+    question: 'What payment options are available for expedition packages and forensic document verification?',
     answer:
-      'All financial settlements—including the $1,000 KYC deposit, $2,500 24-hour Document Verification fee, and full expedition package fees ($6,000 / $10,000 / $20,000)—are processed strictly via our encrypted online payment gateway or verified institutional bank wire for full anti-money-laundering (AML) auditability.',
+      'Clients choose and pay only for the exact service they want—whether a standalone 24–72 Hour Forensic Document Verification (USD 2,500, inclusive of applicable Ugandan VAT, with USD 1,000 credited toward any expedition package booked within 90 days), an expedition package (Tier 01 USD 8,000 / Tier 02 USD 15,000 / Tier 03 USD 25,000 per person, inclusive of applicable Ugandan VAT), or a custom institutional verification service—via our encrypted online payment gateway or institutional bank wire.',
     statutoryRef: 'Financial Intelligence Authority (FIA) AML Compliance & Institutional Settlement Protocol'
-  },
-  {
-    id: 'faq-tl-4',
-    category: 'travel_logistics',
-    categoryLabel: 'Travel Logistics',
-    question: 'How do registered members access the WhatsApp Business (WABA) hotline and AI Concierge?',
-    answer:
-      'Once registered (with your Registration ID, e.g., REG-2026-8812, or registered corporate email), you unlock instant access to our Registered Member WhatsApp Business API (WABA) Concierge and Multi-Turn Gemini AI Advisory Desk. Registered delegates can dispatch encrypted WABA alerts directly to Lead Forensics Expert Mugisa Solomon Byakutaaga, Minerals Trade Expert Kamanzai Kaijuka, Operations Director Ronnie Mugarura, or Staff Officer 1.',
-    statutoryRef: 'Registered Delegate WABA Encrypted Communications Channel'
   }
 ];
 
 export const FaqSection: React.FC<FaqSectionProps> = ({
   currentLang = 'EN',
   selectedCurrency = 'USD',
-  onOpenChatAndWaba,
   onOpenDocVerification,
   onOpenRegistration
 }) => {
   const t = translations[currentLang];
   const localizedFaqs = getLocalizedFaqs(currentLang, FAQ_ITEMS);
   const auditPrice = formatCurrencyPrice(2500, selectedCurrency);
-  const kycPrice = formatCurrencyPrice(1000, selectedCurrency);
 
   const [selectedCategory, setSelectedCategory] = useState<
     'all' | 'supply_chain' | 'due_diligence' | 'travel_logistics'
@@ -189,18 +175,11 @@ export const FaqSection: React.FC<FaqSectionProps> = ({
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <button
-              onClick={() => onOpenChatAndWaba('chat')}
-              className="px-4 py-2.5 text-xs font-bold text-[#0B0F17] bg-[#D4AF37] hover:bg-[#FEF3C7] rounded transition-colors flex items-center gap-2 whitespace-nowrap"
+              onClick={onOpenDocVerification}
+              className="px-4 py-2.5 text-xs font-bold text-[#0B0F17] bg-[#D4AF37] hover:bg-[#FEF3C7] rounded transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer"
             >
-              <MessageSquare className="w-4 h-4" />
-              <span>{t.faqAskAiBtn}</span>
-            </button>
-            <button
-              onClick={() => onOpenChatAndWaba('waba')}
-              className="px-4 py-2.5 text-xs font-semibold text-emerald-300 hover:text-white bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-600/50 rounded transition-colors flex items-center gap-2 whitespace-nowrap"
-            >
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>{t.faqWabaBtn}</span>
+              <FileSearch className="w-4 h-4" />
+              <span>Verify an Offer ({auditPrice})</span>
             </button>
           </div>
         </div>
@@ -314,27 +293,21 @@ export const FaqSection: React.FC<FaqSectionProps> = ({
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <button
-              onClick={() => onOpenChatAndWaba('chat')}
-              className="px-4 py-2.5 text-xs font-bold text-[#0B0F17] bg-[#D4AF37] hover:bg-[#FEF3C7] rounded transition-colors whitespace-nowrap"
-            >
-              {t.faqAskAiBtn}
-            </button>
-            <button
               onClick={onOpenDocVerification}
-              className="px-4 py-2.5 text-xs font-semibold text-white bg-[#0B0F17] hover:bg-[#182232] border border-[#D4AF37]/40 rounded transition-colors flex items-center gap-1.5 whitespace-nowrap"
+              className="px-4 py-2.5 text-xs font-bold text-[#0B0F17] bg-[#D4AF37] hover:bg-[#FEF3C7] rounded transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
             >
-              <FileSearch className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <FileSearch className="w-3.5 h-3.5" />
               <span>
                 {t.navVerifyDoc} ({auditPrice})
               </span>
             </button>
             <button
               onClick={onOpenRegistration}
-              className="px-4 py-2.5 text-xs font-semibold text-slate-200 hover:text-white bg-[#0B0F17] hover:bg-[#182232] border border-slate-700 rounded transition-colors flex items-center gap-1.5 whitespace-nowrap"
+              className="px-4 py-2.5 text-xs font-semibold text-slate-200 hover:text-white bg-[#0B0F17] hover:bg-[#182232] border border-slate-700 rounded transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
             >
               <Award className="w-3.5 h-3.5 text-[#D4AF37]" />
               <span>
-                {t.navApplyCta} ({kycPrice} KYC)
+                {t.navApplyCta}
               </span>
             </button>
           </div>

@@ -1,21 +1,16 @@
 import React from 'react';
-import { Shield, Globe, Lock, MapPin, AlertCircle, KeyRound, Coins, QrCode } from 'lucide-react';
+import { Globe, MapPin, Coins, Lock } from 'lucide-react';
 import { Language, Currency } from '../types';
 import { translations } from '../data/translations';
-import { formatCurrencyPrice } from '../data/expeditionData';
-import { GeoLocationProposalBanner } from './GeoLocationProposalBanner';
 
 interface FooterProps {
   currentLang: Language;
   selectedCurrency?: Currency;
   onLanguageChange: (lang: Language) => void;
   onCurrencyChange?: (currency: Currency) => void;
-  onApplyGeoSettings?: (lang: Language, currency: Currency) => void;
-  onNavigatePage: (page: 'home' | 'about' | 'blog', sectionId?: string) => void;
-  onOpenCharter: () => void;
-  onOpenRegistration: () => void;
-  onOpenPortalAuth: () => void;
-  onOpenAdminPanel: () => void;
+  onNavigate: (path: string) => void;
+  onOpenStaffAuth?: () => void;
+  onOpenAdminAuth?: () => void;
   onOpenInvoiceReceipt?: () => void;
 }
 
@@ -24,266 +19,297 @@ export const Footer: React.FC<FooterProps> = ({
   selectedCurrency = 'USD',
   onLanguageChange,
   onCurrencyChange,
-  onApplyGeoSettings,
-  onNavigatePage,
-  onOpenRegistration,
-  onOpenPortalAuth,
-  onOpenAdminPanel,
-  onOpenInvoiceReceipt
+  onNavigate,
+  onOpenStaffAuth,
+  onOpenAdminAuth,
+  onOpenInvoiceReceipt,
 }) => {
   const t = translations[currentLang];
-  const kycPrice = formatCurrencyPrice(1000, selectedCurrency);
-  const [customLogoUrl, setCustomLogoUrl] = React.useState<string>(() => {
-    try {
-      return localStorage.getItem('uge_custom_logo_url') || '';
-    } catch {
-      return '';
-    }
-  });
 
-  React.useEffect(() => {
-    const handleLogoSync = () => {
-      try {
-        setCustomLogoUrl(localStorage.getItem('uge_custom_logo_url') || '');
-      } catch {
-        // ignore
-      }
-    };
-    window.addEventListener('uge-logo-updated', handleLogoSync);
-    return () => window.removeEventListener('uge-logo-updated', handleLogoSync);
-  }, []);
+  const handleLink = (e: React.MouseEvent, path: string) => {
+    e.preventDefault();
+    onNavigate(path);
+  };
 
   return (
-    <footer className="bg-[#080B11] border-t border-slate-800 text-slate-400 text-xs">
-      {/* Geolocation Detection & Proposed Default Language + Currency Banner at the Footer */}
-      <GeoLocationProposalBanner
-        currentLang={currentLang}
-        selectedCurrency={selectedCurrency}
-        onApplySettings={(lang, curr) => {
-          if (onApplyGeoSettings) {
-            onApplyGeoSettings(lang, curr);
-          } else {
-            onLanguageChange(lang);
-            onCurrencyChange?.(curr);
-          }
-        }}
-      />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <footer
+      role="contentinfo"
+      className="bg-[#080B11] border-t border-slate-800/90 text-slate-400 text-xs"
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Top Footer Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          {/* Brand & Mandate */}
-          <div className="space-y-3 md:col-span-1">
-            <div className="flex items-center gap-2.5 text-white font-cinzel font-bold text-base tracking-wider">
-              <div className="w-9 h-9 rounded-lg border border-[#D4AF37]/60 bg-[#111722] flex items-center justify-center text-[#D4AF37] overflow-hidden shrink-0 shadow-md shadow-[#D4AF37]/10">
-                {customLogoUrl ? (
-                  <img
-                    src={customLogoUrl}
-                    alt="Uganda Gold Expedition Logo"
-                    className="w-full h-full object-contain p-0.5"
-                  />
-                ) : (
-                  <svg
-                    viewBox="0 0 64 64"
-                    className="w-7 h-7"
-                    aria-label="Uganda Gold Expedition Crest"
-                  >
-                    <path
-                      d="M32 6L52 15V31C52 45 43.2 54.8 32 58.5C20.8 54.8 12 45 12 31V15L32 6Z"
-                      fill="#131A26"
-                      stroke="#D4AF37"
-                      strokeWidth="3"
-                    />
-                    <path d="M21 35L25.5 24H38.5L43 35H21Z" fill="#D4AF37" />
-                    <text
-                      x="32"
-                      y="47"
-                      textAnchor="middle"
-                      fill="#FEF3C7"
-                      fontFamily="Cinzel, Georgia, serif"
-                      fontWeight="bold"
-                      fontSize="10"
-                    >
-                      UGE
-                    </text>
-                  </svg>
-                )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 pb-10 border-b border-slate-800/80">
+          {/* Col 1: Brand & Independence Statement */}
+          <div className="lg:col-span-2 space-y-3">
+            <a
+              href="/"
+              onClick={(e) => handleLink(e, '/')}
+              className="inline-flex items-center gap-3 font-cinzel font-bold text-base tracking-wider text-white hover:text-[#FEF3C7] transition-colors group"
+            >
+              <img
+                src="/assets/aistudio/uge-logo-emblem-dark.png"
+                alt="Uganda Gold Expedition Logo"
+                className="w-10 h-10 object-contain shrink-0 transition-transform duration-200 group-hover:scale-105"
+              />
+              <div>
+                <div>
+                  UGANDA GOLD <span className="text-[#D4AF37]">EXPEDITION</span>
+                </div>
+                <div className="text-[10px] font-sans font-semibold tracking-[0.2em] text-[#D4AF37]/90 uppercase mt-0.5">
+                  Due Diligence &amp; Field Verification
+                </div>
               </div>
-              <span>
-                UGANDA GOLD <span className="text-[#D4AF37]">EXPEDITION</span>
-              </span>
-            </div>
-            <p className="text-xs text-slate-400 leading-relaxed text-justify">
-              {t.footerTagline}
+            </a>
+            <p className="text-xs text-slate-300 font-medium leading-relaxed max-w-md">
+              Independent due diligence and field verification. We do not buy, sell, or broker gold.
             </p>
-            <div className="flex items-center gap-1.5 text-[11px] text-[#D4AF37] font-mono-data">
-              <Lock className="w-3.5 h-3.5" />
-              <span>{t.footerStrictMandate}</span>
+            <p className="text-xs text-slate-400 leading-relaxed max-w-md">
+              Structured 7-day supply-chain expeditions and 24–72-hour document verification across
+              Uganda’s mineral cadastre, licensed refineries, and mining corridors.
+            </p>
+            <div className="flex items-start gap-2 text-xs text-slate-300 pt-1">
+              <MapPin className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
+              <div>
+                <div className="font-semibold text-white">
+                  Uganda Gold Expeditions, P.O Box 122234, Bugonga, Entebbe, Uganda
+                </div>
+                <div className="text-[11px] text-slate-400 mt-0.5">
+                  Amber House Secretariat, Kampala · <span className="font-mono-data text-[#D4AF37]">URA TIN 1019482710</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Core Navigation */}
-          <div className="space-y-2">
-            <div className="text-xs font-mono-data uppercase tracking-wider text-white font-bold mb-3">
-              {t.footerNavTitle}
-            </div>
+          {/* Col 2: Services & Programmes */}
+          <div className="space-y-2.5">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-white">
+              Services &amp; Programmes
+            </h3>
             <ul className="space-y-2">
               <li>
-                <button
-                  onClick={() => onNavigatePage('about')}
-                  className="hover:text-[#D4AF37] transition-colors text-left"
+                <a
+                  href="/verification"
+                  onClick={(e) => handleLink(e, '/verification')}
+                  className="hover:text-[#D4AF37] transition-colors"
                 >
-                  {t.navAboutUs}
-                </button>
+                  24–72-Hour Offer Verification
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigatePage('blog')}
-                  className="hover:text-[#D4AF37] transition-colors text-left"
+                <a
+                  href="/expeditions"
+                  onClick={(e) => handleLink(e, '/expeditions')}
+                  className="hover:text-[#D4AF37] transition-colors"
                 >
-                  {t.navBlog}
-                </button>
+                  Expeditions Overview
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigatePage('home', 'expedition')}
-                  className="hover:text-[#D4AF37] transition-colors text-left"
+                <a
+                  href="/expeditions/professional"
+                  onClick={(e) => handleLink(e, '/expeditions/professional')}
+                  className="hover:text-[#D4AF37] transition-colors"
                 >
-                  {t.navExpedition}
-                </button>
+                  Professional Trader Expedition
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigatePage('home', 'scam-immunity')}
-                  className="hover:text-[#D4AF37] transition-colors text-left"
+                <a
+                  href="/expeditions/academic"
+                  onClick={(e) => handleLink(e, '/expeditions/academic')}
+                  className="hover:text-[#D4AF37] transition-colors"
                 >
-                  {t.navScamImmunity}
-                </button>
+                  Academic &amp; Research Expedition
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigatePage('home', 'packages')}
-                  className="hover:text-[#D4AF37] transition-colors text-left"
+                <a
+                  href="/expeditions/institutional"
+                  onClick={(e) => handleLink(e, '/expeditions/institutional')}
+                  className="hover:text-[#D4AF37] transition-colors"
                 >
-                  {t.navPackages}
-                </button>
+                  Institutional &amp; Private Delegations
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigatePage('home', 'faq')}
-                  className="hover:text-[#D4AF37] transition-colors text-left"
+                <a
+                  href="/expeditions/itinerary"
+                  onClick={(e) => handleLink(e, '/expeditions/itinerary')}
+                  className="hover:text-[#D4AF37] transition-colors"
                 >
-                  {t.navFaq}
-                </button>
+                  Full Seven-Day Itinerary
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/expeditions/dates"
+                  onClick={(e) => handleLink(e, '/expeditions/dates')}
+                  className="hover:text-[#D4AF37] transition-colors"
+                >
+                  Dates, Packages &amp; Inclusions
+                </a>
               </li>
             </ul>
           </div>
 
-          {/* Board of Directors Overview */}
-          <div className="space-y-2">
-            <div className="text-xs font-mono-data uppercase tracking-wider text-white font-bold mb-3">
-              {t.footerBoardTitle}
-            </div>
-            <ul className="space-y-2 text-slate-400">
+          {/* Col 3: Risk, Compliance & Research */}
+          <div className="space-y-2.5">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-white">
+              Risk &amp; Intelligence
+            </h3>
+            <ul className="space-y-2">
               <li>
-                <strong className="text-slate-200">Mugisa Solomon Byakutaaga</strong>
-                <span className="block text-[11px] text-slate-500">Lead Forensics Expert</span>
+                <a
+                  href="/risk-compliance"
+                  onClick={(e) => handleLink(e, '/risk-compliance')}
+                  className="hover:text-[#D4AF37] transition-colors"
+                >
+                  Risk &amp; Compliance Hub
+                </a>
               </li>
               <li>
-                <strong className="text-slate-200">Kamanzai Kaijuka</strong>
-                <span className="block text-[11px] text-slate-500">Minerals Trade Expert</span>
+                <a
+                  href="/risk-compliance/supply-chain"
+                  onClick={(e) => handleLink(e, '/risk-compliance/supply-chain')}
+                  className="hover:text-[#D4AF37] transition-colors"
+                >
+                  Supply-Chain Stages &amp; Map
+                </a>
               </li>
               <li>
-                <strong className="text-slate-200">Ronnie Mugarura</strong>
-                <span className="block text-[11px] text-slate-500">
-                  Operations, Logistics and Strategy
-                </span>
+                <a
+                  href="/risk-compliance/scam-check"
+                  onClick={(e) => handleLink(e, '/risk-compliance/scam-check')}
+                  className="hover:text-[#D4AF37] transition-colors"
+                >
+                  Scam-Risk Assessment Tool
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/insights"
+                  onClick={(e) => handleLink(e, '/insights')}
+                  className="hover:text-[#D4AF37] transition-colors"
+                >
+                  Insights &amp; Articles
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/about"
+                  onClick={(e) => handleLink(e, '/about')}
+                  className="hover:text-[#D4AF37] transition-colors"
+                >
+                  Mission, Independence &amp; Team
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/faq"
+                  onClick={(e) => handleLink(e, '/faq')}
+                  className="hover:text-[#D4AF37] transition-colors"
+                >
+                  Frequently Asked Questions
+                </a>
               </li>
             </ul>
           </div>
 
-          {/* Operational Facilities & Portal Access */}
-          <div className="space-y-3">
-            <div className="text-xs font-mono-data uppercase tracking-wider text-white font-bold mb-3">
-              {t.footerSecretariatTitle}
-            </div>
-            <div className="flex items-start gap-2 text-xs text-slate-400">
-              <MapPin className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
-              <span>
-                Amber House, Kampala & DGSM Mineral Headquarters, Entebbe, Republic of Uganda
-              </span>
-            </div>
-
-            <div className="pt-2 space-y-2">
-              <button
-                onClick={onOpenRegistration}
-                className="w-full py-2 text-xs font-bold text-[#0B0F17] bg-[#D4AF37] hover:bg-[#FEF3C7] rounded transition-colors"
-              >
-                {t.navApplyCta} ({kycPrice} KYC)
-              </button>
-
-              <button
-                onClick={onOpenAdminPanel}
-                className="w-full py-2 text-xs font-semibold text-[#D4AF37] hover:text-white bg-[#111722] hover:bg-[#182232] border border-[#D4AF37]/40 rounded transition-colors flex items-center justify-center gap-1.5"
-              >
-                <Lock className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>{t.navAdminPanel}</span>
-              </button>
-
-              <button
-                onClick={onOpenPortalAuth}
-                className="w-full py-2 text-xs font-semibold text-slate-300 hover:text-white bg-[#111722] hover:bg-[#182232] border border-slate-700 rounded transition-colors flex items-center justify-center gap-1.5"
-              >
-                <KeyRound className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>{t.navRoleSwitcher}</span>
-              </button>
-
+          {/* Col 4: Governance, Contact & Portals */}
+          <div className="space-y-2.5">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-white">
+              Governance &amp; Support
+            </h3>
+            <ul className="space-y-2">
+              <li>
+                <a
+                  href="/contact"
+                  onClick={(e) => handleLink(e, '/contact')}
+                  className="hover:text-[#D4AF37] transition-colors"
+                >
+                  Contact &amp; Executive Briefings
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/apply"
+                  onClick={(e) => handleLink(e, '/apply')}
+                  className="hover:text-[#D4AF37] transition-colors"
+                >
+                  Expedition Application
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/portal"
+                  onClick={(e) => handleLink(e, '/portal')}
+                  className="hover:text-[#D4AF37] transition-colors"
+                >
+                  Client Portal
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/charter"
+                  onClick={(e) => handleLink(e, '/charter')}
+                  className="hover:text-[#D4AF37] transition-colors"
+                >
+                  Legal &amp; Non-Transaction Charter
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/privacy"
+                  onClick={(e) => handleLink(e, '/privacy')}
+                  className="hover:text-[#D4AF37] transition-colors"
+                >
+                  Privacy &amp; Document Handling
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/terms"
+                  onClick={(e) => handleLink(e, '/terms')}
+                  className="hover:text-[#D4AF37] transition-colors"
+                >
+                  Terms of Service &amp; Vetting Policy
+                </a>
+              </li>
               {onOpenInvoiceReceipt && (
-                <button
-                  onClick={onOpenInvoiceReceipt}
-                  className="w-full py-2 text-xs font-semibold text-emerald-300 hover:text-white bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-600/50 rounded transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <QrCode className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Invoice & QR Code Receipt</span>
-                </button>
+                <li>
+                  <button
+                    type="button"
+                    onClick={onOpenInvoiceReceipt}
+                    className="hover:text-[#D4AF37] transition-colors text-left"
+                  >
+                    Receipt &amp; Invoice Lookup
+                  </button>
+                </li>
               )}
-            </div>
+            </ul>
           </div>
         </div>
 
-        {/* KYC Mandatory Notice & Statutory Disclaimer */}
-        <div className="p-3.5 rounded-lg bg-[#0B0F17] border border-slate-800/80 mb-5 text-[11px] text-slate-400 leading-snug space-y-1.5">
-          <div className="flex items-start gap-2 text-amber-200">
-            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-            <span>
-              <strong className="text-white">{t.footerKycDisclosureTitle} </strong>
-              {kycPrice} (USD $1,000) {t.footerKycDisclosureText}
-            </span>
-          </div>
-
-          <p>{t.footerDisclaimer}</p>
-        </div>
-
-        {/* Bottom Bar: Copyright & Language / Currency Selectors */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-800/60 text-[11px]">
-          <div>{t.footerRights}</div>
-
-          <div className="flex flex-wrap items-center gap-4">
-            {/* Multi-language Switcher in Footer */}
+        {/* Middle Utility Bar: Language Selection, Currency Selection, and Authenticated Operations Access */}
+        <div className="py-6 border-b border-slate-800/70 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-6">
+            {/* Language Switcher */}
             <div className="flex items-center gap-2">
-              <span className="text-slate-400 flex items-center gap-1">
+              <span className="text-slate-400 flex items-center gap-1.5">
                 <Globe className="w-3.5 h-3.5 text-[#D4AF37]" />
                 <span>{t.languageLabel}:</span>
               </span>
-              <div className="flex items-center gap-1.5 font-mono-data">
+              <div className="flex items-center gap-1 font-mono-data">
                 {(['EN', 'AR', 'ZH', 'FR'] as Language[]).map((lang) => (
                   <button
                     key={lang}
+                    type="button"
                     onClick={() => onLanguageChange(lang)}
-                    className={`px-1.5 py-0.5 rounded transition-colors ${
+                    aria-pressed={currentLang === lang}
+                    className={`px-2 py-1 rounded transition-colors ${
                       currentLang === lang
                         ? 'bg-[#D4AF37] text-[#0B0F17] font-bold'
-                        : 'text-slate-400 hover:text-white'
+                        : 'text-slate-400 hover:text-white bg-[#111722]'
                     }`}
                   >
                     {lang}
@@ -292,10 +318,10 @@ export const Footer: React.FC<FooterProps> = ({
               </div>
             </div>
 
-            {/* Currency Switcher in Footer */}
+            {/* Currency Switcher */}
             {onCurrencyChange && (
               <div className="flex items-center gap-2">
-                <span className="text-slate-400 flex items-center gap-1">
+                <span className="text-slate-400 flex items-center gap-1.5">
                   <Coins className="w-3.5 h-3.5 text-[#D4AF37]" />
                   <span>{t.currencyLabel}:</span>
                 </span>
@@ -303,11 +329,13 @@ export const Footer: React.FC<FooterProps> = ({
                   {(['USD', 'EUR', 'AED', 'GBP', 'CNY', 'UGX'] as Currency[]).map((curr) => (
                     <button
                       key={curr}
+                      type="button"
                       onClick={() => onCurrencyChange(curr)}
-                      className={`px-1.5 py-0.5 rounded transition-colors ${
+                      aria-pressed={selectedCurrency === curr}
+                      className={`px-2 py-1 rounded transition-colors ${
                         selectedCurrency === curr
                           ? 'bg-[#D4AF37] text-[#0B0F17] font-bold'
-                          : 'text-slate-400 hover:text-white'
+                          : 'text-slate-400 hover:text-white bg-[#111722]'
                       }`}
                     >
                       {curr}
@@ -316,6 +344,47 @@ export const Footer: React.FC<FooterProps> = ({
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Discreet Operational Access for Staff & Administration (kept out of public header) */}
+          <div className="flex items-center gap-4 text-[11px] text-slate-500">
+            {onOpenStaffAuth && (
+              <button
+                type="button"
+                onClick={onOpenStaffAuth}
+                className="hover:text-slate-300 transition-colors flex items-center gap-1"
+              >
+                <Lock className="w-3 h-3" />
+                <span>Staff Sign-In</span>
+              </button>
+            )}
+            {onOpenAdminAuth && (
+              <button
+                type="button"
+                onClick={onOpenAdminAuth}
+                className="hover:text-slate-300 transition-colors flex items-center gap-1"
+              >
+                <Lock className="w-3 h-3" />
+                <span>Administration</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom Disclaimer & Copyright */}
+        <div className="pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-[11px] text-slate-500">
+          <p className="max-w-3xl leading-relaxed">
+            Uganda Gold Expedition is an independent due-diligence and field-research organization.
+            We do not act as gold dealers, brokers, or commercial intermediaries, and we never take
+            custody of precious minerals or transaction funds.
+          </p>
+          <div className="shrink-0 flex items-center gap-2.5 text-slate-400">
+            <img
+              src="/favicon.png"
+              alt="Uganda Gold Expedition Favicon"
+              className="w-6 h-6 object-contain shrink-0"
+            />
+            <span>© {new Date().getFullYear()} Uganda Gold Expedition</span>
           </div>
         </div>
       </div>

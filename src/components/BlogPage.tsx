@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import {
   Share2,
   Linkedin,
+  Twitter,
   Facebook,
   Instagram,
+  Link2,
   Copy,
   Check,
   ArrowLeft,
@@ -23,7 +25,10 @@ interface BlogPageProps {
   selectedCurrency?: Currency;
   posts: ContentPost[];
   isFullPage?: boolean;
+  activeSlug?: string;
+  showAdminControls?: boolean;
   onBackToHome?: () => void;
+  onNavigate?: (path: string) => void;
   onOpenAdminPanel: () => void;
   onOpenDocVerification: () => void;
   onOpenRegistration: () => void;
@@ -54,10 +59,10 @@ const LOCALIZED_POST_OVERRIDES: Record<
       body: `تبلغ كثافة الذهب النقي 19.32 جم/سم³، بينما تبلغ كثافة التنغستن 19.25 جم/سم³ — أي أنهما متطابقان تقريباً في الوزن. يقوم المزورون بتغليف قلب من التنغستن بطبقة سميكة (2 ملم) من الذهب الحقيقي عيار 24.\n\nعندما يستخدم المشتري جهاز XRF المحمول، فإن الأشعة تخترق 10 إلى 50 ميكرومتر فقط وتقرأ الذهب الخارجي بنسبة 99.9%!\n\nلذلك يفرض بروتوكول بعثة أوغندا للذهب الفحص بالموجات فوق الصوتية، يليه الصهر الكامل في فرن الحث وأخذ عينات مزدوجة وإجراء معايرة النار (Fire Assay) عند 1050 درجة مئوية.`
     },
     'post-4': {
-      title: 'أمن الوفود الميدانية ولوجستيات الجسر الجوي بالهليكوبتر عبر حزام الذهب الأوغندي',
+      title: 'أمن الوفود الميدانية ولوجستيات المواكب المصفحة B6 عبر حزام الذهب الأوغندي',
       summary: 'يستعرض مدير العمليات والاستراتيجية روني موغارورا البنية الأمنية واللوجستية التي تحمي الوفود الزائرة من مطار عنتيبي إلى المناجم.',
       authorRole: 'عضو مجلس الإدارة · العمليات واللوجستيات والاستراتيجية',
-      body: `يتطلب تنفيذ العناية الواجبة الميدانية في شرق أفريقيا تنسيقاً لوجستياً وأمنياً دقيقاً.\n\nبدءاً من الوصول إلى مطار عنتيبي الدولي عبر المسار الدبلوماسي السريع، مروراً بالمواكب المصفحة B6 المتصلة بالأقمار الصناعية، وصولاً إلى رحلات الهليكوبتر Bell 412 المباشرة إلى مناجم بوسيا وموبيندي، نضمن لوفودنا أقصى درجات الأمان والسرية.`
+      body: `يتطلب تنفيذ العناية الواجبة الميدانية في شرق أفريقيا تنسيقاً لوجستياً وأمنياً دقيقاً.\n\nبدءاً من الوصول إلى مطار عنتيبي الدولي عبر المسار الدبلوماسي السريع، مروراً بالمواكب المصفحة B6 المتصلة بالأقمار الصناعية والحماية التكتيكية المباشرة إلى مناجم بوسيا وموبيندي، نضمن لوفودنا أقصى درجات الأمان والسرية.`
     }
   },
   ZH: {
@@ -80,10 +85,10 @@ const LOCALIZED_POST_OVERRIDES: Record<
       body: `纯金的密度为 19.32 g/cm³，而钨的密度为 19.25 g/cm³——两者在重量与排水体积测试中几乎完全一致。高明的造假团伙将 1.5 至 2 毫米厚的真 24K 纯金熔接在烧结钨棒核心外层。\n\n当买家在酒店房间使用手持式 XRF 光谱仪扫描时，射线仅能穿透表面 10–50 微米，读数自然显示“99.9% 纯金”！\n\n因此，乌干达黄金考察团制定了铁律：必须执行超声波声速扫描，随后在认证保税精炼厂进行感应炉整体均匀熔炼、钻孔取双样，并执行 1050°C 经典铅灰吹火试金法 (Fire Assay)。`
     },
     'post-4': {
-      title: '高管代表团外勤安保与穿越乌干达黄金矿带的直升机空中走廊后勤保障',
+      title: '高管代表团外勤安保与穿越乌干达黄金矿带的 B6 防弹装甲车队后勤保障',
       summary: '运营、后勤与战略总监 Ronnie Mugarura 揭秘从恩德培停机坪到活跃矿坑全程守护代表团的主权级安保架构。',
       authorRole: '董事会董事 · 运营、后勤与战略总监',
-      body: `在东非执行机构级实地尽职调查需要严密的后勤与安全保障。\n\n从恩德培国际机场 (EBB) 停机坪 VIP 外交快速通关，到全程卫星追踪的丰田陆地巡洋舰与 B6 防弹装甲车队，再到直飞布西亚工业矿山与穆本德矿区的 Bell 412 双发直升机专机转运，我们的外勤指挥部确保每一位委托人在绝对安全、保密与高效的环境中完成核查。`
+      body: `在东非执行机构级实地尽职调查需要严密的后勤与安全保障。\n\n从恩德培国际机场 (EBB) 停机坪 VIP 外交快速通关，到全程卫星追踪的丰田陆地巡洋舰与 B6 防弹装甲护卫车队直达布西亚工业矿山与穆本德矿区，我们的外勤指挥部确保每一位委托人在绝对安全、保密与高效的环境中完成核查。`
     }
   },
   FR: {
@@ -106,10 +111,10 @@ const LOCALIZED_POST_OVERRIDES: Record<
       body: `La densité de l'or pur est de 19,32 g/cm³ et celle du tungstène de 19,25 g/cm³. Les faussaires enveloppent des tiges de tungstène fritté d'une couche de 2 mm d'or 24 carats véritable.\n\nUn spectromètre XRF portable ne pénètre que de 10 à 50 micromètres et affiche donc « 99,9 % d'or pur » !\n\nC'est pourquoi notre protocole impose un scan par ultrasons suivi d'une fusion complète par induction, d'un double carottage et d'un essai au feu (Fire Assay) à 1050°C.`
     },
     'post-4': {
-      title: 'Sécurité des Délégations & Pont Aérien par Hélicoptère à Travers la Ceinture Aurifère Ougandaise',
+      title: 'Sécurité des Délégations & Convois Blindés B6 à Travers la Ceinture Aurifère Ougandaise',
       summary: 'Le Directeur des Opérations et de la Stratégie Ronnie Mugarura présente l’architecture sécuritaire protégeant les délégations d’Entebbe jusqu’aux mines.',
       authorRole: 'Directeur · Opérations, Logistique et Stratégie',
-      body: `Mener une diligence raisonnable sur le terrain en Afrique de l'Est exige une logistique souveraine sans faille.\n\nDepuis l'accueil diplomatique VIP sur le tarmac d'Entebbe jusqu'aux convois blindés B6 suivis par satellite et aux transferts en hélicoptère bimoteur Bell 412 vers Busia et Mubende, notre direction assure une sécurité et une confidentialité absolues.`
+      body: `Mener une diligence raisonnable sur le terrain en Afrique de l'Est exige une logistique souveraine sans faille.\n\nDepuis l'accueil diplomatique VIP sur le tarmac d'Entebbe jusqu'aux convois blindés B6 suivis par satellite avec unité de protection rapprochée vers Busia et Mubende, notre direction assure une sécurité et une confidentialité absolues.`
     }
   }
 };
@@ -119,7 +124,10 @@ export const BlogPage: React.FC<BlogPageProps> = ({
   selectedCurrency = 'USD',
   posts,
   isFullPage = false,
+  activeSlug,
+  showAdminControls = false,
   onBackToHome,
+  onNavigate,
   onOpenAdminPanel,
   onOpenDocVerification,
   onOpenRegistration
@@ -132,6 +140,8 @@ export const BlogPage: React.FC<BlogPageProps> = ({
   const [activeArticle, setActiveArticle] = useState<ContentPost | null>(null);
   const [shareModalPost, setShareModalPost] = useState<ContentPost | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [footerSharePostId, setFooterSharePostId] = useState<string>('');
+  const [instagramShareNotice, setInstagramShareNotice] = useState<string | null>(null);
 
   // Localize posts dynamically for currentLang
   const localizedPosts: ContentPost[] = posts.map((p) => {
@@ -147,6 +157,26 @@ export const BlogPage: React.FC<BlogPageProps> = ({
   });
 
   const publishedPosts = localizedPosts.filter((p) => p.published !== false);
+
+  const slugArticle = activeSlug
+    ? publishedPosts.find((p) => p.id === activeSlug) || null
+    : null;
+  const displayedArticle = slugArticle || activeArticle;
+
+  const handleSelectArticle = (post: ContentPost | null) => {
+    if (!post) {
+      setActiveArticle(null);
+      if (activeSlug && onNavigate) {
+        onNavigate('/insights');
+      }
+      return;
+    }
+    if (onNavigate) {
+      onNavigate(`/insights/${post.id}`);
+    } else {
+      setActiveArticle(post);
+    }
+  };
 
   const filteredPosts = publishedPosts.filter((post) => {
     const matchesCategory =
@@ -165,7 +195,7 @@ export const BlogPage: React.FC<BlogPageProps> = ({
       typeof window !== 'undefined' && window.location.origin
         ? window.location.origin
         : 'https://ugandagoldexpedition.org';
-    return `${origin}/#blog-${post.id}`;
+    return `${origin}/insights/${post.id}`;
   };
 
   const getShareLinks = (post: ContentPost) => {
@@ -210,7 +240,7 @@ export const BlogPage: React.FC<BlogPageProps> = ({
     <section
       id="blog"
       className={`${
-        isFullPage ? 'pt-28 pb-12 min-h-screen' : 'py-10 sm:py-12 border-t border-slate-800/80'
+        isFullPage ? 'pt-12 pb-20 min-h-screen' : 'py-10 sm:py-12 border-t border-slate-800/80'
       } bg-[#0B0F17] text-slate-300`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-7">
@@ -219,19 +249,21 @@ export const BlogPage: React.FC<BlogPageProps> = ({
           <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-800">
             <button
               onClick={onBackToHome}
-              className="inline-flex items-center gap-2 text-xs font-semibold text-[#D4AF37] hover:text-[#FEF3C7] transition-colors whitespace-nowrap"
+              className="inline-flex items-center gap-2 text-xs font-semibold text-[#D4AF37] hover:text-[#FEF3C7] transition-colors whitespace-nowrap cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>{t.aboutBackToHome}</span>
             </button>
 
-            <button
-              onClick={onOpenAdminPanel}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-[#111722] border border-slate-800 rounded transition-colors whitespace-nowrap"
-            >
-              <Plus className="w-3.5 h-3.5 text-[#D4AF37]" />
-              <span>{t.blogPublishEditBtn}</span>
-            </button>
+            {showAdminControls && (
+              <button
+                onClick={onOpenAdminPanel}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-[#111722] border border-slate-800 rounded transition-colors whitespace-nowrap cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>{t.blogPublishEditBtn}</span>
+              </button>
+            )}
           </div>
         )}
 
@@ -245,23 +277,25 @@ export const BlogPage: React.FC<BlogPageProps> = ({
               <span aria-hidden="true">·</span>
               <span>{publishedPosts.length}</span>
             </div>
-            <h2 className="font-cinzel text-3xl sm:text-4xl font-bold text-white leading-tight">
+            <h1 className="font-serif-display text-3xl sm:text-5xl font-bold text-white leading-tight">
               {t.blogTitle}
-            </h2>
+            </h1>
             <p className="text-sm sm:text-base text-slate-400 leading-relaxed">
               {t.blogSubtitle}
             </p>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
-            <button
-              onClick={onOpenAdminPanel}
-              className="px-4 py-2.5 text-xs font-semibold text-white bg-[#111722] hover:bg-[#182232] border border-slate-700 rounded transition-colors whitespace-nowrap flex items-center gap-2"
-            >
-              <Settings className="w-3.5 h-3.5 text-[#D4AF37]" />
-              <span>{t.blogPublishEditBtn}</span>
-            </button>
-          </div>
+          {showAdminControls && (
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                onClick={onOpenAdminPanel}
+                className="px-4 py-2.5 text-xs font-semibold text-white bg-[#111722] hover:bg-[#182232] border border-slate-700 rounded transition-colors whitespace-nowrap flex items-center gap-2 cursor-pointer"
+              >
+                <Settings className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>{t.blogPublishEditBtn}</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Filter Controls & Search Bar */}
@@ -319,7 +353,7 @@ export const BlogPage: React.FC<BlogPageProps> = ({
                 >
                   <div>
                     <div
-                      onClick={() => setActiveArticle(post)}
+                      onClick={() => handleSelectArticle(post)}
                       className="relative aspect-[16/9] bg-[#0B0F17] overflow-hidden border-b border-slate-800 cursor-pointer group"
                     >
                       <img
@@ -348,7 +382,7 @@ export const BlogPage: React.FC<BlogPageProps> = ({
                       </div>
 
                       <h3
-                        onClick={() => setActiveArticle(post)}
+                        onClick={() => handleSelectArticle(post)}
                         className="font-cinzel text-xl font-bold text-white hover:text-[#D4AF37] transition-colors cursor-pointer leading-snug"
                       >
                         {post.title}
@@ -372,8 +406,8 @@ export const BlogPage: React.FC<BlogPageProps> = ({
                   {/* Card Footer: Read Full Article + Social Media Share Controls */}
                   <div className="px-6 py-4 bg-[#0B0F17]/60 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
                     <button
-                      onClick={() => setActiveArticle(post)}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#D4AF37] hover:text-[#FEF3C7] transition-colors whitespace-nowrap"
+                      onClick={() => handleSelectArticle(post)}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#D4AF37] hover:text-[#FEF3C7] transition-colors whitespace-nowrap cursor-pointer"
                     >
                       <BookOpen className="w-3.5 h-3.5" />
                       <span>{t.blogReadFullBtn}</span>
@@ -437,37 +471,167 @@ export const BlogPage: React.FC<BlogPageProps> = ({
             })}
           </div>
         )}
+
+        {/* Dedicated Blog Page Footer Social Media Sharing Widget */}
+        {publishedPosts.length > 0 && (() => {
+          const selectedFooterPost =
+            publishedPosts.find((p) => p.id === footerSharePostId) || publishedPosts[0];
+          const footerShareLinks = getShareLinks(selectedFooterPost);
+          const isFooterCopied =
+            copiedId === `${selectedFooterPost.id}-footer` ||
+            copiedId === `${selectedFooterPost.id}-ig-footer`;
+
+          return (
+            <div className="mt-8 rounded-2xl bg-[#111722] border border-[#D4AF37]/40 p-5 sm:p-6 shadow-xl">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                <div className="space-y-2 flex-1">
+                  <div className="inline-flex items-center gap-2 text-xs font-mono-data uppercase tracking-wider text-[#D4AF37]">
+                    <Share2 className="w-3.5 h-3.5" />
+                    <span>{t.blogShareModalTitle} · One-Click Article Syndication</span>
+                  </div>
+                  <h3 className="font-cinzel text-lg sm:text-xl font-bold text-white">
+                    Share Forensic Briefings & Regulatory Dispatches
+                  </h3>
+                  <p className="text-xs text-slate-300 leading-relaxed text-justify">
+                    Select any intelligence briefing below and syndicate directly to LinkedIn, X, Facebook, or Instagram with one click.
+                  </p>
+
+                  {/* Article Selector Dropdown for Footer Sharing Widget */}
+                  <div className="pt-1 max-w-xl">
+                    <label htmlFor="blog-footer-share-select" className="sr-only">
+                      Select Article to Share
+                    </label>
+                    <select
+                      id="blog-footer-share-select"
+                      value={selectedFooterPost.id}
+                      onChange={(e) => {
+                        setFooterSharePostId(e.target.value);
+                        setInstagramShareNotice(null);
+                      }}
+                      className="w-full px-3 py-2 text-xs bg-[#0B0F17] border border-slate-700 hover:border-[#D4AF37]/60 rounded-lg text-white focus:outline-none focus:border-[#D4AF37]"
+                    >
+                      {publishedPosts.map((post) => (
+                        <option key={post.id} value={post.id}>
+                          {post.title} — ({post.author})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* One-Click Social Media Sharing Buttons (LinkedIn, X, Facebook, Instagram) */}
+                <div className="flex flex-col sm:items-end gap-2.5 shrink-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <a
+                      href={footerShareLinks.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3.5 py-2.5 rounded-lg bg-[#0A66C2]/20 hover:bg-[#0A66C2]/35 border border-[#0A66C2]/50 text-xs font-semibold text-white flex items-center gap-2 transition-colors"
+                      title="One-click share to LinkedIn"
+                    >
+                      <Linkedin className="w-4 h-4 text-[#38bdf8]" />
+                      <span>LinkedIn</span>
+                    </a>
+
+                    <a
+                      href={footerShareLinks.x}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3.5 py-2.5 rounded-lg bg-[#0B0F17] hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-white flex items-center gap-2 transition-colors"
+                      title="One-click share to X"
+                    >
+                      <Twitter className="w-4 h-4 text-slate-200" />
+                      <span>X</span>
+                    </a>
+
+                    <a
+                      href={footerShareLinks.facebook}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3.5 py-2.5 rounded-lg bg-[#1877F2]/20 hover:bg-[#1877F2]/35 border border-[#1877F2]/50 text-xs font-semibold text-white flex items-center gap-2 transition-colors"
+                      title="One-click share to Facebook"
+                    >
+                      <Facebook className="w-4 h-4 text-[#60a5fa]" />
+                      <span>Facebook</span>
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleCopyShareText(selectedFooterPost, 'ig-footer');
+                        setInstagramShareNotice(
+                          `Instagram caption & link copied for "${selectedFooterPost.title.slice(0, 42)}..." — ready to paste on Instagram!`
+                        );
+                        setTimeout(() => setInstagramShareNotice(null), 4000);
+                      }}
+                      className="px-3.5 py-2.5 rounded-lg bg-gradient-to-r from-purple-900/40 via-pink-900/40 to-amber-900/40 hover:from-purple-900/60 hover:to-amber-900/60 border border-pink-500/40 text-xs font-semibold text-white flex items-center gap-2 transition-colors cursor-pointer"
+                      title="One-click share to Instagram (copies formatted caption & URL)"
+                    >
+                      <Instagram className="w-4 h-4 text-pink-400" />
+                      <span>Instagram</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleCopyShareText(selectedFooterPost, 'footer')}
+                      className="px-3 py-2.5 rounded-lg bg-[#0B0F17] hover:bg-[#182232] border border-[#D4AF37]/40 text-xs font-mono-data text-[#D4AF37] flex items-center gap-1.5 transition-colors cursor-pointer"
+                      title="Copy direct article link"
+                    >
+                      {isFooterCopied ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span className="text-emerald-400">{t.blogCopiedMsg}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Link2 className="w-3.5 h-3.5" />
+                          <span>Copy Link</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {instagramShareNotice && (
+                    <div className="text-[11px] font-mono-data text-emerald-300 bg-emerald-950/60 border border-emerald-700/60 px-3 py-1 rounded">
+                      {instagramShareNotice}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
-      {/* Full Article Reader Modal */}
-      {activeArticle && (
+      {/* Full Article Reader View / Modal */}
+      {displayedArticle && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[#111722] border border-slate-700 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="relative h-64 sm:h-72 bg-[#0B0F17] border-b border-slate-800">
               <img
                 src={
-                  activeArticle.imageUrl ||
+                  displayedArticle.imageUrl ||
                   '/src/assets/images/hero_uganda_gold_expedition_1793632188698.jpg'
                 }
-                alt={activeArticle.title}
+                alt={displayedArticle.title}
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover opacity-80"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#111722] via-[#0B0F17]/40 to-transparent" />
               <button
-                onClick={() => setActiveArticle(null)}
-                className="absolute top-4 right-4 p-2 rounded-lg bg-[#0B0F17]/80 text-slate-300 hover:text-white border border-slate-700"
+                onClick={() => handleSelectArticle(null)}
+                className="absolute top-4 right-4 p-2 rounded-lg bg-[#0B0F17]/80 text-slate-300 hover:text-white border border-slate-700 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
               <div className="absolute bottom-4 left-6 right-6 space-y-2">
                 <div className="flex items-center gap-2 text-xs font-mono-data text-[#D4AF37]">
-                  <span>{activeArticle.category}</span>
+                  <span>{displayedArticle.category}</span>
                   <span aria-hidden="true">·</span>
-                  <span>{activeArticle.date}</span>
+                  <span>{displayedArticle.date}</span>
                 </div>
                 <h2 className="font-cinzel text-2xl sm:text-3xl font-bold text-white leading-snug">
-                  {activeArticle.title}
+                  {displayedArticle.title}
                 </h2>
               </div>
             </div>
@@ -475,17 +639,17 @@ export const BlogPage: React.FC<BlogPageProps> = ({
             <div className="p-6 sm:p-8 space-y-6">
               <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800">
                 <div className="text-xs">
-                  <div className="text-white font-bold">{activeArticle.author}</div>
-                  {activeArticle.authorRole && (
+                  <div className="text-white font-bold">{displayedArticle.author}</div>
+                  {displayedArticle.authorRole && (
                     <div className="text-[#D4AF37] font-mono-data text-[11px]">
-                      {activeArticle.authorRole}
+                      {displayedArticle.authorRole}
                     </div>
                   )}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
                   <a
-                    href={getShareLinks(activeArticle).linkedin}
+                    href={getShareLinks(displayedArticle).linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#0B0F17] hover:bg-[#182232] border border-slate-700 text-xs text-slate-200 transition-colors"
@@ -494,7 +658,7 @@ export const BlogPage: React.FC<BlogPageProps> = ({
                     <span>LinkedIn</span>
                   </a>
                   <a
-                    href={getShareLinks(activeArticle).x}
+                    href={getShareLinks(displayedArticle).x}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#0B0F17] hover:bg-[#182232] border border-slate-700 text-xs text-slate-200 transition-colors"
@@ -503,7 +667,7 @@ export const BlogPage: React.FC<BlogPageProps> = ({
                     <span>X</span>
                   </a>
                   <a
-                    href={getShareLinks(activeArticle).facebook}
+                    href={getShareLinks(displayedArticle).facebook}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#0B0F17] hover:bg-[#182232] border border-slate-700 text-xs text-slate-200 transition-colors"
@@ -513,10 +677,10 @@ export const BlogPage: React.FC<BlogPageProps> = ({
                   </a>
                   <button
                     onClick={() => {
-                      handleCopyShareText(activeArticle, 'reader-ig');
-                      setShareModalPost(activeArticle);
+                      handleCopyShareText(displayedArticle, 'reader-ig');
+                      setShareModalPost(displayedArticle);
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#0B0F17] hover:bg-[#182232] border border-slate-700 text-xs text-slate-200 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#0B0F17] hover:bg-[#182232] border border-slate-700 text-xs text-slate-200 transition-colors cursor-pointer"
                   >
                     <Instagram className="w-3.5 h-3.5 text-[#D4AF37]" />
                     <span>Instagram</span>
@@ -525,11 +689,11 @@ export const BlogPage: React.FC<BlogPageProps> = ({
               </div>
 
               <p className="text-base text-slate-200 font-medium leading-relaxed">
-                {activeArticle.summary}
+                {displayedArticle.summary}
               </p>
 
               <div className="space-y-4 text-sm sm:text-base text-slate-300 leading-relaxed whitespace-pre-line">
-                {activeArticle.body}
+                {displayedArticle.body}
               </div>
 
               <div className="p-5 rounded-xl bg-[#0B0F17] border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -541,19 +705,19 @@ export const BlogPage: React.FC<BlogPageProps> = ({
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={() => {
-                      setActiveArticle(null);
+                      handleSelectArticle(null);
                       onOpenDocVerification();
                     }}
-                    className="px-3.5 py-2 text-xs font-bold text-[#0B0F17] bg-[#D4AF37] hover:bg-[#FEF3C7] rounded whitespace-nowrap"
+                    className="px-3.5 py-2 text-xs font-bold text-[#0B0F17] bg-[#D4AF37] hover:bg-[#FEF3C7] rounded whitespace-nowrap cursor-pointer"
                   >
                     {t.navVerifyDoc} ({auditPrice})
                   </button>
                   <button
                     onClick={() => {
-                      setActiveArticle(null);
+                      handleSelectArticle(null);
                       onOpenRegistration();
                     }}
-                    className="px-3.5 py-2 text-xs font-semibold text-white bg-[#111722] border border-slate-700 rounded whitespace-nowrap"
+                    className="px-3.5 py-2 text-xs font-semibold text-white bg-[#111722] border border-slate-700 rounded whitespace-nowrap cursor-pointer"
                   >
                     {t.navApplyCta}
                   </button>

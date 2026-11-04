@@ -15,7 +15,10 @@ import {
   Award,
   Upload,
   Check,
-  TrendingUp
+  TrendingUp,
+  Download,
+  History,
+  Search
 } from 'lucide-react';
 import {
   ContentPost,
@@ -26,9 +29,11 @@ import {
   DocumentVerification,
   BoardMember,
   AboutContent,
-  Currency
+  Currency,
+  AdminAuditLog
 } from '../types';
 import { GoldPriceTrendsChart } from './GoldPriceTrendsChart';
+import { DEFAULT_UI_CONFIG, type UiConfigDoc } from '../services/firebase';
 
 interface AdminPortalProps {
   posts: ContentPost[];
@@ -39,8 +44,21 @@ interface AdminPortalProps {
   documentVerifications: DocumentVerification[];
   staff: StaffMember[];
   payments: PaymentRecord[];
+  auditLogs?: AdminAuditLog[];
   selectedCurrency?: Currency;
-  initialTab?: 'content' | 'photos' | 'about-board' | 'registrations' | 'doc-verifications' | 'payments' | 'staff' | 'gateway' | 'gold-trends';
+  uiConfig?: UiConfigDoc;
+  onUpdateUiConfig?: (updates: Partial<UiConfigDoc>) => void;
+  initialTab?:
+    | 'content'
+    | 'photos'
+    | 'about-board'
+    | 'registrations'
+    | 'doc-verifications'
+    | 'payments'
+    | 'staff'
+    | 'audit-logs'
+    | 'gateway'
+    | 'gold-trends';
   onAddPost: (post: Omit<ContentPost, 'id' | 'date'>) => void;
   onUpdatePost: (id: string, updates: Partial<ContentPost>) => void;
   onDeletePost: (id: string) => void;
@@ -53,6 +71,16 @@ interface AdminPortalProps {
   onDeleteBoardMember: (id: string) => void;
   onUpdateRegistration: (id: string, updates: Partial<ExpeditionRegistration>) => void;
   onUpdateDocumentVerification: (id: string, updates: Partial<DocumentVerification>) => void;
+  onUpdateStaffRole?: (
+    staffId: string,
+    updates: Partial<StaffMember>
+  ) => void;
+  onRecordAuditLog?: (entry: {
+    category: AdminAuditLog['category'];
+    action: string;
+    targetId: string;
+    details: string;
+  }) => void;
   onClose: () => void;
   onSwitchToStaff: () => void;
 }
@@ -66,7 +94,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   documentVerifications,
   staff,
   payments,
+  auditLogs = [],
   selectedCurrency = 'USD',
+  uiConfig = DEFAULT_UI_CONFIG,
+  onUpdateUiConfig,
   initialTab = 'content',
   onAddPost,
   onUpdatePost,
@@ -80,14 +111,263 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   onDeleteBoardMember,
   onUpdateRegistration,
   onUpdateDocumentVerification,
+  onUpdateStaffRole,
+  onRecordAuditLog,
   onClose,
   onSwitchToStaff
 }) => {
   const [activeTab, setActiveTab] = useState<
-    'content' | 'photos' | 'about-board' | 'registrations' | 'doc-verifications' | 'payments' | 'staff' | 'gateway' | 'gold-trends'
+    | 'content'
+    | 'photos'
+    | 'about-board'
+    | 'registrations'
+    | 'doc-verifications'
+    | 'payments'
+    | 'staff'
+    | 'audit-logs'
+    | 'gateway'
+    | 'gold-trends'
   >(initialTab);
 
+  // Filter states for Registrations, Document Verifications, Payments, and Audit Logs
+  const [regSearch, setRegSearch] = useState('');
+  const [regStatusFilter, setRegStatusFilter] = useState<'all' | 'approved' | 'under_review' | 'pending_kyc' | 'flagged'>('all');
+
+  const [docSearch, setDocSearch] = useState('');
+  const [docStatusFilter, setDocStatusFilter] = useState<'all' | 'dispatched_to_client' | 'assigned_to_staff_1' | 'analyzing'>('all');
+
+  const [paySearch, setPaySearch] = useState('');
+  const [payTypeFilter, setPayTypeFilter] = useState<'all' | 'full_payment' | 'doc_verification'>('all');
+
+  const [auditSearch, setAuditSearch] = useState('');
+  const [auditCategoryFilter, setAuditCategoryFilter] = useState<'all' | AdminAuditLog['category']>('all');
+
+  // Helper to download RFC-4180 compliant CSV files
+  const downloadCsvFile = (filename: string, headers: string[], rows: (string | number | boolean | undefined)[][]) => {
+    const escapeCell = (val: string | number | boolean | undefined) => {
+      const str = val === undefined || val === null ? '' : String(val);
+      return `"${str.replace(/"/g, '""')}"`;
+    };
+    const csvLines = [
+      headers.map(escapeCell).join(','),
+      ...rows.map((r) => r.map(escapeCell).join(','))
+    ];
+    const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const filteredRegistrations = registrations.filter((r) => {
+    const matchesStatus = regStatusFilter === 'all' || r.status === regStatusFilter;
+    const q = regSearch.trim().toLowerCase();
+    const matchesSearch =
+      !q ||
+      r.id.toLowerCase().includes(q) ||
+      r.fullName.toLowerCase().includes(q) ||
+      r.companyName.toLowerCase().includes(q) ||
+      r.email.toLowerCase().includes(q) ||
+      r.country.toLowerCase().includes(q) ||
+      r.requestedTier.toLowerCase().includes(q);
+    return matchesStatus && matchesSearch;
+  });
+
+  const filteredDocVerifications = documentVerifications.filter((d) => {
+    const matchesStatus = docStatusFilter === 'all' || d.status === docStatusFilter;
+    const q = docSearch.trim().toLowerCase();
+    const matchesSearch =
+      !q ||
+      d.id.toLowerCase().includes(q) ||
+      d.clientName.toLowerCase().includes(q) ||
+      d.companyName.toLowerCase().includes(q) ||
+      d.email.toLowerCase().includes(q) ||
+      d.documentType.toLowerCase().includes(q) ||
+      d.claimedSeller.toLowerCase().includes(q);
+    return matchesStatus && matchesSearch;
+  });
+
+  const filteredPayments = payments.filter((p) => {
+    const matchesType = payTypeFilter === 'all' || p.type === payTypeFilter;
+    const q = paySearch.trim().toLowerCase();
+    const matchesSearch =
+      !q ||
+      p.reference.toLowerCase().includes(q) ||
+      p.customerName.toLowerCase().includes(q) ||
+      p.email.toLowerCase().includes(q) ||
+      p.tier.toLowerCase().includes(q) ||
+      p.status.toLowerCase().includes(q);
+    return matchesType && matchesSearch;
+  });
+
+  const filteredAuditLogs = auditLogs.filter((log) => {
+    const matchesCategory = auditCategoryFilter === 'all' || log.category === auditCategoryFilter;
+    const q = auditSearch.trim().toLowerCase();
+    const matchesSearch =
+      !q ||
+      log.id.toLowerCase().includes(q) ||
+      log.action.toLowerCase().includes(q) ||
+      log.details.toLowerCase().includes(q) ||
+      log.actorEmail.toLowerCase().includes(q) ||
+      log.targetId.toLowerCase().includes(q);
+    return matchesCategory && matchesSearch;
+  });
+
+  const handleExportRegistrationsCsv = () => {
+    const dateStamp = new Date().toISOString().split('T')[0];
+    const filename = `uge-registrations-${dateStamp}.csv`;
+    downloadCsvFile(
+      filename,
+      [
+        'Registration ID',
+        'Registered Date',
+        'Full Name',
+        'Executive Title',
+        'Company Name',
+        'Country',
+        'Email',
+        'Phone',
+        'Tier',
+        'Delegates',
+        'Cohort Date',
+        'Payment Status',
+        'Clearance Status',
+        'Passport Verified',
+        'Sanctions/PEP Clear',
+        'DGSM Clearance',
+        'Assigned Staff'
+      ],
+      filteredRegistrations.map((r) => [
+        r.id,
+        r.registeredAt,
+        r.fullName,
+        r.executiveTitle,
+        r.companyName,
+        r.country,
+        r.email,
+        r.phone,
+        r.requestedTier,
+        r.delegatesCount,
+        r.cohortDate,
+        r.kycPaymentStatus,
+        r.status,
+        r.passportVerified ? 'Yes' : 'No',
+        r.sanctionsPepClear ? 'Yes' : 'No',
+        r.dgsmClearance ? 'Yes' : 'No',
+        r.assignedStaff || 'Unassigned'
+      ])
+    );
+    onRecordAuditLog?.({
+      category: 'data_export',
+      action: 'Exported Registrations to CSV',
+      targetId: filename,
+      details: `Exported ${filteredRegistrations.length} filtered registration record(s) (status filter: ${regStatusFilter}) to ${filename}.`
+    });
+    triggerSavedBanner(`Exported ${filteredRegistrations.length} registrations to ${filename}`);
+  };
+
+  const handleExportDocVerificationsCsv = () => {
+    const dateStamp = new Date().toISOString().split('T')[0];
+    const filename = `uge-document-verifications-${dateStamp}.csv`;
+    downloadCsvFile(
+      filename,
+      [
+        'Verification ID',
+        'Submitted At',
+        'Client Name',
+        'Company Name',
+        'Email',
+        'Phone',
+        'Document Type',
+        'Claimed Seller',
+        'Claimed Quantity',
+        'Claimed Discount',
+        'Fee (USD)',
+        'Payment Status',
+        'Payment Ref',
+        'Status',
+        'Assigned Officer',
+        'AI Risk Score',
+        'AI Verdict',
+        'SLA Deadline'
+      ],
+      filteredDocVerifications.map((d) => [
+        d.id,
+        d.submittedAt,
+        d.clientName,
+        d.companyName,
+        d.email,
+        d.phone,
+        d.documentType,
+        d.claimedSeller,
+        d.claimedQuantityKg,
+        d.claimedDiscountPercent,
+        d.feeUsd,
+        d.paymentStatus,
+        d.paymentRef,
+        d.status,
+        d.assignedOfficer,
+        d.aiAnalysis?.riskScore ?? 'N/A',
+        d.aiAnalysis?.verdict ?? 'Pending',
+        d.slaDeadline
+      ])
+    );
+    onRecordAuditLog?.({
+      category: 'data_export',
+      action: 'Exported Document Verifications to CSV',
+      targetId: filename,
+      details: `Exported ${filteredDocVerifications.length} filtered document verification dossier(s) (status filter: ${docStatusFilter}) to ${filename}.`
+    });
+    triggerSavedBanner(`Exported ${filteredDocVerifications.length} document verifications to ${filename}`);
+  };
+
+  const handleExportPaymentsCsv = () => {
+    const dateStamp = new Date().toISOString().split('T')[0];
+    const filename = `uge-payments-${dateStamp}.csv`;
+    downloadCsvFile(
+      filename,
+      [
+        'Payment ID',
+        'Tx Reference',
+        'Customer Name',
+        'Email',
+        'Type',
+        'Tier / Service',
+        'Amount',
+        'Currency',
+        'Method',
+        'Timestamp',
+        'Status'
+      ],
+      filteredPayments.map((p) => [
+        p.id,
+        p.reference,
+        p.customerName,
+        p.email,
+        p.type,
+        p.tier,
+        p.amount,
+        p.currency,
+        p.cardBrand,
+        p.date,
+        p.status
+      ])
+    );
+    onRecordAuditLog?.({
+      category: 'data_export',
+      action: 'Exported Payment Transactions to CSV',
+      targetId: filename,
+      details: `Exported ${filteredPayments.length} filtered payment transaction record(s) (type filter: ${payTypeFilter}) to ${filename}.`
+    });
+    triggerSavedBanner(`Exported ${filteredPayments.length} payment records to ${filename}`);
+  };
+
   const [saveBanner, setSaveBanner] = useState<string | null>(null);
+  const [copiedRules, setCopiedRules] = useState(false);
 
   const triggerSavedBanner = (msg: string) => {
     setSaveBanner(msg);
@@ -472,7 +752,19 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           }`}
         >
           <Users className="w-4 h-4" />
-          <span>Staff ({staff.length})</span>
+          <span>Staff &amp; Roles ({staff.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('audit-logs')}
+          className={`px-3 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 'audit-logs'
+              ? 'bg-[#182232] text-[#D4AF37] border border-[#D4AF37]/40'
+              : 'text-slate-400 hover:text-white hover:bg-[#111722]'
+          }`}
+        >
+          <History className="w-4 h-4 text-[#D4AF37]" />
+          <span>Audit Logs ({auditLogs.length})</span>
         </button>
 
         <button
@@ -484,7 +776,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           }`}
         >
           <Settings className="w-4 h-4" />
-          <span>Gateway Config</span>
+          <span>Setup, UX/UI &amp; Firestore Rules</span>
         </button>
 
         <button
@@ -853,14 +1145,14 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
               <div>
                 <h3 className="font-cinzel text-xl font-bold text-white">
-                  Delegate Registrations & KYC Clearances
+                  Delegate Registrations &amp; KYC Clearances
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Audited under Uganda Mining Act 2022. Every package includes the mandatory <strong className="text-[#D4AF37]">USD 1,000 KYC & Client Vetting Allocation</strong> (strictly non-refundable once vetting commences; balance refunded within 14 business days if vetting fails).
+                  Audited under Uganda Mining Act 2022. Statutory OFAC, UN, UK HMT, EU sanctions and PEP screening is included with each delegate&apos;s selected package.
                 </p>
               </div>
 
-              <div className="flex items-center gap-3 text-xs font-mono-data">
+              <div className="flex flex-wrap items-center gap-3 text-xs font-mono-data">
                 <span className="text-emerald-400">
                   {registrations.filter((r) => r.kycPaymentStatus === 'paid').length} Paid in Full
                 </span>
@@ -868,11 +1160,47 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 <span className="text-amber-400">
                   {registrations.filter((r) => r.kycPaymentStatus === 'pending').length} Pending
                 </span>
+                <button
+                  type="button"
+                  onClick={handleExportRegistrationsCsv}
+                  className="px-3.5 py-2 rounded-lg bg-[#D4AF37] hover:bg-[#FEF3C7] text-[#0B0F17] font-sans font-bold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export to CSV ({filteredRegistrations.length})</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Filter & Search Bar for Registrations */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#111722] p-3.5 rounded-xl border border-slate-800 text-xs">
+              <div className="relative flex-1">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={regSearch}
+                  onChange={(e) => setRegSearch(e.target.value)}
+                  placeholder="Filter registrations by ID, name, company, email, country, or tier..."
+                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#0B0F17] border border-slate-700 text-white placeholder:text-slate-500 focus:outline-none focus:border-[#D4AF37]"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400 font-mono-data text-[11px]">Status:</span>
+                <select
+                  value={regStatusFilter}
+                  onChange={(e) => setRegStatusFilter(e.target.value as any)}
+                  className="px-3 py-2 rounded-lg bg-[#0B0F17] border border-slate-700 text-white"
+                >
+                  <option value="all">All Statuses ({registrations.length})</option>
+                  <option value="approved">Approved</option>
+                  <option value="under_review">Under Review</option>
+                  <option value="pending_kyc">Pending KYC</option>
+                  <option value="flagged">Flagged</option>
+                </select>
               </div>
             </div>
 
             <div className="space-y-4">
-              {registrations.map((reg) => (
+              {filteredRegistrations.map((reg) => (
                 <div
                   key={reg.id}
                   className="rounded-xl bg-[#111722] border border-slate-800 hover:border-slate-700 p-5 space-y-4"
@@ -964,7 +1292,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                           }
                           className="rounded text-[#D4AF37] focus:ring-[#D4AF37]"
                         />
-                        <span className="text-slate-300">OFAC, UN, UK HMT, EU & PEP Clear</span>
+                        <span className="text-slate-300">OFAC, UN, UK HMT, EU &amp; PEP Clear</span>
                       </label>
                       <label className="flex items-center gap-1.5 cursor-pointer">
                         <input
@@ -1018,16 +1346,53 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   Admin oversight of client documents analyzed by Gemini AI and assigned to <strong>Staff Officer 1</strong> under a 24–72 hour delivery SLA.
                 </p>
               </div>
-              <button
-                onClick={onSwitchToStaff}
-                className="px-3.5 py-2 text-xs font-bold text-[#0B0F17] bg-[#D4AF37] hover:bg-[#FEF3C7] rounded transition-colors shrink-0"
-              >
-                Open Staff Officer 1 Terminal →
-              </button>
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleExportDocVerificationsCsv}
+                  className="px-3.5 py-2 rounded-lg bg-[#182232] hover:bg-[#222E42] border border-[#D4AF37]/50 text-[#D4AF37] font-bold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export to CSV ({filteredDocVerifications.length})</span>
+                </button>
+                <button
+                  onClick={onSwitchToStaff}
+                  className="px-3.5 py-2 text-xs font-bold text-[#0B0F17] bg-[#D4AF37] hover:bg-[#FEF3C7] rounded-lg transition-colors shrink-0"
+                >
+                  Open Staff Officer 1 Terminal →
+                </button>
+              </div>
+            </div>
+
+            {/* Filter & Search Bar for Document Verifications */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#111722] p-3.5 rounded-xl border border-slate-800 text-xs">
+              <div className="relative flex-1">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={docSearch}
+                  onChange={(e) => setDocSearch(e.target.value)}
+                  placeholder="Filter document verifications by ID, client, company, seller, or document type..."
+                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#0B0F17] border border-slate-700 text-white placeholder:text-slate-500 focus:outline-none focus:border-[#D4AF37]"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400 font-mono-data text-[11px]">Status:</span>
+                <select
+                  value={docStatusFilter}
+                  onChange={(e) => setDocStatusFilter(e.target.value as any)}
+                  className="px-3 py-2 rounded-lg bg-[#0B0F17] border border-slate-700 text-white"
+                >
+                  <option value="all">All Dossiers ({documentVerifications.length})</option>
+                  <option value="dispatched_to_client">Dispatched to Client</option>
+                  <option value="assigned_to_staff_1">Assigned to Staff Officer 1</option>
+                  <option value="analyzing">Analyzing</option>
+                </select>
+              </div>
             </div>
 
             <div className="space-y-4">
-              {documentVerifications.map((doc) => (
+              {filteredDocVerifications.map((doc) => (
                 <div
                   key={doc.id}
                   className="rounded-xl bg-[#111722] border border-slate-800 p-5 space-y-3"
@@ -1091,13 +1456,49 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         {/* TAB 6: PAYMENT LOGS */}
         {activeTab === 'payments' && (
           <div className="space-y-6">
-            <div className="pb-4 border-b border-slate-800">
-              <h3 className="font-cinzel text-xl font-bold text-white">
-                Online Payment Gateway Transactions
-              </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Real-time API log of all online settlement transactions.
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+              <div>
+                <h3 className="font-cinzel text-xl font-bold text-white">
+                  Online Payment Gateway Transactions
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Real-time API log of all online settlement transactions.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleExportPaymentsCsv}
+                className="px-3.5 py-2 rounded-lg bg-[#D4AF37] hover:bg-[#FEF3C7] text-[#0B0F17] font-bold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Export to CSV ({filteredPayments.length})</span>
+              </button>
+            </div>
+
+            {/* Filter & Search Bar for Payments */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#111722] p-3.5 rounded-xl border border-slate-800 text-xs">
+              <div className="relative flex-1">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={paySearch}
+                  onChange={(e) => setPaySearch(e.target.value)}
+                  placeholder="Filter payments by reference, customer name, email, or tier..."
+                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#0B0F17] border border-slate-700 text-white placeholder:text-slate-500 focus:outline-none focus:border-[#D4AF37]"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400 font-mono-data text-[11px]">Type:</span>
+                <select
+                  value={payTypeFilter}
+                  onChange={(e) => setPayTypeFilter(e.target.value as any)}
+                  className="px-3 py-2 rounded-lg bg-[#0B0F17] border border-slate-700 text-white"
+                >
+                  <option value="all">All Payment Types ({payments.length})</option>
+                  <option value="full_payment">Expedition Packages</option>
+                  <option value="doc_verification">24–72h Document Verifications ($2,500)</option>
+                </select>
+              </div>
             </div>
 
             <div className="rounded-xl bg-[#111722] border border-slate-800 overflow-hidden">
@@ -1114,7 +1515,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/80 font-mono-data text-slate-300">
-                  {payments.map((p) => (
+                  {filteredPayments.map((p) => (
                     <tr key={p.id} className="hover:bg-[#141C2B] transition-colors">
                       <td className="py-3 px-4 font-bold text-[#D4AF37]">{p.reference}</td>
                       <td className="py-3 px-4 font-sans text-white">{p.customerName}</td>
@@ -1137,21 +1538,21 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           </div>
         )}
 
-        {/* TAB 7: STAFF DIRECTORY */}
+        {/* TAB 7: STAFF DIRECTORY & ROLE MANAGEMENT */}
         {activeTab === 'staff' && (
           <div className="space-y-6">
             <div className="pb-4 border-b border-slate-800">
               <h3 className="font-cinzel text-xl font-bold text-white">
-                Due Diligence Staff Directory
+                Due Diligence Staff Directory &amp; Role Access Control
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Accredited field logistics leads, forensic metallurgists, and legal counsel assigned to delegations.
+                Accredited field logistics leads, forensic metallurgists, and legal counsel. Role updates are automatically recorded in the immutable Audit Log.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {staff.map((s) => (
-                <div key={s.id} className="p-5 rounded-xl bg-[#111722] border border-slate-800 space-y-2">
+                <div key={s.id} className="p-5 rounded-xl bg-[#111722] border border-slate-800 space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-bold text-white">{s.name}</h4>
                     <span className="text-xs font-mono-data text-emerald-400">
@@ -1167,25 +1568,352 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                       Phone: <span className="text-slate-200">{s.phone}</span>
                     </div>
                   </div>
+                  <div className="pt-2 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <label className="block text-[10px] font-mono-data text-slate-400 uppercase mb-1">
+                        Operational Role
+                      </label>
+                      <select
+                        value={s.role}
+                        onChange={(e) => {
+                          const nextRole = e.target.value as StaffMember['role'];
+                          onUpdateStaffRole?.(s.id, { role: nextRole });
+                          triggerSavedBanner(`Updated role for ${s.name} (logged to Audit Trail)`);
+                        }}
+                        className="w-full px-2.5 py-1.5 rounded bg-[#0B0F17] border border-slate-700 text-white text-xs"
+                      >
+                        <option value="Senior Due Diligence Officer">Senior Due Diligence Officer</option>
+                        <option value="Metallurgical Forensic Lead">Metallurgical Forensic Lead</option>
+                        <option value="Legal Compliance Counsel">Legal Compliance Counsel</option>
+                        <option value="Field Logistics Lead">Field Logistics Lead</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-mono-data text-slate-400 uppercase mb-1">
+                        System Access Level (RBAC)
+                      </label>
+                      <select
+                        value={s.accessLevel || 'staff'}
+                        onChange={(e) => {
+                          const nextLevel = e.target.value as 'admin' | 'staff' | 'client';
+                          onUpdateStaffRole?.(s.id, { accessLevel: nextLevel });
+                          triggerSavedBanner(`Updated RBAC level for ${s.name} to ${nextLevel.toUpperCase()}`);
+                        }}
+                        className="w-full px-2.5 py-1.5 rounded bg-[#0B0F17] border border-slate-700 text-white text-xs font-mono-data"
+                      >
+                        <option value="staff">STAFF (Assigned Dossiers &amp; KYC)</option>
+                        <option value="admin">ADMIN (Full Directorate Control)</option>
+                        <option value="client">CLIENT (Restricted Own-File View)</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* TAB 8: GATEWAY SETTINGS */}
-        {activeTab === 'gateway' && (
-          <div className="space-y-6 max-w-2xl">
-            <div className="pb-4 border-b border-slate-800">
-              <h3 className="font-cinzel text-xl font-bold text-white">
-                Online Payment Gateway Configuration
-              </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Configured for encrypted online payment session requests.
-              </p>
+        {/* TAB 8: AUTOMATED READ-ONLY AUDIT LOGS */}
+        {activeTab === 'audit-logs' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+              <div>
+                <h3 className="font-cinzel text-xl font-bold text-white flex items-center gap-2">
+                  <History className="w-5 h-5 text-[#D4AF37]" />
+                  <span>Automated Administrative Audit Log</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Immutable, read-only ledger of all administrative actions including content updates, user role changes, KYC clearances, document verification approvals, and CSV exports.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-xs font-mono-data">
+                <span className="px-2.5 py-1 rounded bg-[#182232] border border-[#D4AF37]/40 text-[#D4AF37] font-semibold">
+                  READ-ONLY · APPEND-ONLY LEDGER ({filteredAuditLogs.length})
+                </span>
+              </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#111722] border border-slate-800 space-y-4 text-xs">
+            {/* Search & Category Filter for Read-Only Audit Logs */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#111722] p-3.5 rounded-xl border border-slate-800 text-xs">
+              <div className="relative flex-1">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={auditSearch}
+                  onChange={(e) => setAuditSearch(e.target.value)}
+                  placeholder="Search audit trail by action, actor email, target ID, or details..."
+                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#0B0F17] border border-slate-700 text-white placeholder:text-slate-500 focus:outline-none focus:border-[#D4AF37]"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400 font-mono-data text-[11px]">Category:</span>
+                <select
+                  value={auditCategoryFilter}
+                  onChange={(e) => setAuditCategoryFilter(e.target.value as any)}
+                  className="px-3 py-2 rounded-lg bg-[#0B0F17] border border-slate-700 text-white"
+                >
+                  <option value="all">All Categories ({auditLogs.length})</option>
+                  <option value="content_update">Content &amp; Media Updates</option>
+                  <option value="user_role_change">User &amp; Staff Role Changes</option>
+                  <option value="document_approval">Document Verification Approvals</option>
+                  <option value="kyc_clearance">Registration &amp; KYC Clearances</option>
+                  <option value="ux_config">UX/UI &amp; Security Rules</option>
+                  <option value="data_export">CSV Data Exports</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Read-Only Audit Log List */}
+            <div className="rounded-xl bg-[#111722] border border-slate-800 overflow-hidden divide-y divide-slate-800/80">
+              {filteredAuditLogs.map((log) => (
+                <div
+                  key={log.id}
+                  className="p-4 hover:bg-[#141C2B] transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-3 text-xs"
+                >
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono-data font-bold text-[#D4AF37]">{log.id}</span>
+                      <span className="text-slate-600">·</span>
+                      <span
+                        className={`px-2 py-0.5 rounded font-mono-data text-[10px] font-bold uppercase border ${
+                          log.category === 'document_approval' || log.category === 'kyc_clearance'
+                            ? 'bg-emerald-950/70 text-emerald-300 border-emerald-700/60'
+                            : log.category === 'user_role_change'
+                            ? 'bg-amber-950/70 text-amber-300 border-amber-700/60'
+                            : log.category === 'data_export'
+                            ? 'bg-blue-950/70 text-blue-300 border-blue-700/60'
+                            : 'bg-slate-800 text-slate-200 border-slate-700'
+                        }`}
+                      >
+                        {log.category.replace(/_/g, ' ')}
+                      </span>
+                      <span className="font-semibold text-white">{log.action}</span>
+                      <span className="font-mono-data text-[11px] text-slate-400">
+                        [Target: {log.targetId}]
+                      </span>
+                    </div>
+                    <p className="text-slate-300 leading-relaxed">{log.details}</p>
+                  </div>
+
+                  <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between gap-1 shrink-0 font-mono-data text-[11px] text-slate-400 border-t lg:border-t-0 pt-2 lg:pt-0 border-slate-800/60">
+                    <div>
+                      Actor: <strong className="text-slate-200">{log.actorEmail}</strong>{' '}
+                      <span className="uppercase text-[#D4AF37]">({log.actorRole})</span>
+                    </div>
+                    <div className="text-slate-500">{log.timestamp}</div>
+                  </div>
+                </div>
+              ))}
+              {filteredAuditLogs.length === 0 && (
+                <div className="p-8 text-center text-xs text-slate-400 font-mono-data">
+                  No audit log entries match the current filter criteria.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 8: SETUP, UX/UI & FIRESTORE SECURITY RULES + GATEWAY SETTINGS */}
+        {activeTab === 'gateway' && (
+          <div className="space-y-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+              <div>
+                <h3 className="font-cinzel text-xl font-bold text-white">
+                  Setup: UX/UI Firestore Security Rules &amp; Gateway Configuration
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Zero-Trust Firestore Security Rules governing per-user UX/UI preferences (<code className="font-mono text-[#D4AF37]">/uxPreferences/&#123;userId&#125;</code>), Global UI Layout Config (<code className="font-mono text-[#D4AF37]">/uiConfig/&#123;configId&#125;</code>), CMS presentation, and KYC dossiers.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-xs font-mono-data">
+                <span className="px-2.5 py-1 rounded bg-emerald-950/70 border border-emerald-700/70 text-emerald-300 font-semibold">
+                  rules_version = &apos;2&apos; · Zero-Trust Active
+                </span>
+              </div>
+            </div>
+
+            {/* Live UX/UI Global Configuration Controls (Synced to /uiConfig/global in Firestore) */}
+            <div className="p-6 rounded-xl bg-[#111722] border border-slate-800 space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
+                <div>
+                  <h4 className="font-cinzel text-base font-bold text-white">
+                    Live UX / IX Interface Configuration (<code className="font-mono text-xs text-[#D4AF37]">/uiConfig/global</code>)
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Protected by <code className="font-mono text-slate-300">isValidUiConfig(request.resource.data, configId)</code> — authenticated read, strict Admin-only write.
+                  </p>
+                </div>
+                <span className="text-[11px] font-mono-data text-slate-400">
+                  Last Sync: {uiConfig.updatedAt?.slice(0, 19).replace('T', ' ')} UTC
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <label className="flex items-start justify-between gap-3 p-3.5 rounded-lg bg-[#0B0F17] border border-slate-800 cursor-pointer hover:border-slate-700">
+                  <div>
+                    <div className="font-semibold text-white">Sovereign Hero &amp; Dispatch Bar Visibility</div>
+                    <div className="text-slate-400 text-[11px] mt-0.5">
+                      Controls <code className="font-mono text-[#D4AF37]">heroBannerVisible</code> boolean rule in Firestore
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={uiConfig.heroBannerVisible}
+                    onChange={(e) => {
+                      onUpdateUiConfig?.({ heroBannerVisible: e.target.checked });
+                      triggerSavedBanner('UX Config synced to Firestore (/uiConfig/global)');
+                    }}
+                    className="mt-1 rounded text-[#D4AF37] focus:ring-[#D4AF37]"
+                  />
+                </label>
+
+                <label className="flex items-start justify-between gap-3 p-3.5 rounded-lg bg-[#0B0F17] border border-slate-800 cursor-pointer hover:border-slate-700">
+                  <div>
+                    <div className="font-semibold text-white">Live Multi-Currency Gold Price Ticker</div>
+                    <div className="text-slate-400 text-[11px] mt-0.5">
+                      Controls <code className="font-mono text-[#D4AF37]">goldTickerEnabled</code> boolean rule in Firestore
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={uiConfig.goldTickerEnabled}
+                    onChange={(e) => {
+                      onUpdateUiConfig?.({ goldTickerEnabled: e.target.checked });
+                      triggerSavedBanner('UX Config synced to Firestore (/uiConfig/global)');
+                    }}
+                    className="mt-1 rounded text-[#D4AF37] focus:ring-[#D4AF37]"
+                  />
+                </label>
+
+                <label className="flex items-start justify-between gap-3 p-3.5 rounded-lg bg-[#0B0F17] border border-slate-800 cursor-pointer hover:border-slate-700">
+                  <div>
+                    <div className="font-semibold text-white">Scam Immunity Diagnostic Auto-Expand</div>
+                    <div className="text-slate-400 text-[11px] mt-0.5">
+                      Controls <code className="font-mono text-[#D4AF37]">scamDiagnosticExpanded</code> boolean rule in Firestore
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={uiConfig.scamDiagnosticExpanded}
+                    onChange={(e) => {
+                      onUpdateUiConfig?.({ scamDiagnosticExpanded: e.target.checked });
+                      triggerSavedBanner('UX Config synced to Firestore (/uiConfig/global)');
+                    }}
+                    className="mt-1 rounded text-[#D4AF37] focus:ring-[#D4AF37]"
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* UX/UI & Collection Security Rules Matrix */}
+            <div className="p-6 rounded-xl bg-[#111722] border border-slate-800 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
+                <div>
+                  <h4 className="font-cinzel text-base font-bold text-white">
+                    Firestore UX / IX &amp; Data Security Matrix (<code className="font-mono text-xs text-[#D4AF37]">firestore.rules</code>)
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Enforces strict schema validation (<code className="font-mono text-slate-300">hasRequiredFields</code>, <code className="font-mono text-slate-300">hasOnlyAllowedFields</code>, string size bounds, and UID ownership).
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const rulesSnippet = `match /uxPreferences/{userId} {\n  allow get, list: if isOwner(userId) || isAdmin();\n  allow create, update: if isOwner(userId) && isValidId(userId) && isValidUxPreferences(request.resource.data, userId);\n  allow delete: if isOwner(userId) || isAdmin();\n}\n\nmatch /uiConfig/{configId} {\n  allow get, list: if isSignedIn();\n  allow create, update: if isAdmin() && isValidId(configId) && isValidUiConfig(request.resource.data, configId);\n  allow delete: if isAdmin();\n}`;
+                    navigator.clipboard?.writeText(rulesSnippet);
+                    setCopiedRules(true);
+                    setTimeout(() => setCopiedRules(false), 2500);
+                  }}
+                  className="px-3 py-1.5 rounded bg-[#182232] hover:bg-[#222E42] border border-[#D4AF37]/40 text-[#D4AF37] text-xs font-semibold transition-colors self-start sm:self-auto"
+                >
+                  {copiedRules ? 'Copied UX/UI Rules!' : 'Copy UX/UI Rules Snippet'}
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border border-slate-800 rounded-lg overflow-hidden">
+                  <thead className="bg-[#182232] text-slate-300 font-mono-data uppercase text-[10px] border-b border-slate-800">
+                    <tr>
+                      <th className="py-2.5 px-3">Firestore Path</th>
+                      <th className="py-2.5 px-3">UX / IX Domain Purpose</th>
+                      <th className="py-2.5 px-3">Read (get / list)</th>
+                      <th className="py-2.5 px-3">Write (create / update)</th>
+                      <th className="py-2.5 px-3">Validator Function</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/80 font-mono-data text-[11px] text-slate-300">
+                    <tr className="bg-[#0B0F17]/60">
+                      <td className="py-2.5 px-3 text-[#D4AF37] font-bold">/uxPreferences/&#123;userId&#125;</td>
+                      <td className="py-2.5 px-3 font-sans text-slate-300">Per-User Language, Currency, RTL &amp; Density</td>
+                      <td className="py-2.5 px-3 text-emerald-400">isOwner(userId) || isAdmin()</td>
+                      <td className="py-2.5 px-3 text-amber-300">isOwner(userId)</td>
+                      <td className="py-2.5 px-3 text-slate-400">isValidUxPreferences()</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2.5 px-3 text-[#D4AF37] font-bold">/uiConfig/&#123;configId&#125;</td>
+                      <td className="py-2.5 px-3 font-sans text-slate-300">Global UX Layout &amp; Ticker Toggles</td>
+                      <td className="py-2.5 px-3 text-emerald-400">isSignedIn()</td>
+                      <td className="py-2.5 px-3 text-amber-300">isAdmin()</td>
+                      <td className="py-2.5 px-3 text-slate-400">isValidUiConfig()</td>
+                    </tr>
+                    <tr className="bg-[#0B0F17]/60">
+                      <td className="py-2.5 px-3 text-[#D4AF37] font-bold">/aboutContent/&#123;docId&#125;</td>
+                      <td className="py-2.5 px-3 font-sans text-slate-300">About Us Headline, Mandate &amp; Copy UX</td>
+                      <td className="py-2.5 px-3 text-emerald-400">isSignedIn()</td>
+                      <td className="py-2.5 px-3 text-amber-300">isAdmin()</td>
+                      <td className="py-2.5 px-3 text-slate-400">isValidAboutContent()</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2.5 px-3 text-[#D4AF37] font-bold">/boardMembers/&#123;memberId&#125;</td>
+                      <td className="py-2.5 px-3 font-sans text-slate-300">Board of Directors UX Cards</td>
+                      <td className="py-2.5 px-3 text-emerald-400">isSignedIn()</td>
+                      <td className="py-2.5 px-3 text-amber-300">isAdmin()</td>
+                      <td className="py-2.5 px-3 text-slate-400">isValidBoardMember()</td>
+                    </tr>
+                    <tr className="bg-[#0B0F17]/60">
+                      <td className="py-2.5 px-3 text-[#D4AF37] font-bold">/posts/&#123;postId&#125;</td>
+                      <td className="py-2.5 px-3 font-sans text-slate-300">Blog Dispatches &amp; Social Share UX</td>
+                      <td className="py-2.5 px-3 text-emerald-400">published == true || isStaffOrAdmin()</td>
+                      <td className="py-2.5 px-3 text-amber-300">isAdmin()</td>
+                      <td className="py-2.5 px-3 text-slate-400">isValidPost()</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2.5 px-3 text-[#D4AF37] font-bold">/photos/&#123;photoId&#125;</td>
+                      <td className="py-2.5 px-3 font-sans text-slate-300">Field &amp; Assay Vault Media Gallery UX</td>
+                      <td className="py-2.5 px-3 text-emerald-400">isSignedIn()</td>
+                      <td className="py-2.5 px-3 text-amber-300">isAdmin()</td>
+                      <td className="py-2.5 px-3 text-slate-400">isValidPhoto()</td>
+                    </tr>
+                    <tr className="bg-[#0B0F17]/60">
+                      <td className="py-2.5 px-3 text-[#D4AF37] font-bold">/registrations/&#123;id&#125;</td>
+                      <td className="py-2.5 px-3 font-sans text-slate-300">7-Day Expedition Dossiers &amp; Charter</td>
+                      <td className="py-2.5 px-3 text-emerald-400">userId == auth.uid || isStaffOrAdmin()</td>
+                      <td className="py-2.5 px-3 text-amber-300">Owner Create / Staff &amp; Admin Review</td>
+                      <td className="py-2.5 px-3 text-slate-400">isValidRegistration()</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2.5 px-3 text-[#D4AF37] font-bold">/documentVerifications/&#123;id&#125;</td>
+                      <td className="py-2.5 px-3 font-sans text-slate-300">24–72h Forensic Audit Dossiers ($2,500)</td>
+                      <td className="py-2.5 px-3 text-emerald-400">userId == auth.uid || isStaffOrAdmin()</td>
+                      <td className="py-2.5 px-3 text-amber-300">Owner Create / Staff Officer 1 Update</td>
+                      <td className="py-2.5 px-3 text-slate-400">isValidDocumentVerification()</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Online Payment Gateway Configuration */}
+            <div className="p-6 rounded-xl bg-[#111722] border border-slate-800 space-y-4 text-xs max-w-3xl">
+              <div className="pb-2 border-b border-slate-800">
+                <h4 className="font-cinzel text-base font-bold text-white">
+                  Online Payment Gateway Configuration
+                </h4>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Configured for encrypted online payment session requests.
+                </p>
+              </div>
+
               <div>
                 <span className="text-slate-400 font-mono-data block mb-1">API Endpoint URL:</span>
                 <input

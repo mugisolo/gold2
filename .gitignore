@@ -1,8 +1,26 @@
+# Dependencies
 node_modules/
+
+# Build outputs
 build/
 dist/
+server.js
 coverage/
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+
+# Firebase & GCP Service Account JSON keys (Never commit secrets)
+*service-account*.json
+*-firebase-adminsdk-*.json
+serviceAccountKey.json
+credentials.json
+.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# System & IDE files
 .DS_Store
 *.log
-.env*
-!.env.example

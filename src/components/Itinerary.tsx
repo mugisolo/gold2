@@ -20,7 +20,6 @@ export const Itinerary: React.FC<ItineraryProps> = ({
 
   const itineraryDays = getLocalizedItinerary(currentLang);
   const activeDayData = itineraryDays.find((d) => d.day === selectedDay) || itineraryDays[0];
-  const kycPrice = formatCurrencyPrice(1000, selectedCurrency);
 
   return (
     <section id="expedition" className="py-10 sm:py-12 bg-[#0B0F17] border-b border-slate-800 relative">
@@ -113,7 +112,7 @@ export const Itinerary: React.FC<ItineraryProps> = ({
                 className="px-4 py-2 text-xs font-semibold text-[#0B0F17] bg-[#D4AF37] hover:bg-[#FEF3C7] rounded transition-colors whitespace-nowrap flex items-center gap-1.5 shadow"
               >
                 <span>
-                  {t.itineraryRegisterBtn} ({kycPrice} KYC)
+                  {t.itineraryRegisterBtn}
                 </span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>

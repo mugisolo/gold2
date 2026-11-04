@@ -22,49 +22,67 @@ import {
   TrendingUp,
   FileSignature,
   Fingerprint,
-  QrCode
+  QrCode,
+  LogIn,
+  LogOut
 } from 'lucide-react';
+import {
+  auth,
+  signInWithGoogle,
+  signOutFirebaseUser,
+  onAuthStateChanged,
+  type User
+} from '../services/firebase';
 import {
   DocumentVerification,
   ExpeditionRegistration,
   Currency,
-  DigitalSignatureRecord
+  DigitalSignatureRecord,
+  PaymentRecord
 } from '../types';
 import { GoldPriceTrendsChart } from './GoldPriceTrendsChart';
 import { DigitalSignatureModal } from './DigitalSignatureModal';
-import { InvoiceReceiptModal, InvoiceReceiptData } from './InvoiceReceiptModal';
+import { InvoiceReceiptModal, InvoiceReceiptData, OFFICIAL_UGE_ADDRESS, OFFICIAL_URA_TIN } from './InvoiceReceiptModal';
 
 interface ClientPortalProps {
   documentVerifications: DocumentVerification[];
   registrations: ExpeditionRegistration[];
   initialClientEmail?: string;
+  initialReferenceId?: string;
   selectedCurrency?: Currency;
+  userRole?: 'client' | 'staff' | 'admin';
   onClose: () => void;
   onOpenDocVerification: () => void;
   onOpenRegistration: () => void;
   onOpenCardPayment: (tier?: 'academic' | 'trader' | 'sovereign', type?: 'full' | 'doc_verification') => void;
   onOpenStaffPortal?: () => void;
-  onOpenChatAndWaba?: (mode: 'chat' | 'waba') => void;
+  onOpenAdminPortal?: () => void;
   onUpdateRegistration?: (id: string, updates: Partial<ExpeditionRegistration>) => void;
   onUpdateDocumentVerification?: (id: string, updates: Partial<DocumentVerification>) => void;
+  onAiReceiptGenerated?: (verificationRecord: DocumentVerification, paymentRecord: PaymentRecord) => void;
 }
 
 export const ClientPortal: React.FC<ClientPortalProps> = ({
   documentVerifications,
   registrations,
   initialClientEmail = '',
+  initialReferenceId = '',
   selectedCurrency = 'USD',
+  userRole = 'client',
   onClose,
   onOpenDocVerification,
   onOpenRegistration,
   onOpenCardPayment,
   onOpenStaffPortal,
-  onOpenChatAndWaba,
+  onOpenAdminPortal,
   onUpdateRegistration,
-  onUpdateDocumentVerification
+  onUpdateDocumentVerification,
+  onAiReceiptGenerated
 }) => {
   const [activeTab, setActiveTab] = useState<'verifications' | 'expeditions' | 'agreements' | 'gold-trends'>('verifications');
-  const [searchQuery, setSearchQuery] = useState<string>(initialClientEmail);
+  const [searchQuery, setSearchQuery] = useState<string>(
+    initialReferenceId || initialClientEmail || auth.currentUser?.email || 'h.lindqvist@nordicbullion.se'
+  );
   const [stageFilter, setStageFilter] = useState<'all' | 'awaiting_payment' | 'analyst_review' | 'report_ready'>('all');
   const [signingTarget, setSigningTarget] = useState<{
     targetType: 'expedition_registration' | 'due_diligence_report';
@@ -72,6 +90,61 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({
     verification?: DocumentVerification;
   } | null>(null);
   const [invoiceReceiptTarget, setInvoiceReceiptTarget] = useState<InvoiceReceiptData | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(auth.currentUser);
+  const [isReferenceBypass, setIsReferenceBypass] = useState<boolean>(
+    Boolean(initialReferenceId || initialClientEmail)
+  );
+  const [authError, setAuthError] = useState<string>('');
+  const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
+
+  const effectiveRole: 'client' | 'staff' | 'admin' = userRole;
+
+  React.useEffect(() => {
+    if (initialReferenceId) {
+      setSearchQuery(initialReferenceId);
+      setIsReferenceBypass(true);
+      const q = initialReferenceId.trim().toLowerCase();
+      const matchesReg = registrations.some((r) => r.id.toLowerCase() === q);
+      const matchesDoc = documentVerifications.some(
+        (d) => d.id.toLowerCase() === q || (d.paymentRef && d.paymentRef.toLowerCase() === q)
+      );
+      if (matchesReg && !matchesDoc) {
+        setActiveTab('expeditions');
+      } else if (matchesDoc) {
+        setActiveTab('verifications');
+      }
+    } else if (initialClientEmail) {
+      setSearchQuery(initialClientEmail);
+      setIsReferenceBypass(true);
+    }
+  }, [initialReferenceId, initialClientEmail, registrations, documentVerifications]);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setFirebaseUser(user);
+      if (user?.email && !initialReferenceId) {
+        setSearchQuery(user.email);
+      }
+    });
+    return () => unsubscribe();
+  }, [initialReferenceId]);
+
+  const handlePortalGoogleSignIn = async () => {
+    setAuthError('');
+    setIsSigningIn(true);
+    try {
+      const user = await signInWithGoogle();
+      if (user.email) {
+        setSearchQuery(user.email);
+      }
+    } catch (err: any) {
+      setAuthError(
+        err?.message || 'Google Sign-In could not be completed. Please check popup permissions.'
+      );
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
 
   // Helper to determine the canonical timeline stage for a verification
   const getVerificationStage = (doc: DocumentVerification): 'awaiting_payment' | 'analyst_review' | 'report_ready' => {
@@ -80,7 +153,7 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({
     return 'analyst_review';
   };
 
-  // Build unique client list from verifications + registrations for quick switching
+  // Build unique client list from verifications + registrations (only Admin/Staff can switch across all principals)
   const clientProfiles = Array.from(
     new Map(
       [
@@ -98,36 +171,84 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({
     ).values()
   );
 
-  // Filter records by search query (email, name, or ID) + stage filter
+  // STRICT ROLE-BASED ACCESS CONTROL (RBAC):
+  // - Admin & Staff can view all or filter across principals.
+  // - Clients can ONLY see their own files matching their authenticated email, UID, or exact Dossier/Receipt Reference ID.
   const normalizedQuery = searchQuery.trim().toLowerCase();
+  const activeClientEmail = (
+    firebaseUser?.email ||
+    initialClientEmail ||
+    searchQuery
+  )
+    .trim()
+    .toLowerCase();
 
-  const filteredVerifications = documentVerifications.filter((doc) => {
-    const matchesSearch =
-      !normalizedQuery ||
-      doc.email.toLowerCase().includes(normalizedQuery) ||
-      doc.clientName.toLowerCase().includes(normalizedQuery) ||
-      doc.id.toLowerCase().includes(normalizedQuery) ||
-      doc.companyName.toLowerCase().includes(normalizedQuery);
+  const isDocAuthorizedForUser = (doc: DocumentVerification): boolean => {
+    if (effectiveRole === 'admin' || effectiveRole === 'staff') {
+      if (!normalizedQuery) return true;
+      return (
+        doc.email.toLowerCase().includes(normalizedQuery) ||
+        doc.clientName.toLowerCase().includes(normalizedQuery) ||
+        doc.id.toLowerCase().includes(normalizedQuery) ||
+        (Boolean(doc.paymentRef) && doc.paymentRef!.toLowerCase().includes(normalizedQuery)) ||
+        doc.companyName.toLowerCase().includes(normalizedQuery)
+      );
+    }
+    // Strict Client Isolation: Only match the client's own UID, exact email, or exact scanned QR reference ID
+    if (firebaseUser?.uid && (doc as any).userId === firebaseUser.uid) {
+      return true;
+    }
+    if (!activeClientEmail) return false;
+    return (
+      doc.email.toLowerCase() === activeClientEmail ||
+      doc.id.toLowerCase() === normalizedQuery ||
+      (Boolean(doc.paymentRef) && doc.paymentRef!.toLowerCase() === normalizedQuery)
+    );
+  };
 
-    if (!matchesSearch) return false;
+  const isRegAuthorizedForUser = (reg: ExpeditionRegistration): boolean => {
+    if (effectiveRole === 'admin' || effectiveRole === 'staff') {
+      if (!normalizedQuery) return true;
+      return (
+        reg.email.toLowerCase().includes(normalizedQuery) ||
+        reg.fullName.toLowerCase().includes(normalizedQuery) ||
+        reg.id.toLowerCase().includes(normalizedQuery) ||
+        reg.companyName.toLowerCase().includes(normalizedQuery)
+      );
+    }
+    // Strict Client Isolation: Only match the client's own UID, exact email, or exact scanned QR reference ID
+    if (firebaseUser?.uid && (reg as any).userId === firebaseUser.uid) {
+      return true;
+    }
+    if (!activeClientEmail) return false;
+    return (
+      reg.email.toLowerCase() === activeClientEmail ||
+      reg.id.toLowerCase() === normalizedQuery
+    );
+  };
+
+  const roleScopedVerifications = documentVerifications.filter(isDocAuthorizedForUser);
+  const filteredVerifications = roleScopedVerifications.filter((doc) => {
     if (stageFilter === 'all') return true;
     return getVerificationStage(doc) === stageFilter;
   });
 
-  const filteredRegistrations = registrations.filter((reg) => {
-    if (!normalizedQuery) return true;
-    return (
-      reg.email.toLowerCase().includes(normalizedQuery) ||
-      reg.fullName.toLowerCase().includes(normalizedQuery) ||
-      reg.id.toLowerCase().includes(normalizedQuery) ||
-      reg.companyName.toLowerCase().includes(normalizedQuery)
-    );
-  });
+  const filteredRegistrations = registrations.filter(isRegAuthorizedForUser);
 
-  // Counts for stage summary pills
-  const awaitingPaymentCount = documentVerifications.filter((d) => getVerificationStage(d) === 'awaiting_payment').length;
-  const analystReviewCount = documentVerifications.filter((d) => getVerificationStage(d) === 'analyst_review').length;
-  const reportReadyCount = documentVerifications.filter((d) => getVerificationStage(d) === 'report_ready').length;
+  const exactVerifiedRecord =
+    (normalizedQuery &&
+      (documentVerifications.find(
+        (d) =>
+          d.id.toLowerCase() === normalizedQuery ||
+          (d.paymentRef && d.paymentRef.toLowerCase() === normalizedQuery)
+      ) ||
+        registrations.find((r) => r.id.toLowerCase() === normalizedQuery))) ||
+    null;
+
+  // Counts for stage summary pills (strictly scoped to the user's authorized files)
+  const awaitingPaymentCount = roleScopedVerifications.filter((d) => getVerificationStage(d) === 'awaiting_payment').length;
+  const analystReviewCount = roleScopedVerifications.filter((d) => getVerificationStage(d) === 'analyst_review').length;
+  const reportReadyCount = roleScopedVerifications.filter((d) => getVerificationStage(d) === 'report_ready').length;
 
   // Download handler — strictly only callable when status === 'dispatched_to_client'
   const handleDownloadApprovedReport = (doc: DocumentVerification) => {
@@ -205,6 +326,81 @@ Amber House, Kampala & DGSM Sovereign Registry Desk, Entebbe, Uganda`;
     filteredRegistrations.filter((r) => Boolean(r.digitalSignature)).length;
   const totalAgreementsCount = filteredVerifications.length + filteredRegistrations.length;
 
+  // Route unauthenticated users to a dedicated Firebase Sign-In screen before accessing per-user portal data
+  if (!firebaseUser && !isReferenceBypass) {
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-[#080B11]/95 backdrop-blur-md flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-[#111722] border border-[#D4AF37]/50 rounded-2xl shadow-2xl overflow-hidden">
+          <div className="bg-[#182232] px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-[#D4AF37]/20 border border-[#D4AF37]/50 flex items-center justify-center text-[#D4AF37]">
+                <Lock className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="font-cinzel text-base font-bold text-white">
+                  SECURE CLIENT PORTAL
+                </h2>
+                <p className="text-[10px] font-mono-data text-[#D4AF37]">
+                  FIREBASE AUTHENTICATION REQUIRED
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="p-6 space-y-5">
+            <p className="text-xs text-slate-300 leading-relaxed text-justify">
+              Per-user forensic document verification dossiers, KYC status, and digital charter signatures are protected by Firestore security rules. Please sign in with Google to access your private records.
+            </p>
+
+            {authError && (
+              <div className="p-3 rounded-lg bg-rose-950/60 border border-rose-800 text-xs text-rose-300 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>{authError}</span>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handlePortalGoogleSignIn}
+              disabled={isSigningIn}
+              className="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-100 text-[#0B0F17] font-bold text-xs flex items-center justify-center gap-2.5 shadow-lg transition-colors cursor-pointer disabled:opacity-60"
+            >
+              <LogIn className="w-4 h-4 text-[#0B0F17]" />
+              <span>
+                {isSigningIn
+                  ? 'Authenticating with Google...'
+                  : 'Sign in with Google (Firebase Auth)'}
+              </span>
+            </button>
+
+            <div className="relative flex py-1 items-center">
+              <div className="flex-grow border-t border-slate-800" />
+              <span className="flex-shrink mx-3 text-[10px] font-mono-data uppercase text-slate-500">
+                Or Reference Lookup
+              </span>
+              <div className="flex-grow border-t border-slate-800" />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsReferenceBypass(true)}
+              className="w-full py-2.5 px-4 rounded-xl bg-[#0B0F17] hover:bg-[#182232] border border-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+            >
+              <Search className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span>Lookup Dossier by Reference ID / Institutional Demo</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-[#080B11]/95 backdrop-blur-md flex flex-col">
       {/* Top Institutional Header */}
@@ -218,36 +414,94 @@ Amber House, Kampala & DGSM Sovereign Registry Desk, Entebbe, Uganda`;
               <span className="font-cinzel text-base sm:text-lg font-bold text-white">
                 SECURE CLIENT PORTAL
               </span>
-              <span className="text-[10px] font-mono-data bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/40 px-2 py-0.5 rounded font-bold uppercase">
-                ENCRYPTED DELEGATE & VERIFICATION DESK
+              <span
+                className={`text-[10px] font-mono-data px-2 py-0.5 rounded font-bold uppercase border ${
+                  effectiveRole === 'admin'
+                    ? 'bg-[#D4AF37]/20 text-[#D4AF37] border-[#D4AF37]/60'
+                    : effectiveRole === 'staff'
+                    ? 'bg-blue-950/80 text-blue-300 border-blue-500/60'
+                    : 'bg-emerald-950/80 text-emerald-300 border-emerald-500/60'
+                }`}
+              >
+                {effectiveRole === 'admin'
+                  ? 'ROLE: ADMINISTRATOR · ALL FILES ACCESS'
+                  : effectiveRole === 'staff'
+                  ? 'ROLE: STAFF OFFICER 1 · ASSIGNED DOSSIERS'
+                  : 'ROLE: CLIENT · SCOPED TO YOUR FILES ONLY'}
               </span>
             </div>
             <p className="text-[11px] text-slate-400">
-              Track 24–72 Hour Forensic Document Verification ($2,500 USD, VAT Incl.) & Booked Expedition Clearances
+              {OFFICIAL_UGE_ADDRESS} · {OFFICIAL_URA_TIN}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2.5">
+          {effectiveRole === 'admin' && onOpenAdminPortal && (
+            <button
+              type="button"
+              onClick={onOpenAdminPortal}
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#0B0F17] bg-[#D4AF37] hover:bg-[#FEF3C7] rounded transition-colors cursor-pointer"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Admin Console</span>
+            </button>
+          )}
+          {(effectiveRole === 'staff' || effectiveRole === 'admin') && onOpenStaffPortal && (
+            <button
+              type="button"
+              onClick={onOpenStaffPortal}
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#D4AF37] bg-[#182232] hover:bg-[#222E42] border border-[#D4AF37]/50 rounded transition-colors cursor-pointer"
+            >
+              <UserCheck className="w-3.5 h-3.5" />
+              <span>Staff Officer 1 Desk</span>
+            </button>
+          )}
+          {firebaseUser ? (
+            <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded bg-[#0B0F17] border border-emerald-700/50 text-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-slate-200 font-mono-data text-[11px] max-w-[160px] truncate">
+                {firebaseUser.email}
+              </span>
+              <button
+                type="button"
+                onClick={() => signOutFirebaseUser()}
+                className="text-slate-400 hover:text-rose-400 transition-colors ml-1"
+                title="Sign out of Firebase"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handlePortalGoogleSignIn}
+              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#0B0F17] bg-white hover:bg-slate-200 rounded transition-colors"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Google Sign-In</span>
+            </button>
+          )}
           <button
-            onClick={() =>
+            onClick={() => {
+              const targetDoc = filteredVerifications[0] || documentVerifications[0];
               setInvoiceReceiptTarget({
                 mode: 'receipt',
-                referenceId: documentVerifications[0]?.id || 'DOC-VER-2027-4401',
-                clientName: documentVerifications[0]?.clientName || 'Henrik Lindqvist',
-                companyName: documentVerifications[0]?.companyName || 'Nordic Bullion Treasury AB',
-                clientEmail: documentVerifications[0]?.email || 'h.lindqvist@nordicbullion.se',
+                referenceId: targetDoc?.id || 'DOC-VER-2027-4401',
+                transactionRef: targetDoc?.paymentRef,
+                clientName: targetDoc?.clientName || 'Henrik Lindqvist',
+                companyName: targetDoc?.companyName || 'Nordic Bullion Treasury AB',
+                clientEmail: targetDoc?.email || 'h.lindqvist@nordicbullion.se',
                 itemTitle: '24–72 Hour Forensic Document Verification & Cadastre Audit',
-                itemDescription:
-                  'Includes AI Forensic Deconstruction, DGSM Entebbe Cadastre Cross-Check, and Staff Officer 1 Signed Dossier (USD 1,000 credited toward any expedition package booked within 90 days).',
-                amountUsd: 2500,
-                paymentStatus: 'paid'
-              })
-            }
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-300 bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-500/50 rounded transition-colors"
+                itemDescription: `Includes AI Forensic Deconstruction, DGSM Entebbe Cadastre Cross-Check, and Staff Officer 1 Signed Dossier issued by ${OFFICIAL_UGE_ADDRESS} (${OFFICIAL_URA_TIN}).`,
+                amountUsd: targetDoc?.feeUsd || 2500,
+                paymentStatus: targetDoc?.paymentStatus || 'paid'
+              });
+            }}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-300 bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-500/50 rounded transition-colors cursor-pointer"
           >
             <QrCode className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Invoice / QR Receipt</span>
+            <span>AI Invoice / QR Receipt</span>
           </button>
 
           <button
@@ -276,10 +530,10 @@ Amber House, Kampala & DGSM Sovereign Registry Desk, Entebbe, Uganda`;
         </div>
       </header>
 
-      {/* Client Lookup & Embargo Notice Sub-Bar */}
+      {/* Role-Based Access Control & File Visibility Sub-Bar */}
       <div className="bg-[#0B0F17] border-b border-slate-800 px-4 sm:px-8 py-4 shrink-0">
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          {/* Search / Client Filter */}
+          {/* Search / Client Identity Lookup */}
           <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="relative flex-1 max-w-md">
               <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -287,47 +541,84 @@ Amber House, Kampala & DGSM Sovereign Registry Desk, Entebbe, Uganda`;
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Filter by client email, name, or reference (e.g. DOC-VER-2026-4401)..."
+                placeholder={
+                  effectiveRole === 'client'
+                    ? 'Enter your registered email or QR Dossier Reference ID...'
+                    : 'Filter across all client emails, names, or reference IDs...'
+                }
                 className="w-full pl-9 pr-3 py-2 text-xs bg-[#111722] border border-slate-700 rounded-lg text-white focus:outline-none focus:border-[#D4AF37]"
               />
             </div>
 
-            {/* Quick Client Account Switcher */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[10px] font-mono-data text-slate-400 uppercase mr-1">
-                Active Principal:
-              </span>
-              <button
-                onClick={() => setSearchQuery('')}
-                className={`px-2.5 py-1 text-[11px] font-mono-data rounded border transition-colors ${
-                  searchQuery === ''
-                    ? 'bg-[#D4AF37] text-[#0B0F17] border-[#D4AF37] font-bold'
-                    : 'bg-[#111722] text-slate-300 border-slate-800 hover:border-slate-700'
-                }`}
-              >
-                All Principals ({documentVerifications.length + registrations.length})
-              </button>
-              {clientProfiles.map((client) => (
+            {/* Role-Aware File Scope Controls: Only Admin & Staff can view "All Principals". Clients only see their own account or switch demo identity */}
+            {effectiveRole === 'admin' || effectiveRole === 'staff' ? (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] font-mono-data text-[#D4AF37] uppercase mr-1 font-bold">
+                  {effectiveRole === 'admin' ? 'Admin Multi-Client View:' : 'Staff Assigned View:'}
+                </span>
                 <button
-                  key={client.email}
-                  onClick={() => setSearchQuery(client.email)}
-                  className={`px-2.5 py-1 text-[11px] rounded border transition-colors ${
-                    searchQuery.toLowerCase() === client.email.toLowerCase()
-                      ? 'bg-[#182232] text-[#D4AF37] border-[#D4AF37] font-bold'
+                  onClick={() => setSearchQuery('')}
+                  className={`px-2.5 py-1 text-[11px] font-mono-data rounded border transition-colors ${
+                    searchQuery === ''
+                      ? 'bg-[#D4AF37] text-[#0B0F17] border-[#D4AF37] font-bold'
                       : 'bg-[#111722] text-slate-300 border-slate-800 hover:border-slate-700'
                   }`}
                 >
-                  {client.name}
+                  All Principals ({documentVerifications.length + registrations.length})
                 </button>
-              ))}
-            </div>
+                {clientProfiles.map((client) => (
+                  <button
+                    key={client.email}
+                    onClick={() => setSearchQuery(client.email)}
+                    className={`px-2.5 py-1 text-[11px] rounded border transition-colors ${
+                      searchQuery.toLowerCase() === client.email.toLowerCase()
+                        ? 'bg-[#182232] text-[#D4AF37] border-[#D4AF37] font-bold'
+                        : 'bg-[#111722] text-slate-300 border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    {client.name}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2.5 py-1 rounded bg-emerald-950/60 border border-emerald-700/60 text-[11px] font-mono-data text-emerald-300 flex items-center gap-1.5">
+                  <Lock className="w-3 h-3 text-emerald-400" />
+                  <span>
+                    Isolated Client View: Showing Only Files for{' '}
+                    <strong className="text-white">
+                      {firebaseUser?.email || searchQuery || 'Your Account'}
+                    </strong>
+                  </span>
+                </span>
+                {!firebaseUser && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] font-mono-data text-slate-500">Demo Client Login:</span>
+                    {clientProfiles.slice(0, 3).map((client) => (
+                      <button
+                        key={client.email}
+                        type="button"
+                        onClick={() => setSearchQuery(client.email)}
+                        className={`px-2 py-0.5 text-[10px] font-mono-data rounded border transition-colors ${
+                          searchQuery.toLowerCase() === client.email.toLowerCase()
+                            ? 'bg-[#182232] text-[#D4AF37] border-[#D4AF37] font-bold'
+                            : 'bg-[#111722] text-slate-400 border-slate-800 hover:text-white'
+                        }`}
+                      >
+                        {client.email}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Strict Report Embargo Policy Badge */}
+          {/* Strict Report Embargo & Role Rights Policy Badge */}
           <div className="p-2.5 rounded-lg bg-amber-950/30 border border-amber-700/50 flex items-center gap-2 text-xs text-amber-200 shrink-0">
             <FileLock2 className="w-4 h-4 text-amber-400 shrink-0" />
             <span>
-              <strong>Strict Compliance Rule:</strong> No access to reports or AI findings for view/download until <strong>Staff Officer 1</strong> approves.
+              <strong>Access Rights Rule:</strong> Users only see their own authorized files. Reports remain locked until <strong>Staff Officer 1</strong> approves.
             </span>
           </div>
         </div>
@@ -385,37 +676,48 @@ Amber House, Kampala & DGSM Sovereign Registry Desk, Entebbe, Uganda`;
             <TrendingUp className="w-4 h-4 text-[#D4AF37]" />
             <span>Gold Price Trends (Multi-Currency)</span>
           </button>
-
-          {onOpenChatAndWaba && (
-            <>
-              <button
-                onClick={() => {
-                  onClose();
-                  onOpenChatAndWaba('waba');
-                }}
-                className="px-4 py-2 text-xs font-bold rounded-lg bg-emerald-950/60 hover:bg-emerald-900/70 text-emerald-300 border border-emerald-600/50 transition-all flex items-center gap-2 whitespace-nowrap"
-              >
-                <UserCheck className="w-4 h-4 text-emerald-400" />
-                <span>Registered Member WhatsApp (WABA)</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  onClose();
-                  onOpenChatAndWaba('chat');
-                }}
-                className="px-4 py-2 text-xs font-bold rounded-lg bg-[#111722] hover:bg-[#182232] text-[#D4AF37] border border-[#D4AF37]/40 transition-all flex items-center gap-2 whitespace-nowrap"
-              >
-                <Shield className="w-4 h-4 text-[#D4AF37]" />
-                <span>Gemini AI Forensic Chatbot</span>
-              </button>
-            </>
-          )}
         </div>
       </div>
 
       {/* Main Content Area */}
       <div className="flex-1 p-4 sm:p-8 overflow-y-auto max-w-7xl mx-auto w-full space-y-6">
+        {/* Official Authority & Logistics QR Transaction Record Verification Banner */}
+        {exactVerifiedRecord && (
+          <div className="rounded-xl bg-emerald-950/30 border border-emerald-500/60 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5">
+                <QrCode className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <div className="text-[11px] font-mono-data uppercase font-bold text-emerald-400">
+                  OFFICIAL TRANSACTION RECORD VERIFIED · AUTHORITY &amp; LOGISTICS CHECK
+                </div>
+                <h3 className="text-sm sm:text-base font-bold text-white">
+                  Matched Dossier ID: <span className="font-mono-data text-[#D4AF37]">{exactVerifiedRecord.id}</span> —{' '}
+                  {'clientName' in exactVerifiedRecord
+                    ? `${exactVerifiedRecord.clientName} (${exactVerifiedRecord.companyName})`
+                    : `${exactVerifiedRecord.fullName} (${exactVerifiedRecord.companyName})`}
+                </h3>
+                <p className="text-xs text-slate-300">
+                  This record is active in the Uganda Gold Expedition Client Portal registry for DGSM, URA Customs, refinery, and logistics partner verification.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                setSearchQuery(
+                  effectiveRole === 'client'
+                    ? firebaseUser?.email || initialClientEmail || exactVerifiedRecord.email
+                    : ''
+                )
+              }
+              className="px-3.5 py-2 text-xs font-mono-data font-bold text-slate-200 hover:text-white bg-[#111722] border border-slate-700 rounded-lg shrink-0 self-start sm:self-center"
+            >
+              {effectiveRole === 'client' ? 'View My Account Files' : 'Show All Records'}
+            </button>
+          </div>
+        )}
         {/* TAB 1: SUBMITTED DOCUMENT VERIFICATIONS */}
         {activeTab === 'verifications' && (
           <div className="space-y-6">
@@ -439,7 +741,7 @@ Amber House, Kampala & DGSM Sovereign Registry Desk, Entebbe, Uganda`;
                       : 'bg-[#111722] text-slate-400 border-slate-800 hover:text-white'
                   }`}
                 >
-                  All Stages ({documentVerifications.length})
+                  All Stages ({roleScopedVerifications.length})
                 </button>
                 <button
                   onClick={() => setStageFilter('awaiting_payment')}
@@ -787,15 +1089,17 @@ Amber House, Kampala & DGSM Sovereign Registry Desk, Entebbe, Uganda`;
                                 <Lock className="w-3.5 h-3.5 text-amber-500" />
                                 <span>Download Locked (Awaiting Analyst)</span>
                               </button>
-                              {onOpenStaffPortal && !isAwaitingPayment && (
-                                <button
-                                  type="button"
-                                  onClick={onOpenStaffPortal}
-                                  className="text-[11px] text-[#D4AF37] hover:underline font-mono-data text-right"
-                                >
-                                  Staff Officer 1? Switch to Staff Portal to Approve →
-                                </button>
-                              )}
+                              {(effectiveRole === 'staff' || effectiveRole === 'admin') &&
+                                onOpenStaffPortal &&
+                                !isAwaitingPayment && (
+                                  <button
+                                    type="button"
+                                    onClick={onOpenStaffPortal}
+                                    className="text-[11px] text-[#D4AF37] hover:underline font-mono-data text-right"
+                                  >
+                                    Staff Officer 1? Switch to Staff Portal to Approve →
+                                  </button>
+                                )}
                             </div>
                           </div>
                         </div>
@@ -1012,7 +1316,7 @@ Amber House, Kampala & DGSM Sovereign Registry Desk, Entebbe, Uganda`;
                   Booked Expedition & Sovereign KYC Status
                 </h2>
                 <p className="text-xs text-slate-400 mt-1">
-                  Monitor your delegation&apos;s OFAC, UN, UK HMT, EU sanctions and PEP screening, DGSM ministry accreditation, and manifest status. Every package includes the mandatory <strong className="text-[#D4AF37]">USD 1,000 KYC & Client Vetting Allocation</strong> (strictly non-refundable once vetting commences; balance refunded within 14 business days if vetting fails).
+                  Monitor your delegation&apos;s OFAC, UN, UK HMT, EU sanctions and PEP screening, DGSM ministry accreditation, and manifest status. Statutory KYC &amp; sanctions screening is included with your selected package.
                 </p>
               </div>
 
@@ -1040,16 +1344,16 @@ Amber House, Kampala & DGSM Sovereign Registry Desk, Entebbe, Uganda`;
                 {filteredRegistrations.map((reg) => {
                   const tierPriceUsd =
                     reg.requestedTier === 'sovereign'
-                      ? 45000
+                      ? 25000
                       : reg.requestedTier === 'trader'
                       ? 15000
                       : 8000;
                   const tierLabel =
                     reg.requestedTier === 'sovereign'
-                      ? 'Tier 03: Sovereign Executive · Diplomatic VIP (USD 45,000, inclusive of applicable Ugandan VAT)'
+                      ? 'Tier 03: Sovereign Executive · Diplomatic VIP (USD 25,000 per person, inclusive of applicable Ugandan VAT)'
                       : reg.requestedTier === 'trader'
-                      ? 'Tier 02: Professional Trader (USD 15,000, inclusive of applicable Ugandan VAT)'
-                      : 'Tier 01: Academic & Research Expedition (USD 8,000, inclusive of applicable Ugandan VAT)';
+                      ? 'Tier 02: Professional Trader (USD 15,000 per person, inclusive of applicable Ugandan VAT)'
+                      : 'Tier 01: Academic & Research Expedition (USD 8,000 per person, inclusive of applicable Ugandan VAT)';
 
                   return (
                     <div
@@ -1153,7 +1457,7 @@ Amber House, Kampala & DGSM Sovereign Registry Desk, Entebbe, Uganda`;
                               STEP 1 · PACKAGE SETTLEMENT
                             </div>
                             <div className="text-xs font-bold text-white mt-0.5">
-                              Full Payment (Incl. $1,000 KYC)
+                              Selected Package Settlement
                             </div>
                             <div className="text-[11px] text-slate-400 mt-0.5">
                               {reg.kycPaymentStatus === 'paid' ? 'Paid in Full' : 'Pending'}
@@ -1619,6 +1923,18 @@ Amber House, Kampala & DGSM Sovereign Registry Desk, Entebbe, Uganda`;
         onClose={() => setInvoiceReceiptTarget(null)}
         initialData={invoiceReceiptTarget}
         selectedCurrency={selectedCurrency}
+        onAiReceiptGenerated={onAiReceiptGenerated}
+        onVerifyRecordInPortal={(refId) => {
+          setInvoiceReceiptTarget(null);
+          setSearchQuery(refId);
+          setIsReferenceBypass(true);
+          const q = refId.trim().toLowerCase();
+          if (registrations.some((r) => r.id.toLowerCase() === q)) {
+            setActiveTab('expeditions');
+          } else {
+            setActiveTab('verifications');
+          }
+        }}
       />
     </div>
   );

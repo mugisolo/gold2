@@ -1,19 +1,23 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
+import html2pdf from 'html2pdf.js';
 import {
   X,
   QrCode,
   FileText,
   Download,
-  CheckCircle2,
   ShieldCheck,
-  Building2,
   Printer,
   Copy,
   Check,
   Sparkles,
-  Receipt
+  Receipt,
+  MapPin,
+  RefreshCw,
+  CheckCircle2,
+  FileDown
 } from 'lucide-react';
-import { Currency } from '../types';
+import { Currency, DocumentVerification, PaymentRecord } from '../types';
 import { formatCurrencyPrice } from '../data/expeditionData';
 
 export interface InvoiceReceiptData {
@@ -37,6 +41,11 @@ interface InvoiceReceiptModalProps {
   onClose: () => void;
   initialData?: InvoiceReceiptData | null;
   selectedCurrency?: Currency;
+  onVerifyRecordInPortal?: (referenceId: string, clientEmail: string) => void;
+  onAiReceiptGenerated?: (
+    verificationRecord: DocumentVerification,
+    paymentRecord: PaymentRecord
+  ) => void;
 }
 
 // Deterministic cryptographic digest for QR verification
@@ -56,93 +65,26 @@ function computeReceiptDigest(payload: string): string {
   return `UGE-QR-${hex1}-${hex2}-${hex3}`;
 }
 
-// Deterministic 25x25 QR Code Matrix Generator (renders genuine finder patterns, timing patterns, alignment pattern, and payload bits)
-function generateQrMatrix(payload: string): boolean[][] {
-  const size = 25;
-  const matrix: boolean[][] = Array.from({ length: size }, () =>
-    Array(size).fill(false)
-  );
-  const reserved: boolean[][] = Array.from({ length: size }, () =>
-    Array(size).fill(false)
-  );
+export const OFFICIAL_UGE_ADDRESS =
+  'Uganda Gold Expeditions, P.O Box 122234, Bugonga, Entebbe, Uganda';
+export const OFFICIAL_URA_TIN = 'URA TIN 1019482710';
 
-  const placeFinderPattern = (rowOffset: number, colOffset: number) => {
-    for (let r = -1; r <= 7; r++) {
-      for (let c = -1; c <= 7; c++) {
-        const rr = rowOffset + r;
-        const cc = colOffset + c;
-        if (rr < 0 || rr >= size || cc < 0 || cc >= size) continue;
-        reserved[rr][cc] = true;
-        if (r >= 0 && r <= 6 && c >= 0 && c <= 6) {
-          if (
-            r === 0 ||
-            r === 6 ||
-            c === 0 ||
-            c === 6 ||
-            (r >= 2 && r <= 4 && c >= 2 && c <= 4)
-          ) {
-            matrix[rr][cc] = true;
-          } else {
-            matrix[rr][cc] = false;
-          }
-        }
-      }
-    }
-  };
-
-  placeFinderPattern(0, 0);
-  placeFinderPattern(0, size - 7);
-  placeFinderPattern(size - 7, 0);
-
-  // Alignment pattern at (16, 16)
-  for (let r = 16; r <= 20; r++) {
-    for (let c = 16; c <= 20; c++) {
-      reserved[r][c] = true;
-      if (
-        r === 16 ||
-        r === 20 ||
-        c === 16 ||
-        c === 20 ||
-        (r === 18 && c === 18)
-      ) {
-        matrix[r][c] = true;
-      }
-    }
-  }
-
-  // Timing patterns
-  for (let i = 8; i < size - 8; i++) {
-    reserved[6][i] = true;
-    reserved[i][6] = true;
-    matrix[6][i] = i % 2 === 0;
-    matrix[i][6] = i % 2 === 0;
-  }
-
-  // Fill remaining cells deterministically from payload hash stream
-  let seed = 2166136261;
-  for (let i = 0; i < payload.length; i++) {
-    seed ^= payload.charCodeAt(i);
-    seed = Math.imul(seed, 16777619);
-  }
-
-  for (let r = 0; r < size; r++) {
-    for (let c = 0; c < size; c++) {
-      if (reserved[r][c]) continue;
-      const charCode = payload.charCodeAt((r * size + c) % payload.length) || 71;
-      seed ^= charCode + r * 131 + c * 17;
-      seed = Math.imul(seed, 1664525) + 1013904223;
-      matrix[r][c] = ((seed >>> 16) & 1) === 1;
-    }
-  }
-
-  return matrix;
-}
+// Embedded UGE Sovereign Crest SVG Data URI for qrcode.react imageSettings
+export const UGE_QR_LOGO_DATA_URI = `data:image/svg+xml;utf8,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+    <rect x="2" y="2" width="60" height="60" rx="12" fill="#0B0F17" stroke="#D4AF37" stroke-width="4"/>
+    <rect x="7" y="7" width="50" height="50" rx="8" fill="none" stroke="#D4AF37" stroke-width="1.5" stroke-opacity="0.6"/>
+    <text x="32" y="39" text-anchor="middle" font-family="Georgia, serif" font-weight="bold" font-size="19" fill="#D4AF37" letter-spacing="1">UGE</text>
+  </svg>`
+)}`;
 
 export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
   isOpen,
   onClose,
   initialData,
-  selectedCurrency = 'USD'
+  selectedCurrency = 'USD',
+  onVerifyRecordInPortal,
+  onAiReceiptGenerated
 }) => {
   const defaultDocMode =
     initialData?.mode || (initialData?.paymentStatus === 'paid' ? 'receipt' : 'invoice');
@@ -150,6 +92,20 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
   const [docMode, setDocMode] = useState<'invoice' | 'receipt'>(defaultDocMode);
   const [displayCurrency, setDisplayCurrency] = useState<Currency>(selectedCurrency);
   const [copiedPayload, setCopiedPayload] = useState(false);
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [aiGeneratedBanner, setAiGeneratedBanner] = useState<string>('');
+
+  const [activeRefId, setActiveRefId] = useState<string>(
+    initialData?.referenceId || 'DOC-VER-2027-4401'
+  );
+  const [customInvoiceNo, setCustomInvoiceNo] = useState<string>('');
+  const [customReceiptNo, setCustomReceiptNo] = useState<string>('');
+  const [customTxRef, setCustomTxRef] = useState<string>(initialData?.transactionRef || '');
+  const [customAiSeal, setCustomAiSeal] = useState<string>('');
+  const [complianceAttestation, setComplianceAttestation] = useState<string>(
+    `Official statutory tax record issued by ${OFFICIAL_UGE_ADDRESS} (${OFFICIAL_URA_TIN}). Verified under the Uganda Mining and Minerals Act 2022 and Non-Transaction Charter.`
+  );
 
   const [clientName, setClientName] = useState(
     initialData?.clientName || 'Alexander Vance'
@@ -166,19 +122,28 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
   );
   const [itemDescription, setItemDescription] = useState(
     initialData?.itemDescription ||
-      'Includes AI Forensic Deconstruction, DGSM Entebbe Mineral Cadastre Cross-Check, URA ASYCUDA Verification, and Staff Officer 1 Signed Dossier. (USD 1,000 credited toward any expedition package booked within 90 days.)'
+      `Includes AI Forensic Deconstruction, DGSM Entebbe Mineral Cadastre Cross-Check, URA ASYCUDA Verification, and Staff Officer 1 Signed Dossier issued by ${OFFICIAL_UGE_ADDRESS} (${OFFICIAL_URA_TIN}). (USD 1,000 credited toward any expedition package booked within 90 days.)`
   );
   const [amountUsd, setAmountUsd] = useState<number>(initialData?.amountUsd || 2500);
   const [paymentStatus, setPaymentStatus] = useState<'paid' | 'pending'>(
     initialData?.paymentStatus || 'paid'
   );
 
+  const qrSvgWrapperRef = useRef<HTMLDivElement>(null);
+  const printableSheetRef = useRef<HTMLDivElement>(null);
+
   React.useEffect(() => {
     if (!isOpen) return;
+    setAiGeneratedBanner('');
     if (initialData) {
       setDocMode(
         initialData.mode || (initialData.paymentStatus === 'paid' ? 'receipt' : 'invoice')
       );
+      setActiveRefId(initialData.referenceId || 'DOC-VER-2027-4401');
+      setCustomTxRef(initialData.transactionRef || '');
+      setCustomInvoiceNo('');
+      setCustomReceiptNo('');
+      setCustomAiSeal('');
       setClientName(initialData.clientName);
       setCompanyName(initialData.companyName);
       setClientEmail(initialData.clientEmail);
@@ -190,41 +155,122 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
     setDisplayCurrency(selectedCurrency);
   }, [isOpen, initialData, selectedCurrency]);
 
-  const referenceId = initialData?.referenceId || 'UGE-DOC-2027-4401';
-  const invoiceNumber = `INV-UGE-2027-${referenceId.replace(/[^0-9]/g, '').slice(-4) || '8812'}`;
-  const receiptNumber = `RCT-UGE-2027-${referenceId.replace(/[^0-9]/g, '').slice(-4) || '8812'}`;
+  const referenceId = activeRefId || initialData?.referenceId || 'DOC-VER-2027-4401';
+  const invoiceNumber =
+    customInvoiceNo ||
+    `INV-UGE-2027-${referenceId.replace(/[^0-9]/g, '').slice(-4) || '8812'}`;
+  const receiptNumber =
+    customReceiptNo ||
+    `RCT-UGE-2027-${referenceId.replace(/[^0-9]/g, '').slice(-4) || '8812'}`;
   const issuedDate =
     initialData?.issuedDate || new Date().toISOString().split('T')[0] + ' UTC';
 
-  const qrVerificationPayload = useMemo(() => {
-    const digest = computeReceiptDigest(
-      `${referenceId}|${clientName}|${companyName}|${amountUsd}|${docMode}`
-    );
-    return `https://ugandagoldexpedition.org/verify?doc=${
-      docMode === 'receipt' ? receiptNumber : invoiceNumber
-    }&ref=${encodeURIComponent(referenceId)}&principal=${encodeURIComponent(
-      clientName
-    )}&usd=${amountUsd}&status=${
-      docMode === 'receipt' ? 'PAID_VERIFIED' : paymentStatus.toUpperCase()
-    }&seal=${digest}`;
-  }, [referenceId, clientName, companyName, amountUsd, docMode, receiptNumber, invoiceNumber, paymentStatus]);
+  const txSettlementRef = useMemo(
+    () =>
+      customTxRef ||
+      initialData?.transactionRef ||
+      (docMode === 'receipt' ? receiptNumber : invoiceNumber),
+    [customTxRef, initialData?.transactionRef, docMode, receiptNumber, invoiceNumber]
+  );
 
   const qrDigest = useMemo(
     () =>
+      customAiSeal ||
       computeReceiptDigest(
-        `${referenceId}|${clientName}|${companyName}|${amountUsd}|${docMode}`
+        `${referenceId}|${txSettlementRef}|${clientName}|${companyName}|${amountUsd}|${docMode}|${OFFICIAL_URA_TIN}`
       ),
-    [referenceId, clientName, companyName, amountUsd, docMode]
+    [customAiSeal, referenceId, txSettlementRef, clientName, companyName, amountUsd, docMode]
   );
 
-  const qrMatrix = useMemo(
-    () => generateQrMatrix(qrVerificationPayload),
-    [qrVerificationPayload]
-  );
+  // Compact Client Portal Deep-Link URL encoded inside qrcode.react QRCodeSVG
+  // Kept concise so Error Correction Level H + embedded UGE logo remains 100% scannable at 2cm x 2cm on physical printouts
+  const qrVerificationPayload = useMemo(() => {
+    const baseOrigin =
+      typeof window !== 'undefined' && window.location.origin
+        ? window.location.origin
+        : 'https://ugandagoldexpedition.org';
+    const params = new URLSearchParams({
+      ref: referenceId,
+      tx: txSettlementRef
+    });
+    return `${baseOrigin}/portal?${params.toString()}`;
+  }, [referenceId, txSettlementRef]);
 
   if (!isOpen) return null;
 
   const formattedDisplayAmount = formatCurrencyPrice(amountUsd, displayCurrency);
+
+  // AI Generate Unique Receipt & Verifiable QR Code (registers record in backend & Client Portal)
+  const handleAiGenerateUniqueReceipt = async () => {
+    setIsAiGenerating(true);
+    setAiGeneratedBanner('');
+    try {
+      const response = await fetch('/api/receipts/ai-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientName,
+          companyName,
+          clientEmail,
+          amountUsd,
+          docMode,
+          serviceType: amountUsd <= 3000 ? 'doc_verification' : 'full_payment'
+        })
+      });
+
+      const data = await response.json();
+      if (data.success && data.receipt) {
+        setActiveRefId(data.receipt.referenceId);
+        setCustomReceiptNo(data.receipt.receiptNumber);
+        setCustomInvoiceNo(data.receipt.invoiceNumber);
+        setCustomTxRef(data.receipt.transactionRef);
+        setCustomAiSeal(data.receipt.cryptographicSeal);
+        if (data.receipt.itemTitle) setItemTitle(data.receipt.itemTitle);
+        if (data.receipt.itemDescription) setItemDescription(data.receipt.itemDescription);
+        if (data.receipt.complianceAttestation) {
+          setComplianceAttestation(data.receipt.complianceAttestation);
+        }
+
+        if (onAiReceiptGenerated && data.verificationRecord && data.paymentRecord) {
+          onAiReceiptGenerated(data.verificationRecord, data.paymentRecord);
+        }
+
+        setAiGeneratedBanner(
+          `AI Generated Unique Verifiable ${
+            docMode === 'receipt' ? 'Receipt' : 'Invoice'
+          } (${
+            docMode === 'receipt' ? data.receipt.receiptNumber : data.receipt.invoiceNumber
+          }) · Linked to Dossier ${data.receipt.referenceId} in Client Portal`
+        );
+        return;
+      }
+    } catch {
+      // Fallback deterministic generation if offline
+    } finally {
+      setIsAiGenerating(false);
+    }
+
+    const fallbackSuffix = `${Date.now().toString().slice(-4)}${Math.floor(10 + Math.random() * 89)}`;
+    const nextRef =
+      amountUsd <= 3000
+        ? `DOC-VER-2027-${fallbackSuffix.slice(0, 4)}`
+        : `REG-2027-${fallbackSuffix.slice(0, 4)}`;
+    const nextRct = `RCT-UGE-2027-${fallbackSuffix}`;
+    const nextInv = `INV-UGE-2027-${fallbackSuffix}`;
+    const nextTx = `UGE-TX-AI-${fallbackSuffix}`;
+    const nextSeal = computeReceiptDigest(`${nextRef}|${nextTx}|${clientEmail}|${Date.now()}`);
+
+    setActiveRefId(nextRef);
+    setCustomReceiptNo(nextRct);
+    setCustomInvoiceNo(nextInv);
+    setCustomTxRef(nextTx);
+    setCustomAiSeal(nextSeal);
+    setAiGeneratedBanner(
+      `Generated Unique Verifiable ${
+        docMode === 'receipt' ? 'Receipt' : 'Invoice'
+      } (${docMode === 'receipt' ? nextRct : nextInv}) · Dossier ${nextRef}`
+    );
+  };
 
   const handleCopyVerificationString = () => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -234,20 +280,65 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
     setTimeout(() => setCopiedPayload(false), 2200);
   };
 
-  // Generate printable HTML file with embedded SVG QR Code
+  // Trigger browser-native print / Export as A4 PDF dialog
+  const handlePrintDocument = () => {
+    if (typeof window !== 'undefined') {
+      window.print();
+    }
+  };
+
+  // Dedicated 'Download as PDF' button using html2pdf.js preserving exact formatting & QR alignment
+  const handleDownloadPdf = async () => {
+    const targetElement =
+      printableSheetRef.current || document.getElementById('printable-invoice-receipt');
+    if (!targetElement || isExportingPdf) return;
+
+    setIsExportingPdf(true);
+    try {
+      const pdfFileName = `${
+        docMode === 'receipt' ? receiptNumber : invoiceNumber
+      }-Uganda-Gold-Expedition.pdf`;
+
+      const workerFn =
+        typeof html2pdf === 'function'
+          ? html2pdf
+          : (html2pdf as unknown as { default?: typeof html2pdf })?.default;
+
+      if (workerFn) {
+        await workerFn()
+          .set({
+            margin: [10, 10, 10, 10],
+            filename: pdfFileName,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+              scale: 2,
+              useCORS: true,
+              backgroundColor: '#0B0F17',
+              logging: false
+            },
+            jsPDF: {
+              unit: 'mm',
+              format: 'a4',
+              orientation: 'portrait'
+            }
+          })
+          .from(targetElement)
+          .save();
+      } else {
+        handlePrintDocument();
+      }
+    } catch {
+      handlePrintDocument();
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
+  // Generate printable HTML file embedding the exact qrcode.react SVG
   const handleDownloadPrintableHtml = () => {
-    const size = qrMatrix.length;
-    const cellSize = 6;
-    const svgDim = size * cellSize;
-    const rects = qrMatrix
-      .flatMap((row, r) =>
-        row.map((val, c) =>
-          val
-            ? `<rect x="${c * cellSize}" y="${r * cellSize}" width="${cellSize}" height="${cellSize}" fill="#0B0F17" />`
-            : ''
-        )
-      )
-      .join('');
+    const renderedQrSvg =
+      qrSvgWrapperRef.current?.innerHTML ||
+      `<div style="padding:16px;font-family:monospace;font-size:11px;color:#0B0F17;">${qrVerificationPayload}</div>`;
 
     const htmlDoc = `<!DOCTYPE html>
 <html lang="en">
@@ -273,8 +364,15 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
     th, td { border-bottom: 1px solid #1E293B; padding: 12px; text-align: left; font-size: 13px; }
     th { color: #D4AF37; text-transform: uppercase; font-size: 11px; }
     .qr-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; padding-top: 20px; border-top: 1px solid #1E293B; }
-    .qr-box { background: #FFFFFF; padding: 12px; border-radius: 10px; display: inline-block; }
+    .qr-box { background: #FFFFFF; padding: 6px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid #D4AF37; }
+    .qr-box svg { width: 2cm; height: 2cm; display: block; }
     .mono { font-family: monospace; font-size: 11px; color: #94A3B8; word-break: break-all; }
+    @media print {
+      body { background: #FFFFFF; color: #0F172A; padding: 0; }
+      .sheet { background: #FFFFFF; color: #0F172A; border-color: #9A7418; }
+      .box { background: #F8FAFC; border-color: #CBD5E1; color: #0F172A; }
+      .qr-box svg { width: 2cm !important; height: 2cm !important; }
+    }
   </style>
 </head>
 <body>
@@ -282,9 +380,9 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
     <div class="header">
       <div>
         <div class="brand">UGANDA GOLD <span class="gold">EXPEDITION</span></div>
-        <div style="font-size:12px;color:#94A3B8;margin-top:4px;">Amber House Secretariat, Kampala & DGSM Registry Liaison, Entebbe</div>
-        <div style="font-size:11px;color:#D4AF37;font-family:monospace;margin-top:4px;">URA TIN 1019482710</div>
-        <div style="font-size:11px;color:#6EE7B7;font-family:monospace;">Output VAT 18% (included in total)</div>
+        <div style="font-size:12px;color:#E2E8F0;font-weight:600;margin-top:4px;">${OFFICIAL_UGE_ADDRESS}</div>
+        <div style="font-size:11px;color:#94A3B8;margin-top:2px;">Amber House Secretariat, Kampala &amp; DGSM Registry Liaison, Entebbe</div>
+        <div style="font-size:11px;color:#D4AF37;font-family:monospace;font-weight:bold;margin-top:4px;">${OFFICIAL_URA_TIN} · Output VAT 18% (included in total)</div>
       </div>
       <div style="text-align:right;">
         <div class="badge">${
@@ -306,12 +404,12 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
         <div style="color:#94A3B8;margin-top:2px;">${clientEmail}</div>
       </div>
       <div class="box">
-        <div style="color:#D4AF37;font-size:11px;font-weight:bold;text-transform:uppercase;">Settlement & Statutory Reference</div>
+        <div style="color:#D4AF37;font-size:11px;font-weight:bold;text-transform:uppercase;">Settlement &amp; Statutory Reference</div>
         <div style="margin-top:4px;">Dossier Ref: <strong>${referenceId}</strong></div>
+        <div>Settlement Ref: <strong>${txSettlementRef}</strong></div>
         <div>Status: <strong style="color:${
           docMode === 'receipt' ? '#34D399' : '#FBBF24'
         };">${docMode === 'receipt' ? 'PAID IN FULL & VERIFIED' : 'PROFORMA / PAYABLE'}</strong></div>
-        <div>Payment Terms: <strong>Full payment due on booking. No instalments.</strong></div>
         <div>Converted Equivalent: <strong>${formattedDisplayAmount} (${displayCurrency})</strong></div>
       </div>
     </div>
@@ -328,7 +426,7 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
           <td>
             <strong style="color:#FFF;">${itemTitle}</strong><br/>
             <span style="color:#94A3B8;font-size:12px;">${itemDescription}</span><br/>
-            <span style="color:#6EE7B7;font-size:11px;font-family:monospace;">URA TIN 1019482710 · Output VAT 18% (included in total) · Payment Terms: Full payment due on booking. No instalments.</span>
+            <span style="color:#6EE7B7;font-size:11px;font-family:monospace;">${OFFICIAL_UGE_ADDRESS} · ${OFFICIAL_URA_TIN} · Output VAT 18% (included in total)</span>
           </td>
           <td style="font-weight:bold;color:#FFF;">$${amountUsd.toLocaleString()} USD<br/><span style="font-size:10px;color:#94A3B8;">(inclusive of applicable Ugandan VAT)</span></td>
           <td style="font-weight:bold;color:#D4AF37;">${formattedDisplayAmount}</td>
@@ -337,16 +435,15 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
     </table>
     <div class="qr-footer">
       <div style="max-width:520px;">
-        <div style="color:#D4AF37;font-weight:bold;font-size:12px;text-transform:uppercase;">Cryptographic QR Code Receipt Verification</div>
-        <p style="font-size:12px;color:#CBD5E1;margin:6px 0;">Scan the official QR code to verify payment authenticity, principal identity, and DGSM/URA compliance status.</p>
-        <div class="mono">Seal Digest: ${qrDigest}</div>
-        <div class="mono" style="margin-top:4px;">Verify URI: ${qrVerificationPayload}</div>
+        <div style="color:#D4AF37;font-weight:bold;font-size:12px;text-transform:uppercase;">Authority &amp; Logistics Client Portal Verification (QR Linked)</div>
+        <p style="font-size:12px;color:#CBD5E1;margin:6px 0;">${complianceAttestation}</p>
+        <div class="mono">Official Address: ${OFFICIAL_UGE_ADDRESS} · ${OFFICIAL_URA_TIN}</div>
+        <div class="mono" style="margin-top:3px;">Transaction / Dossier ID: ${referenceId} · Settlement Ref: ${txSettlementRef}</div>
+        <div class="mono" style="margin-top:3px;">Cryptographic Seal Digest: ${qrDigest}</div>
+        <div class="mono" style="margin-top:3px;">Client Portal Record Link: ${qrVerificationPayload}</div>
       </div>
       <div class="qr-box">
-        <svg width="${svgDim}" height="${svgDim}" viewBox="0 0 ${svgDim} ${svgDim}" xmlns="http://www.w3.org/2000/svg">
-          <rect width="${svgDim}" height="${svgDim}" fill="#FFFFFF" />
-          ${rects}
-        </svg>
+        ${renderedQrSvg}
       </div>
     </div>
   </div>
@@ -366,17 +463,17 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
     <div className="fixed inset-0 z-[65] overflow-y-auto bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
       <div className="relative w-full max-w-3xl bg-[#111722] border border-[#D4AF37]/60 rounded-2xl shadow-2xl overflow-hidden my-4">
         {/* Top Bar */}
-        <div className="bg-[#182232] px-5 py-3.5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
+        <div className="bg-[#182232] px-5 py-3.5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 print:hidden">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg bg-[#D4AF37]/15 border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37]">
               <QrCode className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-cinzel text-base sm:text-lg font-bold text-white">
-                Sovereign Invoice & QR Code Receipt Generator
+                Sovereign Invoice &amp; Verifiable QR Receipt Generator
               </h3>
               <p className="text-[11px] font-mono-data text-[#D4AF37]">
-                CRYPTOGRAPHIC QR VERIFICATION · MULTI-CURRENCY LEDGER
+                {OFFICIAL_UGE_ADDRESS.toUpperCase()} · {OFFICIAL_URA_TIN}
               </p>
             </div>
           </div>
@@ -412,6 +509,31 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
 
             <button
               type="button"
+              onClick={handleDownloadPdf}
+              disabled={isExportingPdf}
+              title="Download as PDF (A4)"
+              className="px-3 py-1.5 text-xs font-mono-data font-bold text-[#0B0F17] bg-[#D4AF37] hover:bg-[#FEF3C7] rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-60 shadow-sm"
+            >
+              {isExportingPdf ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <FileDown className="w-3.5 h-3.5" />
+              )}
+              <span>{isExportingPdf ? 'Exporting PDF...' : 'Download as PDF'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handlePrintDocument}
+              title="Print A4 Output"
+              className="px-2.5 py-1.5 text-xs font-mono-data font-bold text-slate-200 bg-[#0B0F17] hover:bg-slate-800 border border-slate-700 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Printer className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span className="hidden sm:inline">Print A4</span>
+            </button>
+
+            <button
+              type="button"
               onClick={onClose}
               className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
             >
@@ -421,8 +543,57 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
         </div>
 
         <div className="p-5 sm:p-6 space-y-5">
+          {/* AI Unique Receipt & Verifiable QR Generator Bar */}
+          <div className="p-3.5 rounded-xl bg-gradient-to-r from-[#182232] via-[#131C2B] to-[#182232] border border-[#D4AF37]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[#D4AF37]">
+                <Sparkles className="w-4 h-4 shrink-0" />
+                <span>AI Unique Receipt &amp; Cryptographic QR Code Generator</span>
+              </div>
+              <p className="text-[11px] text-slate-300">
+                Dynamically mints a unique receipt serial, URA TIN 1019482710 compliance attestation, and live Client Portal transaction record linked to the QR code.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleAiGenerateUniqueReceipt}
+              disabled={isAiGenerating}
+              className="px-3.5 py-2 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-[#0B0F17] font-mono-data font-bold text-xs inline-flex items-center gap-1.5 shrink-0 shadow-md transition-colors cursor-pointer disabled:opacity-60"
+            >
+              {isAiGenerating ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>Generating Unique QR Receipt...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>AI Generate Unique Receipt &amp; QR</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {aiGeneratedBanner && (
+            <div className="p-3 rounded-xl bg-emerald-950/50 border border-emerald-500/60 flex items-center justify-between gap-3 text-xs text-emerald-200 print:hidden">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="font-mono-data">{aiGeneratedBanner}</span>
+              </div>
+              {onVerifyRecordInPortal && (
+                <button
+                  type="button"
+                  onClick={() => onVerifyRecordInPortal(referenceId, clientEmail)}
+                  className="px-2.5 py-1 rounded bg-emerald-400 text-[#0B0F17] font-bold text-[11px] shrink-0 cursor-pointer"
+                >
+                  Open in Portal →
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Quick Interactive Preset Selector & Currency Switcher */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800/80 print:hidden">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-[10px] font-mono-data uppercase text-slate-400 mr-1">
                 Quick Template:
@@ -431,26 +602,26 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
                 {
                   label: '$2,500 Doc Verification',
                   title: '24–72 Hour Forensic Document Verification & Cadastre Audit',
-                  desc: 'AI Forensic Deconstruction + Physical DGSM & URA ASYCUDA verification by Staff Officer 1 (USD 1,000 credited toward any expedition package booked within 90 days).',
+                  desc: `AI Forensic Deconstruction + Physical DGSM & URA ASYCUDA verification by Staff Officer 1 at ${OFFICIAL_UGE_ADDRESS} (${OFFICIAL_URA_TIN}). (USD 1,000 credited toward any expedition package booked within 90 days).`,
                   usd: 2500
                 },
                 {
                   label: '$8,000 Tier 01 Academic',
                   title: 'Tier 01: Academic & Research Expedition (7-Day Program)',
-                  desc: 'Full 7-day supply chain due diligence & academic research immersion. Includes mandatory USD 1,000 KYC & sanctions vetting allocation (OFAC, UN, UK HMT, EU).',
+                  desc: `Full 7-day supply chain due diligence & academic research immersion issued by ${OFFICIAL_UGE_ADDRESS} (${OFFICIAL_URA_TIN}). Includes mandatory USD 1,000 KYC & sanctions vetting allocation.`,
                   usd: 8000
                 },
                 {
                   label: '$15,000 Tier 02 Trader',
                   title: 'Tier 02: Professional Trader 7-Day Gold Supply Chain Expedition',
-                  desc: 'Full 7-day physical supply chain due diligence immersion across Entebbe, Kampala, and Busia. Includes mandatory USD 1,000 KYC & sanctions vetting allocation.',
+                  desc: `Full 7-day physical supply chain due diligence immersion across Entebbe, Kampala, and Busia issued by ${OFFICIAL_UGE_ADDRESS} (${OFFICIAL_URA_TIN}). Includes mandatory USD 1,000 KYC & sanctions vetting allocation.`,
                   usd: 15000
                 },
                 {
-                  label: '$45,000 Tier 03 Sovereign VIP',
-                  title: 'Tier 03: Sovereign Executive · Diplomatic VIP Expedition',
-                  desc: 'Dedicated B6 armored executive motorcade & close-protection tactical detail, private fire assay lab access, up to 5 forensic audits, and 12-month verification retainer.',
-                  usd: 45000
+                  label: '$25,000 Tier 03 Sovereign VIP',
+                  title: 'Tier 03: Sovereign Executive · Diplomatic VIP Expedition ($25,000 per person)',
+                  desc: `Dedicated B6 armored executive motorcade & close-protection tactical detail, private fire assay lab access, up to 5 forensic audits, and 12-month verification retainer (${OFFICIAL_UGE_ADDRESS} · ${OFFICIAL_URA_TIN}).`,
+                  usd: 25000
                 }
               ].map((preset) => (
                 <button
@@ -494,7 +665,7 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
           </div>
 
           {/* Editable Principal & Billing Fields */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 print:hidden">
             <div>
               <label className="block text-[10px] font-mono-data uppercase text-slate-400 mb-1">
                 Principal Name
@@ -531,45 +702,115 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
           </div>
 
           {/* THE OFFICIAL INVOICE / QR CODE RECEIPT DOCUMENT CARD */}
-          <div className="rounded-xl bg-[#0B0F17] border-2 border-[#D4AF37]/50 p-5 sm:p-6 space-y-5 shadow-inner">
-            {/* Document Top Header */}
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-4 border-b border-slate-800">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-cinzel font-bold text-base text-white tracking-wider">
-                    UGANDA GOLD <span className="text-[#D4AF37]">EXPEDITION</span>
-                  </span>
+          <div
+            id="printable-invoice-receipt"
+            ref={printableSheetRef}
+            className="rounded-xl bg-[#0B0F17] border-2 border-[#D4AF37]/60 p-5 sm:p-6 space-y-5 shadow-inner"
+          >
+            {/* OFFICIAL UGANDA GOLD EXPEDITION COMPANY HEADER (Top of A4 Print Output for Professional Compliance) */}
+            <div className="pb-4 border-b-2 border-[#D4AF37]/40 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#111722] border border-[#D4AF37]/30 rounded-xl p-3.5">
+                <div className="flex items-center gap-3.5">
+                  <img
+                    src="/assets/aistudio/uge-logo-emblem-dark.png"
+                    alt="Uganda Gold Expedition Official Emblem"
+                    crossOrigin="anonymous"
+                    className="w-14 h-14 object-contain shrink-0"
+                  />
+                  <div className="space-y-0.5">
+                    <div className="font-cinzel font-bold text-base sm:text-lg text-white tracking-wider">
+                      UGANDA GOLD <span className="text-[#D4AF37]">EXPEDITION</span>
+                    </div>
+                    <p className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
+                      <span>{OFFICIAL_UGE_ADDRESS}</span>
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      Amber House Secretariat, Kampala · DGSM Mineral Registry Liaison, Entebbe
+                    </p>
+                  </div>
+                </div>
+
+                <div className="sm:text-right font-mono-data space-y-1 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-800">
+                  <div className="inline-block px-2.5 py-1 rounded bg-[#D4AF37]/15 border border-[#D4AF37]/50 text-[#D4AF37] font-bold text-xs">
+                    {OFFICIAL_URA_TIN}
+                  </div>
+                  <div className="text-[10px] text-emerald-400 font-semibold">
+                    Output VAT 18% · Statutory Tax Compliant
+                  </div>
+                  <div className="text-[10px] text-slate-400">
+                    Independent Due Diligence &amp; Field Verification
+                  </div>
+                </div>
+              </div>
+
+              {/* Document Serial & Metadata Sub-Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                <div className="flex flex-wrap items-center gap-2">
                   <span
-                    className={`text-[10px] font-mono-data font-bold px-2 py-0.5 rounded uppercase border ${
+                    className={`text-[11px] font-mono-data font-bold px-2.5 py-1 rounded uppercase border ${
                       docMode === 'receipt'
                         ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500'
                         : 'bg-amber-950/80 text-amber-300 border-amber-500'
                     }`}
                   >
                     {docMode === 'receipt'
-                      ? 'OFFICIAL QR CODE RECEIPT · PAID'
+                      ? 'OFFICIAL VERIFIED QR CODE RECEIPT · PAID'
                       : 'COMMERCIAL PROFORMA INVOICE'}
                   </span>
+                  <span className="text-xs font-mono-data font-bold text-[#D4AF37]">
+                    {docMode === 'receipt' ? receiptNumber : invoiceNumber}
+                  </span>
                 </div>
-                <p className="text-[11px] text-slate-400">
-                  Amber House Secretariat, Kampala · DGSM Mineral Headquarters, Entebbe, Uganda
-                </p>
-                <div className="pt-1 font-mono-data text-[11px] space-y-0.5">
-                  <div className="text-[#D4AF37] font-bold">URA TIN 1019482710</div>
-                  <div className="text-emerald-400 font-semibold">
-                    Output VAT 18% (included in total)
-                  </div>
+
+                <div className="sm:text-right font-mono-data text-[11px] flex flex-wrap sm:justify-end items-center gap-x-4 gap-y-1 text-slate-300">
+                  <span>
+                    Dossier Ref: <strong className="text-white">{referenceId}</strong>
+                  </span>
+                  <span>
+                    Settlement Ref: <strong className="text-[#D4AF37]">{txSettlementRef}</strong>
+                  </span>
+                  <span className="text-slate-400">Issued: {issuedDate}</span>
                 </div>
               </div>
+            </div>
 
-              <div className="sm:text-right font-mono-data">
-                <div className="text-xs font-bold text-[#D4AF37]">
-                  {docMode === 'receipt' ? receiptNumber : invoiceNumber}
+            {/* Billed Principal & Statutory Settlement Summary inside Printable Sheet */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-3 border-b border-slate-800/80 text-xs">
+              <div className="p-3 rounded-lg bg-[#111722] border border-slate-800/90 space-y-0.5">
+                <div className="text-[10px] font-mono-data uppercase text-[#D4AF37] font-bold">
+                  Billed Principal / Organization
                 </div>
-                <div className="text-[11px] text-slate-400">Dossier Ref: {referenceId}</div>
-                <div className="text-[11px] text-slate-400">Date: {issuedDate}</div>
-                <div className="text-[11px] text-amber-300 font-semibold mt-0.5">
-                  Full payment due on booking. No instalments.
+                <div className="font-bold text-white text-sm">{clientName}</div>
+                <div className="text-slate-300">{companyName}</div>
+                <div className="text-slate-400 font-mono-data text-[11px]">{clientEmail}</div>
+              </div>
+
+              <div className="p-3 rounded-lg bg-[#111722] border border-slate-800/90 space-y-1 font-mono-data text-[11px]">
+                <div className="text-[10px] uppercase text-[#D4AF37] font-bold">
+                  Settlement &amp; Statutory Status ({OFFICIAL_URA_TIN})
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Ledger Status:</span>
+                  <span
+                    className={`font-bold ${
+                      docMode === 'receipt' ? 'text-emerald-400' : 'text-amber-300'
+                    }`}
+                  >
+                    {docMode === 'receipt' ? 'PAID IN FULL & VERIFIED' : 'PROFORMA / PAYABLE'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Payment Channel:</span>
+                  <span className="text-slate-200">
+                    {initialData?.paymentMethodLabel || 'Visa / Mastercard / Sovereign Wire'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Converted Total:</span>
+                  <span className="text-[#D4AF37] font-bold">
+                    {formattedDisplayAmount} ({displayCurrency})
+                  </span>
                 </div>
               </div>
             </div>
@@ -579,7 +820,7 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-slate-800 text-[10px] font-mono-data uppercase text-[#D4AF37]">
-                    <th className="py-2 pr-3">Service & Statutory Mandate Description</th>
+                    <th className="py-2 pr-3">Service &amp; Statutory Mandate Description</th>
                     <th className="py-2 px-3 whitespace-nowrap">USD (VAT Incl.)</th>
                     <th className="py-2 pl-3 text-right whitespace-nowrap">
                       {displayCurrency} Total
@@ -592,7 +833,7 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
                       <div className="font-bold text-white">{itemTitle}</div>
                       <div className="text-[11px] text-slate-400 mt-0.5">{itemDescription}</div>
                       <div className="text-[10px] font-mono-data text-emerald-400 mt-1">
-                        URA TIN 1019482710 · Output VAT 18% (included in total) · Payment Terms: Full payment due on booking. No instalments.
+                        {OFFICIAL_UGE_ADDRESS} · {OFFICIAL_URA_TIN} · Output VAT 18% (included in total)
                       </div>
                     </td>
                     <td className="py-3 px-3 font-mono-data font-bold text-white whitespace-nowrap">
@@ -609,75 +850,103 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
               </table>
             </div>
 
-            {/* QR CODE RECEIPT & CRYPTOGRAPHIC SEAL BLOCK */}
+            {/* QR CODE RECEIPT & CLIENT PORTAL TRANSACTION LINK FOR AUTHORITIES & LOGISTICS PARTNERS */}
             <div className="pt-4 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-5">
               <div className="space-y-2 flex-1">
                 <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 font-mono-data uppercase">
                   <ShieldCheck className="w-4 h-4 shrink-0" />
                   <span>
                     {docMode === 'receipt'
-                      ? 'Verified QR Code Receipt · Instant Audit Authentication'
-                      : 'QR Code Proforma Verification · Sovereign Settlement'}
+                      ? 'Client Portal Transaction Verification QR · Authorities & Logistics Partners'
+                      : 'Client Portal Proforma Verification QR · Authorities & Logistics Partners'}
                   </span>
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  Scan this cryptographic QR Code at Entebbe VIP diplomatic clearance, Amber House Kampala Secretariat, or any compliance desk to verify authenticity and settlement status.
+                  Scan this dynamic QR code to open transaction record{' '}
+                  <strong className="font-mono-data text-white">{referenceId}</strong> directly in the authenticated Uganda Gold Expedition Client Portal. Issued by{' '}
+                  <strong className="text-white">{OFFICIAL_UGE_ADDRESS}</strong> ({OFFICIAL_URA_TIN}) for instant verification by DGSM, URA Customs, refineries, and logistics partners.
                 </p>
 
                 <div className="p-2.5 rounded-lg bg-[#111722] border border-slate-800 font-mono-data text-[10px] space-y-1">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-slate-400">
+                      Transaction / Dossier ID: <strong className="text-white">{referenceId}</strong>
+                    </span>
+                    <span className="text-slate-400">
+                      Settlement Ref: <strong className="text-[#D4AF37]">{txSettlementRef}</strong>
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-slate-400">QR Cryptographic Seal:</span>
                     <span className="text-[#D4AF37] font-bold">{qrDigest}</span>
                   </div>
-                  <div className="text-slate-400 truncate">
-                    Payload: <span className="text-emerald-300">{qrVerificationPayload}</span>
+                  <div className="text-slate-400">
+                    Registered Issuer:{' '}
+                    <span className="text-slate-200">
+                      {OFFICIAL_UGE_ADDRESS} · {OFFICIAL_URA_TIN}
+                    </span>
+                  </div>
+                  <div className="text-slate-400 break-all">
+                    Client Portal Record URL:{' '}
+                    <span className="text-emerald-300">{qrVerificationPayload}</span>
                   </div>
                 </div>
+
+                {onVerifyRecordInPortal && (
+                  <div className="pt-1 print:hidden">
+                    <button
+                      type="button"
+                      onClick={() => onVerifyRecordInPortal(referenceId, clientEmail)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#182232] hover:bg-[#222E42] border border-[#D4AF37]/50 text-[#D4AF37] text-[11px] font-mono-data font-bold transition-colors cursor-pointer"
+                    >
+                      <QrCode className="w-3.5 h-3.5" />
+                      <span>Verify Transaction Record in Client Portal →</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {/* Rendered High-Contrast SVG QR Code */}
+              {/* Rendered qrcode.react QRCodeSVG with Embedded UGE Logo (Calibrated for 2cm x 2cm Print Scannability) */}
               <div className="flex flex-col items-center gap-1.5 shrink-0">
-                <div className="p-3 rounded-xl bg-white border-2 border-[#D4AF37] shadow-lg">
-                  <svg
-                    width={132}
-                    height={132}
-                    viewBox={`0 0 ${qrMatrix.length * 5} ${qrMatrix.length * 5}`}
-                    aria-label="Official Verification QR Code"
-                  >
-                    <rect
-                      width={qrMatrix.length * 5}
-                      height={qrMatrix.length * 5}
-                      fill="#FFFFFF"
-                    />
-                    {qrMatrix.map((row, rIdx) =>
-                      row.map((cell, cIdx) =>
-                        cell ? (
-                          <rect
-                            key={`${rIdx}-${cIdx}`}
-                            x={cIdx * 5}
-                            y={rIdx * 5}
-                            width={5}
-                            height={5}
-                            fill="#0B0F17"
-                          />
-                        ) : null
-                      )
-                    )}
-                  </svg>
+                <div
+                  ref={qrSvgWrapperRef}
+                  className="uge-qr-print-box p-2.5 print:p-1 rounded-xl bg-white border-2 border-[#D4AF37] shadow-lg flex items-center justify-center"
+                >
+                  <QRCodeSVG
+                    value={qrVerificationPayload}
+                    size={128}
+                    bgColor="#FFFFFF"
+                    fgColor="#0B0F17"
+                    level="H"
+                    includeMargin={false}
+                    className="uge-qr-print-svg w-32 h-32 print:w-[2cm] print:h-[2cm]"
+                    title={`Client Portal Transaction Verification QR Code for ${referenceId}`}
+                    imageSettings={{
+                      src: UGE_QR_LOGO_DATA_URI,
+                      x: undefined,
+                      y: undefined,
+                      height: 26,
+                      width: 26,
+                      excavate: true
+                    }}
+                  />
                 </div>
-                <span className="text-[10px] font-mono-data text-[#D4AF37] font-bold uppercase">
-                  SCAN QR RECEIPT
+                <span className="text-[10px] font-mono-data text-[#D4AF37] font-bold uppercase text-center">
+                  SCAN TO VERIFY IN PORTAL
+                </span>
+                <span className="text-[9px] font-mono-data text-slate-400 text-center">
+                  2cm × 2cm Print-Calibrated · {referenceId}
                 </span>
               </div>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-1 print:hidden">
             <button
               type="button"
               onClick={handleCopyVerificationString}
-              className="px-3.5 py-2 text-xs font-mono-data text-slate-300 hover:text-white bg-[#182232] border border-slate-700 rounded-lg flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-2 text-xs font-mono-data text-slate-300 hover:text-white bg-[#182232] border border-slate-700 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               {copiedPayload ? (
                 <>
@@ -695,12 +964,35 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
             <div className="flex flex-wrap items-center gap-2.5">
               <button
                 type="button"
-                onClick={handleDownloadPrintableHtml}
-                className="px-4 py-2.5 text-xs font-bold text-[#0B0F17] bg-[#D4AF37] hover:bg-[#FEF3C7] rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-[#D4AF37]/20"
+                onClick={handlePrintDocument}
+                className="px-3.5 py-2.5 text-xs font-bold text-white bg-[#182232] hover:bg-slate-800 border border-slate-700 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
               >
-                <Download className="w-4 h-4" />
+                <Printer className="w-4 h-4 text-[#D4AF37]" />
+                <span>Print A4</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDownloadPrintableHtml}
+                className="px-3.5 py-2.5 text-xs font-bold text-slate-200 bg-[#182232] hover:bg-slate-800 border border-[#D4AF37]/50 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
+              >
+                <Download className="w-4 h-4 text-[#D4AF37]" />
+                <span>Download HTML</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDownloadPdf}
+                disabled={isExportingPdf}
+                className="px-4 py-2.5 text-xs font-bold text-[#0B0F17] bg-[#D4AF37] hover:bg-[#FEF3C7] rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-[#D4AF37]/20 cursor-pointer disabled:opacity-60"
+              >
+                {isExportingPdf ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <FileDown className="w-4 h-4" />
+                )}
                 <span>
-                  Download {docMode === 'receipt' ? 'QR Code Receipt' : 'Official Invoice'} (.HTML)
+                  {isExportingPdf ? 'Generating A4 PDF...' : 'Download as PDF'}
                 </span>
               </button>
             </div>

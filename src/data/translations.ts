@@ -285,8 +285,8 @@ export const translations: Record<Language, TranslationStrings> = {
     heroCtaBriefing: 'Executive Briefing',
     heroDisclaimerTitle: 'Non-Transaction Mandate:',
     heroDisclaimerText: 'Strictly an educational and forensic due-diligence mission. We do NOT broker, buy, or sell gold.',
-    heroKycNoticeTitle: 'Mandatory KYC & Vetting Allocation:',
-    heroKycNoticeText: 'is included in every package for background screening, OFAC, UN, UK HMT, EU sanctions and PEP checks, and government liaison processing (strictly non-refundable once vetting commences; balance above $1,000 refunded within 14 business days if vetting is not passed).',
+    heroKycNoticeTitle: 'KYC & Sanctions Vetting:',
+    heroKycNoticeText: 'Included in every package (OFAC, UN, UK HMT, EU sanctions and PEP screening).',
     heroStat1Label: '7-Day Field Immersion',
     heroStat1Sub: 'Entebbe, Kampala, Mubende & Busia',
     heroStat2Label: '24–72 Hour Forensic Document Verification',
@@ -389,9 +389,9 @@ export const translations: Record<Language, TranslationStrings> = {
     packagesCurrencyLabel: 'Currency Display:',
     packagesDatesLabel: '2027 Scheduled Expedition Windows:',
     packagesPopularBadge: 'Most Selected by Commodity Desks',
-    packagesPerDelegate: '/ delegate',
-    packagesKycAllocationNote: 'Includes Mandatory KYC & Client Vetting Allocation (USD 1,000)',
-    packagesKycWarning: 'is strictly non-refundable once vetting commences for OFAC, UN, UK HMT, EU sanctions and PEP screening (balance above $1,000 refunded within 14 business days if vetting is not passed).',
+    packagesPerDelegate: '/ person',
+    packagesKycAllocationNote: 'KYC & Sanctions Vetting Included (OFAC, UN, UK HMT, EU & PEP)',
+    packagesKycWarning: 'All prices in USD, inclusive of applicable Ugandan VAT. Select and pay only for the exact expedition tier or forensic verification service you require. Statutory OFAC, UN, UK HMT, EU sanctions and PEP screening and government liaison processing are included in every expedition package with no separate standalone KYC deposit.',
     packagesIdealForLabel: 'Ideal Delegate Profile',
     packagesAccommodationLabel: 'Accommodation Standard',
     packagesTransportLabel: 'Field Transport & Security',
@@ -429,7 +429,7 @@ export const translations: Record<Language, TranslationStrings> = {
     faqCatLogistics: 'Travel Logistics & Security',
     faqSearchPlaceholder: 'Search supply chain, XRF, URA, KYC, B6 convoy...',
     faqBottomTitle: 'Have a Specific Contract or Delegation Requirement?',
-    faqBottomDesc: 'Consult our multi-turn Gemini AI Forensic Advisor immediately, connect via our Registered Member WhatsApp Business (WABA) channel, or submit an FCO/SPA for a 24–72 Hour Forensic Document Verification.',
+    faqBottomDesc: 'Submit an FCO, SPA, or DGSM mineral license for a 24–72 Hour Offer Verification or apply for an upcoming 7-day field expedition cohort.',
 
     charterBadge1: 'STATUTORY INDEPENDENCE & ETHICS',
     charterBadge2: 'MANDATORY GOVERNANCE FRAMEWORK',
@@ -442,8 +442,8 @@ export const translations: Record<Language, TranslationStrings> = {
     footerNavTitle: 'Institution & Dispatches',
     footerBoardTitle: 'Board of Directors',
     footerSecretariatTitle: 'Inspection Secretariats',
-    footerKycDisclosureTitle: 'Mandatory KYC & Vetting Allocation:',
-    footerKycDisclosureText: 'Every package is paid in full (USD, inclusive of applicable Ugandan VAT) and includes the mandatory KYC & Client Vetting Allocation (USD 1,000) covering background screening, OFAC, UN, UK HMT, EU sanctions and PEP screening, and government liaison processing. Strictly non-refundable once vetting commences; should an applicant not pass vetting, the full balance above $1,000 is refunded within 14 business days.',
+    footerKycDisclosureTitle: 'Statutory Compliance & Sanctions Screening:',
+    footerKycDisclosureText: 'All expedition packages include OFAC, UN, UK HMT, EU sanctions and PEP screening and government liaison processing.',
     footerDisclaimer: 'The Uganda Gold Expedition is an independent executive diligence and forensic research symposium. We do not act as gold dealers, brokers, intermediaries, or commercial representatives of any mining entity, refinery, or banking institution. We strictly do NOT buy, sell, or take custody of precious minerals.',
     footerRights: '© 2026 Uganda Gold Expedition. All rights reserved. Sovereign Intelligence & Anti-Fraud Due Diligence.'
   },
@@ -494,8 +494,8 @@ export const translations: Record<Language, TranslationStrings> = {
     heroCtaBriefing: 'الإحاطة التنفيذية',
     heroDisclaimerTitle: 'ميثاق عدم التداول:',
     heroDisclaimerText: 'مهمة تعليمية واستقصائية بحتة للعناية الواجبة. نحن لا نتوسط ولا نشتري ولا نبيع الذهب.',
-    heroKycNoticeTitle: 'مخصص التحقق الأمني KYC الإلزامي:',
-    heroKycNoticeText: 'مشمولة في كل باقة لفحص الخلفية وقوائم عقوبات OFAC والأمم المتحدة وUK HMT والاتحاد الأوروبي وفحص PEP (غير قابلة للاسترداد بمجرد بدء الفحص؛ ويُرد الرصيد المتبقي فوق 1,000 دولار خلال 14 يوم عمل في حال عدم اجتياز الفحص).',
+    heroKycNoticeTitle: 'فحص KYC والعقوبات الدولية:',
+    heroKycNoticeText: 'مشمول في كل باقة (فحص عقوبات OFAC والأمم المتحدة وUK HMT والاتحاد الأوروبي وفحص PEP).',
     heroStat1Label: '7 أيام من التدقيق الميداني',
     heroStat1Sub: 'عنتيبي، كمبالا، موبيندي وبوسيا',
     heroStat2Label: 'التحقق الجنائي من الوثائق (24–72 ساعة)',
@@ -598,9 +598,9 @@ export const translations: Record<Language, TranslationStrings> = {
     packagesCurrencyLabel: 'عملة العرض:',
     packagesDatesLabel: 'مواعيد البعثات المجدولة لعام 2027:',
     packagesPopularBadge: 'الأكثر اختياراً من مكاتب تداول السلع',
-    packagesPerDelegate: '/ للمشارك',
-    packagesKycAllocationNote: 'تشمل مخصص فحص KYC وتدقيق العميل الإلزامي (1,000 دولار أمريكي)',
-    packagesKycWarning: 'غير قابلة للاسترداد بمجرد بدء الفحص الأمني وقوائم العقوبات (OFAC, UN, UK HMT, EU) وفحص PEP، ويُرد الرصيد المتبقي خلال 14 يوم عمل في حال عدم اجتياز الفحص.',
+    packagesPerDelegate: '/ للشخص',
+    packagesKycAllocationNote: 'شاملة فحص KYC وقوائم العقوبات الدولية (OFAC, UN, UK HMT, EU & PEP)',
+    packagesKycWarning: 'جميع الأسعار بالدولار الأمريكي شاملة ضريبة القيمة المضافة الأوغندية. اختر وادفع فقط مقابل الباقة أو خدمة التحقق التي تحتاجها، مع شمول فحص العقوبات الدولية والاعتماد الحكومي في كل باقة دون رسوم KYC منفصلة.',
     packagesIdealForLabel: 'الفئة المستهدفة',
     packagesAccommodationLabel: 'مستوى الإقامة الفندقية',
     packagesTransportLabel: 'النقل الميداني والحماية الأمنية',
@@ -651,8 +651,8 @@ export const translations: Record<Language, TranslationStrings> = {
     footerNavTitle: 'المؤسسة والتقارير',
     footerBoardTitle: 'مجلس الإدارة',
     footerSecretariatTitle: 'مقرات التفتيش الميداني',
-    footerKycDisclosureTitle: 'إفصاح KYC الإلزامي:',
-    footerKycDisclosureText: 'تُدفع جميع الباقات بالكامل (بالدولار الأمريكي شاملة ضريبة القيمة المضافة الأوغندية) وتشمل مخصص فحص KYC وتدقيق العميل الإلزامي (1,000 دولار أمريكي) لفحص الخلفية وقوائم العقوبات (OFAC, UN, UK HMT, EU) وفحص PEP، وهو غير قابل للاسترداد بمجرد بدء الفحص؛ وفي حال عدم اجتياز الفحص يُرد الرصيد المتبقي فوق 1,000 دولار خلال 14 يوم عمل.',
+    footerKycDisclosureTitle: 'الامتثال القانوني وفحص العقوبات:',
+    footerKycDisclosureText: 'تشمل جميع الباقات فحص الخلفية وقوائم العقوبات (OFAC, UN, UK HMT, EU) وفحص PEP.',
     footerDisclaimer: 'بعثة أوغندا للذهب هي هيئة مستقلة للعناية الواجبة والأبحاث الجنائية. نحن لا نعمل كتجار ذهب أو وسطاء أو سماسرة، ولا نشتري أو نبيع أو نحتفظ بالمعادن الثمينة.',
     footerRights: '© 2026 بعثة أوغندا للذهب. جميع الحقوق محفوظة. الاستخبارات السيادية والعناية الواجبة.'
   },
@@ -703,8 +703,8 @@ export const translations: Record<Language, TranslationStrings> = {
     heroCtaBriefing: '高管简报',
     heroDisclaimerTitle: '严禁交易原则：',
     heroDisclaimerText: '本项目纯属教育与取证尽职调查任务。我们绝不居间、购买或出售任何黄金。',
-    heroKycNoticeTitle: '强制性 KYC 与审查拨款：',
-    heroKycNoticeText: '包含在每个套餐中，用于背景调查、OFAC、联合国、英国财政部 (UK HMT)、欧盟制裁名单及政治公众人物 (PEP) 筛查（一旦启动审查严格不予退还；若未通过审查，超出1,000美元的余额将在14个工作日内全额退还）。',
+    heroKycNoticeTitle: 'KYC 与制裁名单审查：',
+    heroKycNoticeText: '包含在每个考察套餐中（涵盖 OFAC、联合国、UK HMT、欧盟制裁名单及 PEP 筛查）。',
     heroStat1Label: '7天全流程实地考察',
     heroStat1Sub: '恩德培、坎帕拉、穆本德与布西亚',
     heroStat2Label: '24–72小时文件取证核验',
@@ -807,9 +807,9 @@ export const translations: Record<Language, TranslationStrings> = {
     packagesCurrencyLabel: '显示货币：',
     packagesDatesLabel: '2027年预定考察团期：',
     packagesPopularBadge: '大宗商品交易台首选方案',
-    packagesPerDelegate: '/ 每位代表',
-    packagesKycAllocationNote: '含强制性 KYC 与客户背景审查拨款（1,000美元）',
-    packagesKycWarning: '一旦启动审查（涵盖 OFAC、联合国、英国财政部、欧盟制裁名单与 PEP 筛查）严格不予退还；若未通过审查，超出1,000美元的余额将在14个工作日内退还。',
+    packagesPerDelegate: '/ 每人',
+    packagesKycAllocationNote: '包含 KYC 与制裁名单审查 (OFAC, UN, UK HMT, EU & PEP)',
+    packagesKycWarning: '所有价格均以美元计价，含适用的乌干达增值税。您只需根据需求自由选择并支付所选的考察套餐或取证核验服务，所有考察套餐均已包含 OFAC、联合国、英国财政部、欧盟制裁名单与 PEP 筛查，无单独的 KYC 押金。',
     packagesIdealForLabel: '适用代表群体',
     packagesAccommodationLabel: '住宿标准',
     packagesTransportLabel: '实地交通与安保配置',
@@ -860,8 +860,8 @@ export const translations: Record<Language, TranslationStrings> = {
     footerNavTitle: '机构与简报',
     footerBoardTitle: '董事会成员',
     footerSecretariatTitle: '核查秘书处驻地',
-    footerKycDisclosureTitle: '强制性 KYC 披露声明：',
-    footerKycDisclosureText: '所有考察套餐均需一次性全额支付（美元计价，含适用的乌干达增值税），并包含 1,000 美元强制性 KYC 与客户审查拨款（涵盖背景筛查、OFAC、联合国、英国财政部、欧盟制裁名单及 PEP 核查）。一旦启动审查严格不予退还；若未通过审查，超出1,000美元的余额将在14个工作日内全额退还。',
+    footerKycDisclosureTitle: '法定合规与制裁筛查声明：',
+    footerKycDisclosureText: '所有考察套餐均包含背景筛查、OFAC、联合国、英国财政部、欧盟制裁名单及 PEP 核查。',
     footerDisclaimer: '乌干达黄金考察团是独立的高管尽职调查与取证研究机构。我们绝不充当黄金交易商、经纪人或中间商，也绝不买卖或托管任何贵金属。',
     footerRights: '© 2026 乌干达黄金考察团 版权所有 · 主权情报与反欺诈尽职调查。'
   },
@@ -912,8 +912,8 @@ export const translations: Record<Language, TranslationStrings> = {
     heroCtaBriefing: 'Briefing Exécutif',
     heroDisclaimerTitle: 'Mandat Strict de Non-Transaction :',
     heroDisclaimerText: 'Mission exclusivement éducative et de diligence forensique. Nous ne faisons ni courtage, ni achat, ni vente d’or.',
-    heroKycNoticeTitle: 'Allocation KYC Obligatoire :',
-    heroKycNoticeText: 'est incluse dans chaque forfait pour le contrôle des antécédents et le filtrage des sanctions OFAC, ONU, UK HMT, UE et PEP (strictement non remboursable dès le début du contrôle ; solde au-delà de 1 000 $ remboursé sous 14 jours ouvrés en cas de refus).',
+    heroKycNoticeTitle: 'Filtrage KYC & Sanctions :',
+    heroKycNoticeText: 'inclus dans chaque forfait (filtrage des sanctions OFAC, ONU, UK HMT, UE et PEP).',
     heroStat1Label: 'Immersion Terrain 7 Jours',
     heroStat1Sub: 'Entebbe, Kampala, Mubende & Busia',
     heroStat2Label: 'Vérification Forensique en 24–72h',
@@ -1016,9 +1016,9 @@ export const translations: Record<Language, TranslationStrings> = {
     packagesCurrencyLabel: 'Devise d’Affichage :',
     packagesDatesLabel: 'Sessions d’Expédition Programmées en 2027 :',
     packagesPopularBadge: 'Le Plus Choisi par les Tables de Négoce',
-    packagesPerDelegate: '/ délégué',
-    packagesKycAllocationNote: 'Inclut l’Allocation Obligatoire KYC & Filtrage Client (1 000 USD)',
-    packagesKycWarning: 'est strictement non remboursable dès le début du filtrage des sanctions OFAC, ONU, UK HMT, UE et PEP (solde au-delà de 1 000 $ remboursé sous 14 jours ouvrés en cas de refus).',
+    packagesPerDelegate: '/ personne',
+    packagesKycAllocationNote: 'Filtrage KYC & Sanctions Inclus (OFAC, ONU, UK HMT, UE & PEP)',
+    packagesKycWarning: 'Tous les prix sont en USD, TVA ougandaise applicable incluse. Choisissez et payez uniquement pour le forfait d’expédition ou le service de vérification forensique souhaité. Le filtrage des sanctions OFAC, ONU, UK HMT, UE et PEP est inclus dans chaque forfait sans frais KYC séparés.',
     packagesIdealForLabel: 'Profil de Délégué Idéal',
     packagesAccommodationLabel: 'Standard d’Hébergement',
     packagesTransportLabel: 'Transport Terrain & Sécurité',
@@ -1069,8 +1069,8 @@ export const translations: Record<Language, TranslationStrings> = {
     footerNavTitle: 'Institution & Dépêches',
     footerBoardTitle: 'Conseil d’Administration',
     footerSecretariatTitle: 'Secrétariats d’Inspection',
-    footerKycDisclosureTitle: 'Divulgation KYC Obligatoire :',
-    footerKycDisclosureText: "Chaque forfait est réglé en totalité (en USD, TVA ougandaise applicable incluse) et comprend l'Allocation KYC & Filtrage Client obligatoire (1 000 USD) couvrant le filtrage des sanctions OFAC, ONU, UK HMT, UE et PEP. Strictement non remboursable dès le début du contrôle ; en cas de refus, le solde au-delà de 1 000 $ est remboursé sous 14 jours ouvrés.",
+    footerKycDisclosureTitle: 'Conformité Statutaire & Filtrage des Sanctions :',
+    footerKycDisclosureText: "Chaque forfait comprend le filtrage des sanctions OFAC, ONU, UK HMT, UE et PEP ainsi que les liaisons gouvernementales.",
     footerDisclaimer: "L'Uganda Gold Expedition est un symposium indépendant de diligence exécutive et de recherche forensique. Nous n'agissons pas en tant que négociants, courtiers ou intermédiaires, et nous n'achetons, ne vendons ni ne détenons aucun métal précieux.",
     footerRights: '© 2026 Uganda Gold Expedition. Tous droits réservés. Renseignement Souverain & Diligence Anti-Fraude.'
   }
@@ -1735,9 +1735,9 @@ export function getLocalizedCharterPillars(lang: Language) {
       },
       {
         number: '02',
-        title: 'فحص KYC وقوائم العقوبات الإلزامي',
+        title: 'فحص KYC وقوائم العقوبات الدولية',
         subtitle: 'فحص عقوبات OFAC والأمم المتحدة وUK HMT والاتحاد الأوروبي وفحص PEP',
-        content: 'تشمل كل باقة مخصص فحص KYC وتدقيق العميل الإلزامي (1,000 دولار أمريكي) الذي يغطي فحص الخلفية وقوائم عقوبات OFAC والأمم المتحدة وUK HMT والاتحاد الأوروبي وفحص الشخصيات السياسية البارزة (PEP). هذا المخصص غير قابل للاسترداد بمجرد بدء الفحص؛ وفي حال عدم اجتياز الفحص يُرد الرصيد المتبقي فوق 1,000 دولار خلال 14 يوم عمل.'
+        content: 'تشمل كل باقة بعثة فحص الخلفية وقوائم عقوبات OFAC والأمم المتحدة وUK HMT والاتحاد الأوروبي وفحص الشخصيات السياسية البارزة (PEP) وإجراءات الارتباط الحكومي دون أي رسوم KYC منفصلة.'
       },
       {
         number: '03',
@@ -1763,9 +1763,9 @@ export function getLocalizedCharterPillars(lang: Language) {
       },
       {
         number: '02',
-        title: '强制性 KYC 与制裁名单筛查',
+        title: '法定 KYC 与制裁名单筛查',
         subtitle: 'OFAC、联合国、UK HMT、欧盟制裁名单及 PEP 审查',
-        content: '每个考察套餐均包含 1,000 美元的强制性 KYC 与客户审查拨款，涵盖背景审查、OFAC、联合国、英国财政部 (UK HMT)、欧盟制裁名单及政治公众人物 (PEP) 筛查和政府联络审批。一旦启动审查，该拨款严格不予退还；若申请人未通过审查，超出 1,000 美元的余额将在 14 个工作日内全额退还。'
+        content: '每个考察套餐均包含背景审查、OFAC、联合国、英国财政部 (UK HMT)、欧盟制裁名单及政治公众人物 (PEP) 筛查和政府联络审批，无任何单独的 KYC 押金费用。'
       },
       {
         number: '03',
@@ -1790,9 +1790,9 @@ export function getLocalizedCharterPillars(lang: Language) {
     },
     {
       number: '02',
-      title: 'Filtrage KYC & Sanctions Obligatoire',
+      title: 'Filtrage KYC & Sanctions Statutaire',
       subtitle: 'Filtrage des Sanctions OFAC, ONU, UK HMT, UE & PEP',
-      content: "Chaque forfait d'expédition comprend l'allocation obligatoire de 1 000 USD pour le KYC et le filtrage client, couvrant la vérification des antécédents, le filtrage des sanctions OFAC, ONU, UK HMT, UE et PEP, ainsi que les liaisons gouvernementales. Cette allocation est strictement non remboursable dès le début du contrôle ; si un candidat ne passe pas le contrôle, le solde au-delà de 1 000 $ est remboursé sous 14 jours ouvrés."
+      content: "Chaque forfait d'expédition comprend la vérification des antécédents, le filtrage des sanctions OFAC, ONU, UK HMT, UE et PEP, ainsi que les liaisons gouvernementales, sans frais KYC séparés."
     },
     {
       number: '03',
@@ -2470,8 +2470,8 @@ export function getLocalizedFaqs(lang: Language, defaultFaqs: FaqItem[]): FaqIte
         id: 'faq-tl-1',
         category: 'travel_logistics',
         categoryLabel: 'اللوجستيات وأمن السفر',
-        question: 'لماذا يُعد مخصص فحص KYC وتدقيق العميل (1,000 دولار أمريكي) غير قابل للاسترداد؟',
-        answer: 'تشمل كل باقة بعثة مخصص فحص KYC وتدقيق العميل الإلزامي (1,000 دولار أمريكي)، الذي يغطي فحص الخلفية وفحص قوائم العقوبات والشخصيات السياسية البارزة (OFAC, UN, UK HMT, EU sanctions and PEP screening) وإجراءات الارتباط الحكومي. هذا المخصص غير قابل للاسترداد نهائياً بمجرد بدء إجراءات الفحص. وفي حال عدم اجتياز المتقدم للفحص، يتم رد كامل الرصيد المتبقي فوق مبلغ 1,000 دولار خلال 14 يوم عمل.',
+        question: 'كيف يتم إجراء فحص العقوبات الدولية وKYC للمشاركين في البعثة؟',
+        answer: 'تشمل كل باقة بعثة فحص الخلفية وفحص قوائم العقوبات والشخصيات السياسية البارزة (OFAC, UN, UK HMT, EU sanctions and PEP screening) وإجراءات الاعتماد الحكومي دون أي رسوم KYC منفصلة — حيث يختار المشارك ويدفع فقط مقابل الباقة أو الخدمة التي يريدها.',
         statutoryRef: 'بروتوكول KYC السيادي وفحص عقوبات OFAC, UN, UK HMT, EU وPEP'
       },
       {
@@ -2487,16 +2487,8 @@ export function getLocalizedFaqs(lang: Language, defaultFaqs: FaqItem[]): FaqIte
         category: 'travel_logistics',
         categoryLabel: 'اللوجستيات وأمن السفر',
         question: 'ما هي طرق الدفع المقبولة لباقات البعثة والتحقق الجنائي من الوثائق؟',
-        answer: 'تُدفع جميع الباقات دفعة واحدة بالكامل (8,000 / 15,000 / 45,000 دولار أمريكي شاملة ضريبة القيمة المضافة الأوغندية) وكذلك خدمة التحقق الجنائي من الوثائق خلال 24–72 ساعة (2,500 دولار أمريكي شاملة الضريبة) حصرياً عبر بوابة الدفع الإلكتروني المشفرة أو الحوالات البنكية المؤسسية الموثقة.',
+        answer: 'تُدفع جميع الباقات دفعة واحدة بالكامل (8,000 / 15,000 / 25,000 دولار أمريكي للشخص شاملة ضريبة القيمة المضافة الأوغندية) وكذلك خدمة التحقق الجنائي من الوثائق خلال 24–72 ساعة (2,500 دولار أمريكي شاملة الضريبة) حصرياً عبر بوابة الدفع الإلكتروني المشفرة أو الحوالات البنكية المؤسسية الموثقة.',
         statutoryRef: 'امتثال هيئة الاستخبارات المالية (FIA) وبروتوكول التسوية المؤسسية'
-      },
-      {
-        id: 'faq-tl-4',
-        category: 'travel_logistics',
-        categoryLabel: 'اللوجستيات وأمن السفر',
-        question: 'كيف يمكن للأعضاء المسجلين الوصول إلى خط واتساب للأعمال (WABA) والمستشار الذكي؟',
-        answer: 'بمجرد التسجيل (باستخدام رقم التسجيل الخاص بك أو بريدك الإلكتروني)، يمكنك استخدام قناة واتساب للأعمال (WABA) المشفرة لإرسال تنبيهات مباشرة إلى موغيسا سولومون بياكوتاغا أو كامانزاي كايجوكا أو روني موغارورا أو الضابط الميداني الأول.',
-        statutoryRef: 'قناة اتصالات WABA المشفرة للأعضاء المسجلين'
       }
     ];
   }
@@ -2570,9 +2562,9 @@ export function getLocalizedFaqs(lang: Language, defaultFaqs: FaqItem[]): FaqIte
         id: 'faq-tl-1',
         category: 'travel_logistics',
         categoryLabel: '差旅后勤与安保',
-        question: '为什么套餐价格中包含的 1,000 美元 KYC 与客户审查拨款严格不予退还？',
-        answer: '由于参团代表将进入主权政府部委、海关保税金库、高安全级别精炼厂及活跃矿区，每个考察套餐价格均包含强制性 KYC 与客户审查拨款（1,000美元），专门用于背景调查、OFAC、联合国、英国财政部 (UK HMT)、欧盟制裁名单及政治公众人物 (PEP) 筛查和政府联络审批。一旦启动审查，该 1,000 美元拨款严格不予退还。若申请人未通过审查，超出 1,000 美元拨款部分的全部余额将在 14 个工作日内退还。',
-        statutoryRef: '强制性 KYC 及 OFAC、UN、UK HMT、EU 制裁名单与 PEP 筛查规程'
+        question: '参团代表的制裁名单与法定 KYC 审查是如何进行的？',
+        answer: '由于参团代表将进入主权政府部委、海关保税金库、高安全级别精炼厂及活跃矿区，每个考察套餐均已包含背景调查、OFAC、联合国、英国财政部 (UK HMT)、欧盟制裁名单及政治公众人物 (PEP) 筛查和政府联络审批，不收取任何单独的 KYC 押金——委托人只需选择并支付自己所需的套餐或取证服务。',
+        statutoryRef: '法定 KYC 及 OFAC、UN、UK HMT、EU 制裁名单与 PEP 筛查规程'
       },
       {
         id: 'faq-tl-2',
@@ -2587,16 +2579,8 @@ export function getLocalizedFaqs(lang: Language, defaultFaqs: FaqItem[]): FaqIte
         category: 'travel_logistics',
         categoryLabel: '差旅后勤与安保',
         question: '考察套餐及文件取证核验支持哪些支付方式？',
-        answer: '所有财务结算——包括 2,500 美元的 24–72 小时文件取证核验费以及全额考察套餐费（8,000 / 15,000 / 45,000 美元，均含适用乌干达增值税，一次性全额支付，不设分期）——均严格通过我们的加密在线支付网关或经核实的机构银行电汇处理，确保反洗钱 (AML) 审计合规。',
+        answer: '所有财务结算——包括 2,500 美元的 24–72 小时文件取证核验费以及全额考察套餐费（每人 8,000 / 15,000 / 25,000 美元，均含适用乌干达增值税，一次性全额支付，不设分期）——均严格通过我们的加密在线支付网关或经核实的机构银行电汇处理，确保反洗钱 (AML) 审计合规。',
         statutoryRef: '金融情报局 (FIA) 反洗钱合规与机构结算规程'
-      },
-      {
-        id: 'faq-tl-4',
-        category: 'travel_logistics',
-        categoryLabel: '差旅后勤与安保',
-        question: '注册会员如何使用 WhatsApp Business (WABA) 专线与 AI 顾问台？',
-        answer: '完成注册后（凭您的注册编号或注册企业邮箱），即可解锁注册会员专属 WhatsApp Business API (WABA) 专线及多轮对话 Gemini AI 顾问台。注册代表可向首席取证专家 Mugisa Solomon Byakutaaga、矿产贸易专家 Kamanzai Kaijuka、运营总监 Ronnie Mugarura 或一级外勤军官直接发送加密 WABA 调度指令。',
-        statutoryRef: '注册代表 WABA 加密通信专线规程'
       }
     ];
   }
@@ -2669,9 +2653,9 @@ export function getLocalizedFaqs(lang: Language, defaultFaqs: FaqItem[]): FaqIte
       id: 'faq-tl-1',
       category: 'travel_logistics',
       categoryLabel: 'Logistique & Sécurité',
-      question: 'Pourquoi l’allocation KYC et filtrage client (1 000 USD) incluse dans chaque forfait est-elle non remboursable ?',
-      answer: "Chaque forfait d'expédition inclut l'allocation obligatoire de 1 000 USD pour le KYC et le filtrage client, couvrant la vérification des antécédents, le filtrage des sanctions et des personnes politiquement exposées (OFAC, ONU, UK HMT, UE sanctions et PEP screening) ainsi que les liaisons gouvernementales. Cette allocation est strictement non remboursable dès le début du contrôle. Si un candidat ne passe pas le contrôle, le solde complet au-delà de 1 000 $ est remboursé dans les 14 jours ouvrés.",
-      statutoryRef: 'Protocole Obligatoire KYC & Filtrage des Sanctions OFAC, ONU, UK HMT, UE et PEP'
+      question: 'Comment fonctionne le filtrage des sanctions et le contrôle KYC pour les délégués ?',
+      answer: "Chaque forfait d'expédition inclut la vérification des antécédents, le filtrage des sanctions et des personnes politiquement exposées (OFAC, ONU, UK HMT, UE sanctions et PEP screening) ainsi que les liaisons gouvernementales, sans aucun dépôt KYC séparé — vous choisissez et payez uniquement le forfait ou service souhaité.",
+      statutoryRef: 'Protocole KYC & Filtrage des Sanctions OFAC, ONU, UK HMT, UE et PEP'
     },
     {
       id: 'faq-tl-2',
@@ -2686,16 +2670,8 @@ export function getLocalizedFaqs(lang: Language, defaultFaqs: FaqItem[]): FaqIte
       category: 'travel_logistics',
       categoryLabel: 'Logistique & Sécurité',
       question: 'Quels modes de paiement sont acceptés pour les forfaits d’expédition et les vérifications documentaires ?',
-      answer: "Tous les règlements financiers — y compris les forfaits d'expédition réglés intégralement en un seul paiement (8 000 / 15 000 / 45 000 USD, TVA ougandaise incluse) et la Vérification Forensique de Documents en 24–72h (2 500 USD, TVA incluse) — sont traités strictement via notre passerelle de paiement en ligne sécurisée ou par virement bancaire institutionnel vérifié.",
+      answer: "Tous les règlements financiers — y compris les forfaits d'expédition réglés intégralement en un seul paiement (8 000 / 15 000 / 25 000 USD par personne, TVA ougandaise incluse) et la Vérification Forensique de Documents en 24–72h (2 500 USD, TVA incluse) — sont traités strictement via notre passerelle de paiement en ligne sécurisée ou par virement bancaire institutionnel vérifié.",
       statutoryRef: 'Conformité LCB-FT de la Financial Intelligence Authority (FIA)'
-    },
-    {
-      id: 'faq-tl-4',
-      category: 'travel_logistics',
-      categoryLabel: 'Logistique & Sécurité',
-      question: 'Comment les membres inscrits accèdent-ils à la ligne WhatsApp Business (WABA) et au Conseiller IA ?',
-      answer: "Une fois inscrit (avec votre ID d'inscription ou votre e-mail professionnel), vous débloquez un accès immédiat à notre conciergerie WhatsApp Business API (WABA) et à notre bureau de conseil IA Gemini multi-tours, permettant d'envoyer des dépêches chiffrées directement à Mugisa Solomon Byakutaaga, Kamanzai Kaijuka, Ronnie Mugarura ou à l'Officier 1.",
-      statutoryRef: 'Canal de Communication Chiffré WABA pour Délégués Inscrits'
     }
   ];
 }

@@ -1,0 +1,377 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Global Helper Functions
+    // ===============================================================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.size() >= 3 && email.size() <= 254 &&
+        email.matches('^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email == "mugisolo@gmail.com" && request.auth.token.email_verified == true) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    function isStaffOrAdmin() {
+      return isAdmin() || (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'staff'
+      );
+    }
+
+    // ===============================================================
+    // Domain Validators (Users, UX/UI Preferences, UI Config & CMS)
+    // ===============================================================
+    function isValidUserProfile(data, userId) {
+      return hasRequiredFields(['uid', 'email', 'role', 'createdAt']) &&
+        hasOnlyAllowedFields(['uid', 'email', 'displayName', 'role', 'createdAt', 'updatedAt']) &&
+        data.uid == userId &&
+        isValidEmail(data.email) &&
+        data.role in ['client', 'staff', 'admin'] &&
+        data.createdAt is string && data.createdAt.size() >= 8 && data.createdAt.size() <= 64 &&
+        (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 120)) &&
+        (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    function isValidUxPreferences(data, userId) {
+      return hasRequiredFields(['userId', 'language', 'currency', 'updatedAt']) &&
+        hasOnlyAllowedFields([
+          'userId', 'language', 'currency', 'defaultPage',
+          'compactMode', 'rtlEnabled', 'geoAutoDetect', 'updatedAt'
+        ]) &&
+        data.userId == userId &&
+        data.language in ['EN', 'FR', 'AR', 'ZH', 'RU'] &&
+        data.currency in ['USD', 'EUR', 'GBP', 'AED', 'CNY', 'UGX'] &&
+        data.updatedAt is string && data.updatedAt.size() >= 8 && data.updatedAt.size() <= 64 &&
+        (!('defaultPage' in data) || (data.defaultPage is string && data.defaultPage.size() <= 128)) &&
+        (!('compactMode' in data) || data.compactMode is bool) &&
+        (!('rtlEnabled' in data) || data.rtlEnabled is bool) &&
+        (!('geoAutoDetect' in data) || data.geoAutoDetect is bool);
+    }
+
+    function isValidUiConfig(data, configId) {
+      return hasRequiredFields([
+          'id', 'heroBannerVisible', 'goldTickerEnabled',
+          'wabaConciergeEnabled', 'scamDiagnosticExpanded',
+          'defaultThemeAccent', 'updatedAt'
+        ]) &&
+        hasOnlyAllowedFields([
+          'id', 'heroBannerVisible', 'goldTickerEnabled',
+          'wabaConciergeEnabled', 'scamDiagnosticExpanded',
+          'defaultThemeAccent', 'updatedBy', 'updatedAt'
+        ]) &&
+        data.id == configId &&
+        data.heroBannerVisible is bool &&
+        data.goldTickerEnabled is bool &&
+        data.wabaConciergeEnabled is bool &&
+        data.scamDiagnosticExpanded is bool &&
+        data.defaultThemeAccent in ['gold', 'emerald', 'slate'] &&
+        data.updatedAt is string && data.updatedAt.size() >= 8 && data.updatedAt.size() <= 64 &&
+        (!('updatedBy' in data) || (data.updatedBy is string && data.updatedBy.size() <= 128));
+    }
+
+    function isValidAboutContent(data, docId) {
+      return hasRequiredFields([
+          'id', 'headline', 'subheadline', 'missionStatement',
+          'statutoryMandate', 'headquarters', 'overviewParagraphs'
+        ]) &&
+        hasOnlyAllowedFields([
+          'id', 'headline', 'subheadline', 'missionStatement',
+          'statutoryMandate', 'headquarters', 'establishedYear', 'overviewParagraphs', 'updatedAt'
+        ]) &&
+        data.id == docId &&
+        data.headline is string && data.headline.size() >= 3 && data.headline.size() <= 300 &&
+        data.subheadline is string && data.subheadline.size() >= 3 && data.subheadline.size() <= 600 &&
+        data.missionStatement is string && data.missionStatement.size() >= 5 && data.missionStatement.size() <= 2000 &&
+        data.statutoryMandate is string && data.statutoryMandate.size() >= 5 && data.statutoryMandate.size() <= 2000 &&
+        data.headquarters is string && data.headquarters.size() >= 2 && data.headquarters.size() <= 300 &&
+        data.overviewParagraphs is list && data.overviewParagraphs.size() >= 1 && data.overviewParagraphs.size() <= 20 &&
+        (!('establishedYear' in data) || (data.establishedYear is string && data.establishedYear.size() <= 16)) &&
+        (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    function isValidBoardMember(data, memberId) {
+      return hasRequiredFields(['id', 'name', 'role', 'designation', 'specialty', 'bio']) &&
+        hasOnlyAllowedFields([
+          'id', 'name', 'role', 'designation', 'specialty',
+          'bio', 'credentials', 'imageUrl', 'linkedinUrl'
+        ]) &&
+        data.id == memberId &&
+        data.name is string && data.name.size() >= 2 && data.name.size() <= 150 &&
+        data.role is string && data.role.size() >= 2 && data.role.size() <= 150 &&
+        data.designation in ['Board of Directors', 'Executive Directorate', 'Advisory Council'] &&
+        data.specialty is string && data.specialty.size() <= 250 &&
+        data.bio is string && data.bio.size() >= 5 && data.bio.size() <= 5000 &&
+        (!('credentials' in data) || (data.credentials is list && data.credentials.size() <= 25)) &&
+        (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() <= 1048576)) &&
+        (!('linkedinUrl' in data) || (data.linkedinUrl is string && data.linkedinUrl.size() <= 500));
+    }
+
+    function isValidRegistration(data) {
+      return hasRequiredFields([
+          'id', 'userId', 'fullName', 'companyName', 'email',
+          'requestedTier', 'delegatesCount', 'kycPaymentStatus', 'status', 'registeredAt'
+        ]) &&
+        hasOnlyAllowedFields([
+          'id', 'userId', 'fullName', 'companyName', 'executiveTitle', 'country',
+          'email', 'phone', 'requestedTier', 'delegatesCount', 'cohortDate',
+          'primaryObjective', 'activeProposalDetails', 'nonTransactionAgreed',
+          'kycAcknowledged', 'kycPaymentStatus', 'status', 'assignedStaff',
+          'internalNotes', 'registeredAt', 'passportVerified', 'sanctionsPepClear',
+          'dgsmClearance', 'digitalSignature'
+        ]) &&
+        data.id is string && data.id.size() >= 3 && data.id.size() <= 64 &&
+        data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+        data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 150 &&
+        data.companyName is string && data.companyName.size() >= 1 && data.companyName.size() <= 200 &&
+        isValidEmail(data.email) &&
+        data.requestedTier in ['academic', 'trader', 'sovereign'] &&
+        data.delegatesCount is number && data.delegatesCount >= 1 && data.delegatesCount <= 50 &&
+        data.kycPaymentStatus in ['paid', 'pending', 'waived'] &&
+        data.status in ['pending_kyc', 'under_review', 'approved', 'flagged', 'rejected'] &&
+        data.registeredAt is string && data.registeredAt.size() >= 8 && data.registeredAt.size() <= 64;
+    }
+
+    function isValidDocumentVerification(data) {
+      return hasRequiredFields([
+          'id', 'userId', 'clientName', 'email', 'documentType',
+          'feeUsd', 'paymentStatus', 'status', 'submittedAt'
+        ]) &&
+        hasOnlyAllowedFields([
+          'id', 'userId', 'clientName', 'companyName', 'email', 'phone',
+          'documentType', 'claimedSeller', 'claimedQuantityKg', 'claimedDiscountPercent',
+          'documentTextOrNotes', 'fileName', 'feeUsd', 'paymentStatus', 'paymentRef',
+          'assignedOfficer', 'status', 'submittedAt', 'slaDeadline', 'aiAnalysis',
+          'staffFollowUpNotes', 'digitalSignature'
+        ]) &&
+        data.id is string && data.id.size() >= 3 && data.id.size() <= 64 &&
+        data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+        data.clientName is string && data.clientName.size() >= 1 && data.clientName.size() <= 150 &&
+        isValidEmail(data.email) &&
+        data.documentType is string && data.documentType.size() >= 1 && data.documentType.size() <= 150 &&
+        data.feeUsd is number && data.feeUsd == 2500 &&
+        data.paymentStatus in ['paid', 'pending'] &&
+        data.status in ['analyzing', 'ai_analyzed', 'assigned_to_staff_1', 'in_field_verification', 'dispatched_to_client'] &&
+        data.submittedAt is string && data.submittedAt.size() >= 8 && data.submittedAt.size() <= 64;
+    }
+
+    function isValidPost(data) {
+      return hasRequiredFields(['id', 'title', 'category', 'summary', 'body', 'author', 'date', 'published']) &&
+        hasOnlyAllowedFields(['id', 'title', 'category', 'summary', 'body', 'author', 'authorRole', 'date', 'published', 'imageUrl', 'readTime', 'tags']) &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 100 &&
+        data.title is string && data.title.size() >= 3 && data.title.size() <= 300 &&
+        data.category in ['Field Dispatch', 'Regulatory Alert', 'Scam Case Study', 'Intelligence Briefing', 'Market Update'] &&
+        data.summary is string && data.summary.size() >= 3 && data.summary.size() <= 1000 &&
+        data.body is string && data.body.size() >= 10 && data.body.size() <= 25000 &&
+        data.author is string && data.author.size() >= 2 && data.author.size() <= 150 &&
+        data.date is string && data.date.size() >= 8 && data.date.size() <= 64 &&
+        data.published is bool;
+    }
+
+    function isValidPhoto(data) {
+      return hasRequiredFields(['id', 'title', 'imageUrl', 'category', 'dateAdded']) &&
+        hasOnlyAllowedFields(['id', 'title', 'caption', 'imageUrl', 'category', 'dateAdded']) &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 100 &&
+        data.title is string && data.title.size() >= 2 && data.title.size() <= 200 &&
+        data.imageUrl is string && data.imageUrl.size() >= 5 && data.imageUrl.size() <= 1048576 &&
+        data.category in ['Field Operations', 'Assay Lab', 'VIP Transport', 'Ministry & Customs', 'Refinery', 'Concessions'] &&
+        data.dateAdded is string && data.dateAdded.size() >= 8 && data.dateAdded.size() <= 64;
+    }
+
+    function isValidFieldLog(data) {
+      return hasRequiredFields(['id', 'staffName', 'location', 'logDate', 'title', 'observations', 'riskAssessment']) &&
+        hasOnlyAllowedFields(['id', 'userId', 'staffName', 'location', 'logDate', 'title', 'observations', 'riskAssessment', 'testResults']) &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 64 &&
+        data.staffName is string && data.staffName.size() >= 2 && data.staffName.size() <= 150 &&
+        data.location is string && data.location.size() >= 2 && data.location.size() <= 200 &&
+        data.logDate is string && data.logDate.size() >= 8 && data.logDate.size() <= 64 &&
+        data.title is string && data.title.size() >= 2 && data.title.size() <= 200 &&
+        data.observations is string && data.observations.size() >= 5 && data.observations.size() <= 5000 &&
+        data.riskAssessment in ['Low', 'Medium', 'High', 'Severe'];
+    }
+
+    function isValidPayment(data) {
+      return hasRequiredFields(['id', 'userId', 'reference', 'customerName', 'email', 'amount', 'currency', 'type', 'status', 'date']) &&
+        hasOnlyAllowedFields(['id', 'userId', 'reference', 'customerName', 'email', 'amount', 'currency', 'type', 'status', 'cardBrand', 'date', 'tier']) &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 64 &&
+        data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+        data.reference is string && data.reference.size() >= 3 && data.reference.size() <= 100 &&
+        data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 150 &&
+        isValidEmail(data.email) &&
+        data.amount is number && data.amount > 0 && data.amount <= 1000000 &&
+        data.currency is string && data.currency.size() == 3 &&
+        data.type in ['full_payment', 'full', 'doc_verification', 'custom'] &&
+        data.status in ['Completed', 'Pending', 'Failed'] &&
+        data.date is string && data.date.size() >= 8 && data.date.size() <= 64;
+    }
+
+    function isValidAuditLog(data) {
+      return hasRequiredFields(['id', 'timestamp', 'actorEmail', 'actorRole', 'category', 'action', 'targetId', 'details']) &&
+        hasOnlyAllowedFields(['id', 'timestamp', 'actorEmail', 'actorRole', 'category', 'action', 'targetId', 'details', 'userId']) &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 64 &&
+        data.timestamp is string && data.timestamp.size() >= 8 && data.timestamp.size() <= 64 &&
+        isValidEmail(data.actorEmail) &&
+        data.actorRole in ['admin', 'staff'] &&
+        data.category in ['content_update', 'user_role_change', 'document_approval', 'kyc_clearance', 'ux_config', 'data_export'] &&
+        data.action is string && data.action.size() >= 2 && data.action.size() <= 200 &&
+        data.targetId is string && data.targetId.size() >= 1 && data.targetId.size() <= 128 &&
+        data.details is string && data.details.size() >= 2 && data.details.size() <= 2000;
+    }
+
+    // ===============================================================
+    // Collection Security Rules
+    // ===============================================================
+    match /users/{userId} {
+      allow get, list: if isOwner(userId) || isAdmin();
+      allow create: if isValidId(userId) &&
+        isValidUserProfile(request.resource.data, userId) &&
+        ((isOwner(userId) && request.resource.data.role == 'client') || isAdmin());
+      allow update: if isValidId(userId) &&
+        isValidUserProfile(request.resource.data, userId) &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        ((isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // UX/UI Per-User Interface Preferences (Language, Currency, RTL, Compact Density)
+    match /uxPreferences/{userId} {
+      allow get, list: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) &&
+        isValidId(userId) &&
+        isValidUxPreferences(request.resource.data, userId);
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    // Global UX/UI Configuration & Module Visibility Rules
+    match /uiConfig/{configId} {
+      allow get, list: if isSignedIn();
+      allow create, update: if isAdmin() &&
+        isValidId(configId) &&
+        isValidUiConfig(request.resource.data, configId);
+      allow delete: if isAdmin();
+    }
+
+    // About Us Institutional Copy & UX Content
+    match /aboutContent/{docId} {
+      allow get, list: if isSignedIn();
+      allow create, update: if isAdmin() &&
+        isValidId(docId) &&
+        isValidAboutContent(request.resource.data, docId);
+      allow delete: if isAdmin();
+    }
+
+    // Board of Directors UX Profile Cards
+    match /boardMembers/{memberId} {
+      allow get, list: if isSignedIn();
+      allow create, update: if isAdmin() &&
+        isValidId(memberId) &&
+        isValidBoardMember(request.resource.data, memberId);
+      allow delete: if isAdmin();
+    }
+
+    match /registrations/{registrationId} {
+      allow get, list: if isSignedIn() && (resource.data.userId == request.auth.uid || isStaffOrAdmin());
+      allow create: if isSignedIn() &&
+        isValidId(registrationId) &&
+        isValidRegistration(request.resource.data) &&
+        request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() &&
+        isValidId(registrationId) &&
+        isValidRegistration(request.resource.data) &&
+        request.resource.data.userId == resource.data.userId &&
+        request.resource.data.registeredAt == resource.data.registeredAt &&
+        (
+          (resource.data.userId == request.auth.uid && request.resource.data.status == resource.data.status) ||
+          isStaffOrAdmin()
+        );
+      allow delete: if isAdmin();
+    }
+
+    match /documentVerifications/{verificationId} {
+      allow get, list: if isSignedIn() && (resource.data.userId == request.auth.uid || isStaffOrAdmin());
+      allow create: if isSignedIn() &&
+        isValidId(verificationId) &&
+        isValidDocumentVerification(request.resource.data) &&
+        request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() &&
+        isValidId(verificationId) &&
+        isValidDocumentVerification(request.resource.data) &&
+        request.resource.data.userId == resource.data.userId &&
+        request.resource.data.submittedAt == resource.data.submittedAt &&
+        (
+          (resource.data.userId == request.auth.uid && request.resource.data.status == resource.data.status) ||
+          isStaffOrAdmin()
+        );
+      allow delete: if isAdmin();
+    }
+
+    match /posts/{postId} {
+      allow get, list: if isSignedIn() && (resource.data.published == true || isStaffOrAdmin());
+      allow create, update: if isAdmin() && isValidId(postId) && isValidPost(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /photos/{photoId} {
+      allow get, list: if isSignedIn();
+      allow create, update: if isAdmin() && isValidId(photoId) && isValidPhoto(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /fieldLogs/{logId} {
+      allow get, list: if isStaffOrAdmin();
+      allow create, update: if isStaffOrAdmin() && isValidId(logId) && isValidFieldLog(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /payments/{paymentId} {
+      allow get, list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() &&
+        isValidId(paymentId) &&
+        isValidPayment(request.resource.data) &&
+        request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin() &&
+        isValidId(paymentId) &&
+        isValidPayment(request.resource.data) &&
+        request.resource.data.userId == resource.data.userId;
+      allow delete: if isAdmin();
+    }
+
+    // Immutable Administrative Audit Logs (Read-only after creation; no update or delete allowed)
+    match /auditLogs/{logId} {
+      allow get, list: if isStaffOrAdmin();
+      allow create: if isStaffOrAdmin() && isValidId(logId) && isValidAuditLog(request.resource.data);
+      allow update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

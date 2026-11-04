@@ -22,11 +22,13 @@ interface StaffPortalProps {
   documentVerifications: DocumentVerification[];
   fieldLogs: FieldLog[];
   staff: StaffMember[];
+  canAccessAdmin?: boolean;
   onUpdateRegistration: (id: string, updates: Partial<ExpeditionRegistration>) => void;
   onUpdateDocumentVerification: (id: string, updates: Partial<DocumentVerification>) => void;
   onAddFieldLog: (log: Omit<FieldLog, 'id' | 'logDate'>) => void;
   onClose: () => void;
   onSwitchToAdmin: () => void;
+  onSwitchToClientPortal?: () => void;
 }
 
 export const StaffPortal: React.FC<StaffPortalProps> = ({
@@ -34,14 +36,35 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({
   documentVerifications,
   fieldLogs,
   staff,
+  canAccessAdmin = false,
   onUpdateRegistration,
   onUpdateDocumentVerification,
   onAddFieldLog,
   onClose,
-  onSwitchToAdmin
+  onSwitchToAdmin,
+  onSwitchToClientPortal
 }) => {
   const [activeTab, setActiveTab] = useState<'doc-verifications' | 'kyc-queue' | 'field-logs' | 'manifest'>('doc-verifications');
   const [activeStaffMember, setActiveStaffMember] = useState<string>(staff[0]?.name || 'Staff Officer 1: Lt. Col. (Rtd) Arthur Mwesigye');
+  const [onlyMyAssigned, setOnlyMyAssigned] = useState<boolean>(true);
+
+  const staffScopedVerifications = onlyMyAssigned
+    ? documentVerifications.filter(
+        (d) =>
+          !d.assignedOfficer ||
+          d.assignedOfficer.toLowerCase().includes(activeStaffMember.split(':')[0].toLowerCase()) ||
+          activeStaffMember.toLowerCase().includes(d.assignedOfficer.split(':')[0].toLowerCase())
+      )
+    : documentVerifications;
+
+  const staffScopedRegistrations = onlyMyAssigned
+    ? registrations.filter(
+        (r) =>
+          !r.assignedStaff ||
+          r.assignedStaff.toLowerCase().includes(activeStaffMember.split(':')[0].toLowerCase()) ||
+          activeStaffMember.toLowerCase().includes(r.assignedStaff.split(':')[0].toLowerCase())
+      )
+    : registrations;
   
   // Field Log Form State
   const [logTitle, setLogTitle] = useState('');
@@ -83,19 +106,19 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({
                 UGANDA GOLD EXPEDITION
               </span>
               <span className="text-[10px] font-mono-data bg-emerald-950/60 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded font-bold uppercase">
-                Staff Due Diligence Portal
+                ROLE: STAFF OFFICER 1 · ASSIGNED DOSSIERS &amp; KYC
               </span>
             </div>
             <p className="text-[11px] text-slate-400">
-              Staff Officer 1 AI Document Verification Terminal & Sovereign KYC Desk
+              Uganda Gold Expeditions, P.O Box 122234, Bugonga, Entebbe, Uganda · URA TIN 1019482710
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Active Staff Picker */}
+        <div className="flex items-center gap-2.5">
+          {/* Active Staff Picker & Assignment Filter */}
           <div className="hidden md:flex items-center gap-1.5 bg-[#0B0F17] px-2.5 py-1 rounded border border-slate-800 text-xs">
-            <span className="text-slate-500">Active Officer:</span>
+            <span className="text-slate-500">Officer Identity:</span>
             <select
               value={activeStaffMember}
               onChange={(e) => setActiveStaffMember(e.target.value)}
@@ -110,12 +133,35 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({
           </div>
 
           <button
-            onClick={onSwitchToAdmin}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white bg-[#182232] border border-slate-700 rounded transition-colors"
+            type="button"
+            onClick={() => setOnlyMyAssigned((prev) => !prev)}
+            className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-mono-data rounded border transition-colors ${
+              onlyMyAssigned
+                ? 'bg-emerald-950/70 text-emerald-300 border-emerald-600 font-bold'
+                : 'bg-[#0B0F17] text-slate-400 border-slate-800 hover:text-white'
+            }`}
           >
-            <Lock className="w-3.5 h-3.5 text-[#D4AF37]" />
-            <span>Switch to Admin Panel</span>
+            <span>{onlyMyAssigned ? 'Showing: My Assigned Files' : 'Showing: Directorate Queue'}</span>
           </button>
+
+          {onSwitchToClientPortal && (
+            <button
+              onClick={onSwitchToClientPortal}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-300 hover:text-white bg-[#182232] border border-slate-700 rounded transition-colors"
+            >
+              <span>Client Portal View</span>
+            </button>
+          )}
+
+          {canAccessAdmin && (
+            <button
+              onClick={onSwitchToAdmin}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#0B0F17] font-bold bg-[#D4AF37] hover:bg-[#FEF3C7] rounded transition-colors"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Admin Console</span>
+            </button>
+          )}
 
           <button
             onClick={onClose}
@@ -138,7 +184,7 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({
           }`}
         >
           <FileSearch className="w-4 h-4" />
-          <span>Staff Officer 1: AI Document Audits ($2,500) ({documentVerifications.length})</span>
+          <span>Assigned Document Audits ($2,500) ({staffScopedVerifications.length})</span>
         </button>
 
         <button
@@ -150,7 +196,7 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({
           }`}
         >
           <ShieldCheck className="w-4 h-4" />
-          <span>Assigned KYC Queue ({registrations.length})</span>
+          <span>Assigned KYC Queue ({staffScopedRegistrations.length})</span>
         </button>
 
         <button
@@ -206,7 +252,7 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({
             </div>
 
             <div className="space-y-5">
-              {documentVerifications.map((doc) => (
+              {staffScopedVerifications.map((doc) => (
                 <div
                   key={doc.id}
                   className="rounded-xl bg-[#111722] border border-[#D4AF37]/40 p-5 sm:p-6 space-y-4 shadow-xl"
@@ -353,12 +399,12 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({
                 Assigned KYC Dossiers & Government Protocol Audits
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Execute OFAC, UN, UK HMT, EU sanctions and PEP screening, corporate trade license authentication, and DGSM mineral clearance. Every package includes the mandatory <strong className="text-[#D4AF37]">USD 1,000 KYC & Client Vetting Allocation</strong> (strictly non-refundable once vetting commences).
+                Execute OFAC, UN, UK HMT, EU sanctions and PEP screening, corporate trade license authentication, and DGSM mineral clearance included with each delegate&apos;s selected package.
               </p>
             </div>
 
             <div className="space-y-4">
-              {registrations.map((reg) => (
+              {staffScopedRegistrations.map((reg) => (
                 <div
                   key={reg.id}
                   className="rounded-xl bg-[#111722] border border-slate-800 p-5 space-y-4 shadow-lg"
@@ -543,7 +589,7 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({
                 <div className="p-3 rounded bg-[#0B0F17] border border-slate-800 flex items-center justify-between">
                   <div>
                     <span className="text-white font-bold">Alexander Vance (Apex Precious Metals DMCC)</span>
-                    <span className="text-slate-400 block text-[11px]">Sovereign Executive · Diplomatic VIP (USD 45,000) · Entebbe VIP Fast-Track & B6 Motorcade · 2 PAX</span>
+                    <span className="text-slate-400 block text-[11px]">Sovereign Executive · Diplomatic VIP (USD 25,000 per person) · Entebbe VIP Fast-Track & B6 Motorcade · 2 PAX</span>
                   </div>
                   <span className="text-emerald-400 font-mono-data">Cleared by DGSM · Paid in Full</span>
                 </div>

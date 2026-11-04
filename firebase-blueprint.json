@@ -1,0 +1,330 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user account and institutional role profile",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "format": "email", "description": "User email address" },
+        "displayName": { "type": "string", "description": "Full display name" },
+        "role": { "type": "string", "enum": ["client", "staff", "admin"], "description": "Institutional access role" },
+        "createdAt": { "type": "string", "description": "ISO creation timestamp" },
+        "updatedAt": { "type": "string", "description": "ISO update timestamp" }
+      },
+      "required": ["uid", "email", "role", "createdAt"]
+    },
+    "UxPreferences": {
+      "title": "UxPreferences",
+      "description": "Per-user UX/UI interface preferences, localization, currency, and layout settings",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID" },
+        "language": { "type": "string", "enum": ["EN", "FR", "AR", "ZH", "RU"], "description": "Selected UI language" },
+        "currency": { "type": "string", "enum": ["USD", "EUR", "GBP", "AED", "CNY", "UGX"], "description": "Selected settlement & display currency" },
+        "defaultPage": { "type": "string", "maxLength": 128, "description": "Preferred landing route path" },
+        "compactMode": { "type": "boolean", "description": "Compact data-table density toggle" },
+        "rtlEnabled": { "type": "boolean", "description": "Right-to-Left layout direction state" },
+        "geoAutoDetect": { "type": "boolean", "description": "Automatic geolocation currency/language prompt toggle" },
+        "updatedAt": { "type": "string", "description": "ISO timestamp of last UX preference sync" }
+      },
+      "required": ["userId", "language", "currency", "updatedAt"]
+    },
+    "UiConfig": {
+      "title": "UiConfig",
+      "description": "Global UX/UI interface configuration and interactive module visibility rules managed by Admin",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Configuration document ID (e.g. global)" },
+        "heroBannerVisible": { "type": "boolean", "description": "Show sovereign hero banner and dispatch bar" },
+        "goldTickerEnabled": { "type": "boolean", "description": "Enable live multi-currency gold price ticker in UX" },
+        "wabaConciergeEnabled": { "type": "boolean", "description": "Enable floating AI & WhatsApp Business (WABA) concierge widget" },
+        "scamDiagnosticExpanded": { "type": "boolean", "description": "Default expanded state for Scam Immunity Diagnostic matrix" },
+        "defaultThemeAccent": { "type": "string", "enum": ["gold", "emerald", "slate"], "description": "Primary institutional UI accent token" },
+        "updatedBy": { "type": "string", "description": "Admin email or UID who last updated UX config" },
+        "updatedAt": { "type": "string", "description": "ISO update timestamp" }
+      },
+      "required": [
+        "id",
+        "heroBannerVisible",
+        "goldTickerEnabled",
+        "wabaConciergeEnabled",
+        "scamDiagnosticExpanded",
+        "defaultThemeAccent",
+        "updatedAt"
+      ]
+    },
+    "AboutContentDoc": {
+      "title": "AboutContentDoc",
+      "description": "UX/UI copy and institutional mandate displayed on the About Us page",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Document ID (e.g. main)" },
+        "headline": { "type": "string", "description": "Primary About Us headline" },
+        "subheadline": { "type": "string", "description": "Supporting subheadline" },
+        "missionStatement": { "type": "string", "description": "Sovereign mission statement" },
+        "statutoryMandate": { "type": "string", "description": "Statutory alignment notice under Uganda Mining Act 2022" },
+        "headquarters": { "type": "string", "description": "Operational secretariats and headquarters" },
+        "establishedYear": { "type": "string", "description": "Year established" },
+        "overviewParagraphs": { "type": "array", "items": { "type": "string" }, "description": "Institutional overview paragraphs" },
+        "updatedAt": { "type": "string", "description": "ISO update timestamp" }
+      },
+      "required": ["id", "headline", "subheadline", "missionStatement", "statutoryMandate", "headquarters", "overviewParagraphs"]
+    },
+    "BoardMemberDoc": {
+      "title": "BoardMemberDoc",
+      "description": "Board of Directors and Executive Leadership profile card for the About Us UX",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Director profile ID" },
+        "name": { "type": "string", "description": "Full name" },
+        "role": { "type": "string", "description": "Executive title" },
+        "designation": { "type": "string", "enum": ["Board of Directors", "Executive Directorate", "Advisory Council"] },
+        "specialty": { "type": "string", "description": "Forensic or legal specialty" },
+        "bio": { "type": "string", "description": "Executive biography" },
+        "credentials": { "type": "array", "items": { "type": "string" } },
+        "imageUrl": { "type": "string", "description": "Portrait image URL" },
+        "linkedinUrl": { "type": "string", "description": "LinkedIn profile URL" }
+      },
+      "required": ["id", "name", "role", "designation", "specialty", "bio"]
+    },
+    "ExpeditionRegistration": {
+      "title": "ExpeditionRegistration",
+      "description": "7-Day Uganda Gold Expedition delegate registration and KYC dossier",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Registration reference ID" },
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID" },
+        "fullName": { "type": "string", "description": "Delegate full name" },
+        "companyName": { "type": "string", "description": "Corporate entity name" },
+        "executiveTitle": { "type": "string", "description": "Executive title" },
+        "country": { "type": "string", "description": "Jurisdiction country" },
+        "email": { "type": "string", "format": "email", "description": "Delegate email" },
+        "phone": { "type": "string", "description": "Contact phone number" },
+        "requestedTier": { "type": "string", "enum": ["academic", "trader", "sovereign"], "description": "Selected expedition tier" },
+        "delegatesCount": { "type": "number", "description": "Number of paying delegates" },
+        "cohortDate": { "type": "string", "description": "Target cohort dates" },
+        "primaryObjective": { "type": "string", "description": "Primary due diligence objective" },
+        "activeProposalDetails": { "type": "string", "description": "Active proposal notes for audit" },
+        "nonTransactionAgreed": { "type": "boolean", "description": "Accepted Non-Transaction Charter" },
+        "kycAcknowledged": { "type": "boolean", "description": "Acknowledged statutory KYC screening inclusion" },
+        "kycPaymentStatus": { "type": "string", "enum": ["paid", "pending", "waived"], "description": "Full package payment status" },
+        "status": {
+          "type": "string",
+          "enum": ["pending_kyc", "under_review", "approved", "flagged", "rejected"],
+          "description": "Vetting workflow status"
+        },
+        "assignedStaff": { "type": "string", "description": "Assigned vetting officer" },
+        "internalNotes": { "type": "string", "description": "Staff vetting notes" },
+        "registeredAt": { "type": "string", "description": "Registration date" },
+        "passportVerified": { "type": "boolean", "description": "Passport verified flag" },
+        "sanctionsPepClear": { "type": "boolean", "description": "OFAC, UN, UK HMT, EU sanctions & PEP clear flag" },
+        "dgsmClearance": { "type": "boolean", "description": "DGSM security clearance flag" },
+        "digitalSignature": { "type": "object", "description": "Executed digital charter signature" }
+      },
+      "required": [
+        "id",
+        "userId",
+        "fullName",
+        "companyName",
+        "email",
+        "requestedTier",
+        "delegatesCount",
+        "kycPaymentStatus",
+        "status",
+        "registeredAt"
+      ]
+    },
+    "DocumentVerification": {
+      "title": "DocumentVerification",
+      "description": "24-72 Hour Forensic Document Verification dossier ($2,500 USD, VAT Incl.)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Verification reference ID" },
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID" },
+        "clientName": { "type": "string", "description": "Client principal name" },
+        "companyName": { "type": "string", "description": "Client corporate entity" },
+        "email": { "type": "string", "format": "email", "description": "Client email" },
+        "phone": { "type": "string", "description": "Client phone" },
+        "documentType": { "type": "string", "description": "Audited document type (FCO, SPA, DGSM License, etc.)" },
+        "claimedSeller": { "type": "string", "description": "Claimed seller entity" },
+        "claimedQuantityKg": { "type": "string", "description": "Claimed bullion quantity" },
+        "claimedDiscountPercent": { "type": "string", "description": "Claimed LBMA discount" },
+        "documentTextOrNotes": { "type": "string", "description": "Submitted clauses or notes" },
+        "fileName": { "type": "string", "description": "Uploaded file name" },
+        "feeUsd": { "type": "number", "description": "Verification fee in USD (2500)" },
+        "paymentStatus": { "type": "string", "enum": ["paid", "pending"], "description": "Settlement status" },
+        "paymentRef": { "type": "string", "description": "Payment reference code" },
+        "assignedOfficer": { "type": "string", "description": "Assigned forensic officer" },
+        "status": {
+          "type": "string",
+          "enum": ["analyzing", "ai_analyzed", "assigned_to_staff_1", "in_field_verification", "dispatched_to_client"],
+          "description": "Verification workflow stage"
+        },
+        "submittedAt": { "type": "string", "description": "UTC submission timestamp" },
+        "slaDeadline": { "type": "string", "description": "24-72h SLA deadline" },
+        "aiAnalysis": { "type": "object", "description": "Gemini forensic risk analysis payload" },
+        "staffFollowUpNotes": { "type": "string", "description": "Staff Officer 1 registry notes" },
+        "digitalSignature": { "type": "object", "description": "Client digital counter-signature" }
+      },
+      "required": [
+        "id",
+        "userId",
+        "clientName",
+        "email",
+        "documentType",
+        "feeUsd",
+        "paymentStatus",
+        "status",
+        "submittedAt"
+      ]
+    },
+    "ContentPost": {
+      "title": "ContentPost",
+      "description": "Forensic intelligence dispatch or regulatory alert article",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Post ID" },
+        "title": { "type": "string", "description": "Article headline" },
+        "category": {
+          "type": "string",
+          "enum": ["Field Dispatch", "Regulatory Alert", "Scam Case Study", "Intelligence Briefing", "Market Update"]
+        },
+        "summary": { "type": "string", "description": "Executive summary" },
+        "body": { "type": "string", "description": "Full article body" },
+        "author": { "type": "string", "description": "Author name" },
+        "authorRole": { "type": "string", "description": "Author board designation" },
+        "date": { "type": "string", "description": "Publication date" },
+        "published": { "type": "boolean", "description": "Public visibility flag" },
+        "imageUrl": { "type": "string", "description": "Featured image URL" },
+        "readTime": { "type": "string", "description": "Estimated read time" },
+        "tags": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["id", "title", "category", "summary", "body", "author", "date", "published"]
+    },
+    "PhotoItem": {
+      "title": "PhotoItem",
+      "description": "Verified field operation or laboratory photograph",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Photo ID" },
+        "title": { "type": "string", "description": "Photo title" },
+        "caption": { "type": "string", "description": "Forensic caption" },
+        "imageUrl": { "type": "string", "description": "Asset URL" },
+        "category": {
+          "type": "string",
+          "enum": ["Field Operations", "Assay Lab", "VIP Transport", "Ministry & Customs", "Refinery", "Concessions"]
+        },
+        "dateAdded": { "type": "string", "description": "ISO date added" }
+      },
+      "required": ["id", "title", "imageUrl", "category", "dateAdded"]
+    },
+    "FieldLog": {
+      "title": "FieldLog",
+      "description": "Staff Officer field inspection log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Log ID" },
+        "userId": { "type": "string", "description": "Author Staff/Admin UID" },
+        "staffName": { "type": "string", "description": "Inspecting officer name" },
+        "location": { "type": "string", "description": "Mine belt or refinery location" },
+        "logDate": { "type": "string", "description": "Inspection date" },
+        "title": { "type": "string", "description": "Inspection title" },
+        "observations": { "type": "string", "description": "Field observations" },
+        "riskAssessment": { "type": "string", "enum": ["Low", "Medium", "High", "Severe"] },
+        "testResults": { "type": "string", "description": "Assay / density test summary" }
+      },
+      "required": ["id", "staffName", "location", "logDate", "title", "observations", "riskAssessment"]
+    },
+    "PaymentRecord": {
+      "title": "PaymentRecord",
+      "description": "Full package or forensic verification settlement record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Payment ID" },
+        "userId": { "type": "string", "description": "Payer Firebase Auth UID" },
+        "reference": { "type": "string", "description": "Gateway transaction reference" },
+        "customerName": { "type": "string", "description": "Customer name" },
+        "email": { "type": "string", "format": "email", "description": "Customer email" },
+        "amount": { "type": "number", "description": "Amount settled" },
+        "currency": { "type": "string", "description": "Settlement currency" },
+        "type": { "type": "string", "enum": ["full_payment", "full", "doc_verification", "custom"] },
+        "status": { "type": "string", "enum": ["Completed", "Pending", "Failed"] },
+        "cardBrand": { "type": "string", "enum": ["Online Settlement", "Visa", "Mastercard"] },
+        "date": { "type": "string", "description": "Settlement timestamp" },
+        "tier": { "type": "string", "description": "Tier or service description" }
+      },
+      "required": ["id", "userId", "reference", "customerName", "email", "amount", "currency", "type", "status", "date"]
+    },
+    "AdminAuditLog": {
+      "title": "AdminAuditLog",
+      "description": "Immutable administrative audit log recording content updates, user role changes, document approvals, KYC clearances, UX config updates, and CSV exports",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Audit log entry ID" },
+        "timestamp": { "type": "string", "description": "UTC timestamp of administrative action" },
+        "actorEmail": { "type": "string", "format": "email", "description": "Email of admin or staff officer" },
+        "actorRole": { "type": "string", "enum": ["admin", "staff"] },
+        "category": {
+          "type": "string",
+          "enum": ["content_update", "user_role_change", "document_approval", "kyc_clearance", "ux_config", "data_export"]
+        },
+        "action": { "type": "string", "description": "Short action title" },
+        "targetId": { "type": "string", "description": "Target record or entity identifier" },
+        "details": { "type": "string", "description": "Detailed summary of the administrative change" }
+      },
+      "required": ["id", "timestamp", "actorEmail", "actorRole", "category", "action", "targetId", "details"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Per-user profile and role assignments"
+    },
+    "/uxPreferences/{userId}": {
+      "schema": { "$ref": "#/entities/UxPreferences" },
+      "description": "Per-user UX/UI preferences (language, currency, RTL, compact layout) scoped strictly to owner UID"
+    },
+    "/uiConfig/{configId}": {
+      "schema": { "$ref": "#/entities/UiConfig" },
+      "description": "Global UX/UI layout and widget visibility rules (authenticated read, admin write)"
+    },
+    "/aboutContent/{docId}": {
+      "schema": { "$ref": "#/entities/AboutContentDoc" },
+      "description": "About Us UX/UI institutional copy (authenticated read, admin write)"
+    },
+    "/boardMembers/{memberId}": {
+      "schema": { "$ref": "#/entities/BoardMemberDoc" },
+      "description": "Board of Directors UX profile cards (authenticated read, admin write)"
+    },
+    "/registrations/{registrationId}": {
+      "schema": { "$ref": "#/entities/ExpeditionRegistration" },
+      "description": "Per-user expedition registrations scoped by userId and accessible to staff/admin"
+    },
+    "/documentVerifications/{verificationId}": {
+      "schema": { "$ref": "#/entities/DocumentVerification" },
+      "description": "Per-user forensic document verification dossiers scoped by userId and accessible to staff/admin"
+    },
+    "/posts/{postId}": {
+      "schema": { "$ref": "#/entities/ContentPost" },
+      "description": "Intelligence blog posts (authenticated read for published posts, admin write)"
+    },
+    "/photos/{photoId}": {
+      "schema": { "$ref": "#/entities/PhotoItem" },
+      "description": "Operational gallery photos (authenticated read, admin write)"
+    },
+    "/fieldLogs/{logId}": {
+      "schema": { "$ref": "#/entities/FieldLog" },
+      "description": "Staff field inspection logs (staff/admin read and write)"
+    },
+    "/payments/{paymentId}": {
+      "schema": { "$ref": "#/entities/PaymentRecord" },
+      "description": "Per-user payment records scoped by userId and accessible to admin"
+    },
+    "/auditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AdminAuditLog" },
+      "description": "Immutable administrative audit logs (staff/admin read and create, no update or delete)"
+    }
+  }
+}
+

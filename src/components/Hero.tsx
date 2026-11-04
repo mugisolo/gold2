@@ -7,6 +7,8 @@ import { formatCurrencyPrice } from '../data/expeditionData';
 interface HeroProps {
   currentLang: Language;
   selectedCurrency: Currency;
+  showHeroBanner?: boolean;
+  showGoldTicker?: boolean;
   onOpenBriefing: () => void;
   onViewPackages: () => void;
   onOpenCardPayment: () => void;
@@ -17,6 +19,8 @@ interface HeroProps {
 export const Hero: React.FC<HeroProps> = ({
   currentLang,
   selectedCurrency,
+  showHeroBanner = true,
+  showGoldTicker = true,
   onOpenBriefing,
   onViewPackages,
   onOpenCardPayment,
@@ -24,8 +28,9 @@ export const Hero: React.FC<HeroProps> = ({
   onOpenDocVerification
 }) => {
   const t = translations[currentLang];
-  const kycPrice = formatCurrencyPrice(1000, selectedCurrency);
   const auditPrice = formatCurrencyPrice(2500, selectedCurrency);
+  const spotLbmaKg = formatCurrencyPrice(85420, selectedCurrency);
+  const entebbeRefineryKg = formatCurrencyPrice(84150, selectedCurrency);
 
   return (
     <section className="relative min-h-[72vh] flex items-center pt-28 pb-10 overflow-hidden border-b border-slate-800/80">
@@ -43,11 +48,35 @@ export const Hero: React.FC<HeroProps> = ({
 
       {/* Main Content Container */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <div className="max-w-3xl space-y-4">
-          {/* Authority Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-[#131A26]/90 border border-[#D4AF37]/40 text-[#FEF3C7] text-xs font-medium tracking-wide">
-            <span>{t.heroBadge}</span>
+        {/* Live Multi-Currency Gold Spot Ticker (Controlled by /uiConfig/global goldTickerEnabled rule) */}
+        {showGoldTicker && (
+          <div className="mb-4 px-3.5 py-2 rounded-lg bg-[#0B0F17]/90 border border-[#D4AF37]/30 flex flex-wrap items-center justify-between gap-3 text-[11px] font-mono-data">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[#D4AF37] font-bold uppercase">
+                LBMA 999.9 Fine Reference ({selectedCurrency}):
+              </span>
+              <span className="text-white font-bold">{spotLbmaKg} / kg</span>
+            </div>
+            <div className="flex items-center gap-3 text-slate-300">
+              <span>
+                Entebbe Licensed Refinery Parity (98.5%): <strong className="text-emerald-400">{entebbeRefineryKg} / kg</strong>
+              </span>
+              <span className="hidden sm:inline text-slate-500">·</span>
+              <span className="hidden sm:inline text-rose-400">
+                Scam Threshold Alert: &gt;4% Discount = Advance-Fee Fraud
+              </span>
+            </div>
           </div>
+        )}
+
+        <div className="max-w-3xl space-y-4">
+          {/* Authority Badge (Controlled by /uiConfig/global heroBannerVisible rule) */}
+          {showHeroBanner && (
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-[#131A26]/90 border border-[#D4AF37]/40 text-[#FEF3C7] text-xs font-medium tracking-wide">
+              <span>{t.heroBadge}</span>
+            </div>
+          )}
 
           {/* Primary Sovereign Headline */}
           <h1 className="font-cinzel text-3xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1] tracking-tight">
@@ -136,20 +165,13 @@ export const Hero: React.FC<HeroProps> = ({
             </button>
           </div>
 
-          {/* Mandatory Non-Refundable KYC & Non-Transaction Notice */}
+          {/* Statutory Non-Transaction Notice */}
           <div className="pt-2 space-y-1.5">
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <ShieldAlert className="w-4 h-4 text-[#D4AF37] shrink-0" />
               <span>
                 <strong className="text-slate-200">{t.heroDisclaimerTitle}</strong>{' '}
                 {t.heroDisclaimerText}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-amber-300/90">
-              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>
-                <strong className="text-amber-200">{t.heroKycNoticeTitle}</strong>{' '}
-                {t.heroKycNoticeText}
               </span>
             </div>
           </div>

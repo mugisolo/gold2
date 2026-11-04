@@ -188,8 +188,8 @@ export const DigitalSignatureModal: React.FC<DigitalSignatureModalProps> = ({
     targetType === 'expedition_registration'
       ? [
           'Article I (Strict Non-Transaction Covenant): I acknowledge that Uganda Gold Expedition is strictly an educational, forensic inspection, and due diligence mission under the Uganda Mining and Minerals Act 2022, and does not broker, buy, or sell physical bullion during field operations.',
-          'Article II (Statutory KYC & Non-Refundable Deposit): I confirm that the USD $1,000 KYC & Interpol Security Vetting fee is strictly non-refundable and required for DGSM Entebbe and bonded refinery security accreditation.',
-          'Article III (Field Security & Chain-of-Custody Compliance): I agree to abide by all safety directives issued by the Operations & Strategy Directorate during armored ground transfers, rotary-wing flights, and active mine pithead inspections.'
+          'Article II (Statutory KYC & Sanctions Screening Compliance): I consent to OFAC, UN, UK HMT, EU sanctions and PEP screening included with my selected expedition package for DGSM Entebbe and bonded refinery security accreditation.',
+          'Article III (Field Security & Chain-of-Custody Compliance): I agree to abide by all safety directives issued by the Operations & Strategy Directorate during dedicated B6 armored executive motorcade ground transfers and active mine pithead inspections.'
         ]
       : [
           'Section 1 (Forensic Findings Acknowledgment): I acknowledge receipt of the certified forensic due diligence findings, risk score, and statutory DGSM/URA cadastre cross-check prepared by the Forensic Intelligence Desk and Staff Officer 1.',

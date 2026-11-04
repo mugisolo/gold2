@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, ShieldCheck, Lock, CreditCard, ArrowRight, CheckCircle2, AlertCircle, ExternalLink, Loader2, QrCode } from 'lucide-react';
-import { PackageTier } from '../types';
+import { PackageTier, PaymentRecord } from '../types';
 import { EXPEDITION_PACKAGES } from '../data/expeditionData';
 import { InvoiceReceiptData } from './InvoiceReceiptModal';
 
@@ -10,6 +10,7 @@ interface CardPaymentModalProps {
   selectedTier?: 'academic' | 'trader' | 'sovereign';
   defaultPaymentType?: 'full' | 'doc_verification';
   onOpenInvoiceReceipt?: (data: InvoiceReceiptData) => void;
+  onPaymentRecorded?: (payment: PaymentRecord) => void;
 }
 
 export const CardPaymentModal: React.FC<CardPaymentModalProps> = ({
@@ -17,10 +18,13 @@ export const CardPaymentModal: React.FC<CardPaymentModalProps> = ({
   onClose,
   selectedTier = 'trader',
   defaultPaymentType = 'full',
-  onOpenInvoiceReceipt
+  onOpenInvoiceReceipt,
+  onPaymentRecorded
 }) => {
   const [tier, setTier] = useState<'academic' | 'trader' | 'sovereign'>(selectedTier);
-  const [paymentType, setPaymentType] = useState<'full' | 'doc_verification'>(defaultPaymentType);
+  const [paymentType, setPaymentType] = useState<'full' | 'doc_verification' | 'custom'>(defaultPaymentType);
+  const [customServiceTitle, setCustomServiceTitle] = useState('Custom Forensic Advisory / Counterparty Audit');
+  const [customAmountUsd, setCustomAmountUsd] = useState<number>(1500);
   const [cardholderName, setCardholderName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -36,6 +40,8 @@ export const CardPaymentModal: React.FC<CardPaymentModalProps> = ({
   const totalAmount =
     paymentType === 'doc_verification'
       ? DOC_VERIFICATION_AMOUNT
+      : paymentType === 'custom'
+      ? Math.max(100, Number(customAmountUsd) || 0)
       : currentPkg.priceUsd;
 
   const handleInitiateCardPayment = async (e: React.FormEvent) => {
@@ -59,16 +65,42 @@ export const CardPaymentModal: React.FC<CardPaymentModalProps> = ({
           description:
             paymentType === 'doc_verification'
               ? '24–72 Hour Forensic Document Verification (USD 2,500, inclusive of applicable Ugandan VAT)'
-              : `Uganda Gold Expedition: ${currentPkg.name} (Full Package Settlement · USD ${currentPkg.priceUsd.toLocaleString()}, inclusive of applicable Ugandan VAT)`,
+              : paymentType === 'custom'
+              ? `${customServiceTitle} (USD ${totalAmount.toLocaleString()}, inclusive of applicable Ugandan VAT)`
+              : `Uganda Gold Expedition: ${currentPkg.name} (USD ${currentPkg.priceUsd.toLocaleString()}, inclusive of applicable Ugandan VAT)`,
           customer_email: email,
           customer_name: cardholderName,
-          package_tier: paymentType === 'doc_verification' ? '24–72 Hour Forensic Document Verification ($2,500)' : currentPkg.name
+          package_tier:
+            paymentType === 'doc_verification'
+              ? '24–72 Hour Forensic Document Verification ($2,500)'
+              : paymentType === 'custom'
+              ? customServiceTitle
+              : currentPkg.name
         })
       });
 
       const data = await res.json();
       if (data.success) {
         setPaymentResult(data);
+        const newPayment: PaymentRecord = {
+          id: `PAY-${Date.now().toString().slice(-6)}`,
+          reference: data.reference || `UGE-CARD-${Date.now().toString().slice(-6)}`,
+          customerName: cardholderName,
+          email,
+          amount: totalAmount,
+          currency: 'USD',
+          type: paymentType === 'doc_verification' ? 'doc_verification' : 'full_payment',
+          status: 'Completed',
+          cardBrand: 'Visa',
+          date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+          tier:
+            paymentType === 'doc_verification'
+              ? '24–72 Hour Forensic Document Verification ($2,500, VAT Incl.)'
+              : paymentType === 'custom'
+              ? customServiceTitle
+              : `${currentPkg.name} (Paid in Full, VAT Incl.)`
+        };
+        onPaymentRecorded?.(newPayment);
       } else {
         setErrorMsg(data.message || 'Payment session generation failed.');
       }
@@ -110,12 +142,12 @@ export const CardPaymentModal: React.FC<CardPaymentModalProps> = ({
         {!paymentResult ? (
           <form onSubmit={handleInitiateCardPayment} className="p-6 space-y-4">
             
-            {/* MANDATORY ONE PAYMENT / ONE PRICE & VERIFICATION NOTICE */}
-            <div className="p-3.5 rounded-lg bg-amber-950/40 border border-amber-600/60 text-xs text-amber-200 flex items-start gap-2.5">
-              <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            {/* FLEXIBLE SERVICE SELECTION NOTICE */}
+            <div className="p-3.5 rounded-lg bg-[#182232]/80 border border-[#D4AF37]/40 text-xs text-slate-200 flex items-start gap-2.5">
+              <ShieldCheck className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
               <div className="leading-relaxed text-justify">
-                <strong className="text-white">One Payment. One Price: </strong>
-                All prices in <strong className="text-white">USD, inclusive of applicable Ugandan VAT</strong>. Every expedition package includes the mandatory <strong className="text-white underline">USD 1,000 KYC & Client Vetting Allocation</strong> (OFAC, UN, UK HMT, EU sanctions & PEP checks), which is strictly non-refundable once vetting commences (balance refunded within 14 business days if vetting fails). Standalone <strong className="text-emerald-300 font-bold">24–72 Hour Forensic Document Verification is USD 2,500</strong> (USD 1,000 credited toward any expedition package booked within 90 days).
+                <strong className="text-white">Select & Pay for Your Chosen Service: </strong>
+                All prices in <strong className="text-white">USD, inclusive of applicable Ugandan VAT</strong>. Choose any expedition tier, standalone <strong className="text-emerald-300 font-bold">24–72 Hour Forensic Document Verification (USD 2,500, with USD 1,000 credited toward any expedition booked within 90 days)</strong>, or enter a custom service below.
               </div>
             </div>
 
@@ -125,12 +157,12 @@ export const CardPaymentModal: React.FC<CardPaymentModalProps> = ({
               </div>
             )}
 
-            {/* Payment Service Selector: Full Expedition Package vs 24-72 Hour Doc Verification */}
+            {/* Payment Service Selector: Expedition Package vs 24-72 Hour Doc Verification vs Custom Service */}
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                Payment Service (Full Payment Due on Booking · No Instalments)
+                Choose What You Want to Pay For
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <button
                   type="button"
                   onClick={() => setPaymentType('full')}
@@ -141,13 +173,13 @@ export const CardPaymentModal: React.FC<CardPaymentModalProps> = ({
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white">7-Day Expedition Package</span>
+                    <span className="text-xs font-bold text-white">7-Day Expedition</span>
                     <span className="text-xs font-mono-data text-[#D4AF37] font-bold">
                       ${currentPkg.priceUsd.toLocaleString()}
                     </span>
                   </div>
                   <p className="text-[10px] text-slate-300 mt-1">
-                    Full Payment · Incl. $1,000 KYC Allocation
+                    Full Package · KYC Included
                   </p>
                 </button>
 
@@ -161,18 +193,38 @@ export const CardPaymentModal: React.FC<CardPaymentModalProps> = ({
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white">24–72h Doc Verification</span>
+                    <span className="text-xs font-bold text-white">24–72h Doc Audit</span>
                     <span className="text-xs font-mono-data text-emerald-400 font-bold">$2,500</span>
                   </div>
                   <p className="text-[10px] text-emerald-300/90 mt-1 font-mono-data">
-                    $1,000 credited to expedition w/in 90d
+                    $1,000 credited w/in 90d
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPaymentType('custom')}
+                  className={`p-3 rounded-lg border text-left transition-all ${
+                    paymentType === 'custom'
+                      ? 'bg-[#182232] border-sky-400'
+                      : 'bg-[#0B0F17] border-slate-800 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white">Custom Service</span>
+                    <span className="text-xs font-mono-data text-sky-400 font-bold">
+                      ${(Number(customAmountUsd) || 0).toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-300 mt-1">
+                    Pay for Custom Audit / Retainer
                   </p>
                 </button>
               </div>
             </div>
 
             {/* Tier Selector */}
-            {paymentType !== 'doc_verification' && (
+            {paymentType === 'full' && (
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1.5">
                   Select Expedition Package Tier (USD, inclusive of applicable Ugandan VAT)
@@ -192,10 +244,43 @@ export const CardPaymentModal: React.FC<CardPaymentModalProps> = ({
                       <div className="text-[10px] font-mono-data text-[#D4AF37]">{pkg.tierNumber}</div>
                       <div className="text-xs font-bold truncate">{pkg.name}</div>
                       <div className="text-[11px] font-mono-data text-slate-200 mt-0.5">
-                        USD {pkg.priceUsd.toLocaleString()}
+                        USD {pkg.priceUsd.toLocaleString()} / person
                       </div>
                     </button>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Custom Service Amount & Description */}
+            {paymentType === 'custom' && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-lg bg-[#0B0F17] border border-slate-800">
+                <div className="sm:col-span-2">
+                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                    Service Description *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={customServiceTitle}
+                    onChange={(e) => setCustomServiceTitle(e.target.value)}
+                    placeholder="e.g. Additional Counterparty Verification ($1,500)"
+                    className="w-full px-3 py-2 text-xs bg-[#111722] border border-slate-700 rounded text-white focus:outline-none focus:border-[#D4AF37]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                    Amount (USD) *
+                  </label>
+                  <input
+                    type="number"
+                    min={100}
+                    step={50}
+                    required
+                    value={customAmountUsd}
+                    onChange={(e) => setCustomAmountUsd(Number(e.target.value))}
+                    className="w-full px-3 py-2 text-xs font-mono-data bg-[#111722] border border-slate-700 rounded text-[#D4AF37] font-bold focus:outline-none focus:border-[#D4AF37]"
+                  />
                 </div>
               </div>
             )}
@@ -255,7 +340,9 @@ export const CardPaymentModal: React.FC<CardPaymentModalProps> = ({
                 <div className="text-xs text-slate-300 font-medium">
                   {paymentType === 'doc_verification'
                     ? '24–72 Hour Forensic Document Verification'
-                    : `${currentPkg.name} (Full Payment · KYC Included)`}
+                    : paymentType === 'custom'
+                    ? customServiceTitle
+                    : `${currentPkg.name} (Full Package · KYC Included)`}
                 </div>
               </div>
               <div className="font-cinzel text-2xl font-bold text-[#D4AF37] font-mono-data">
@@ -304,7 +391,7 @@ export const CardPaymentModal: React.FC<CardPaymentModalProps> = ({
                 Secure Payment Session Ready
               </h3>
               <p className="text-xs text-slate-300 mt-1 max-w-sm mx-auto text-justify">
-                Your checkout session has been initialized in USD, inclusive of applicable Ugandan VAT. Every expedition package includes the mandatory USD $1,000 KYC & Client Vetting Allocation (strictly non-refundable once vetting commences).
+                Your checkout session has been initialized in USD, inclusive of applicable Ugandan VAT, for your selected service.
               </p>
             </div>
 

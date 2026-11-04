@@ -1,5 +1,14 @@
 import React from 'react';
-import { Shield, MapPin, ArrowLeft, Settings, CheckCircle2, FileSearch, ExternalLink } from 'lucide-react';
+import {
+  Shield,
+  MapPin,
+  Settings,
+  CheckCircle2,
+  FileSearch,
+  ExternalLink,
+  ArrowRight,
+  XCircle
+} from 'lucide-react';
 import { AboutContent, BoardMember, PhotoItem, Language, Currency } from '../types';
 import {
   translations,
@@ -15,11 +24,13 @@ interface AboutUsPageProps {
   boardMembers: BoardMember[];
   photos: PhotoItem[];
   isFullPage?: boolean;
+  showAdminControls?: boolean;
   onBackToHome?: () => void;
   onOpenRegistration: () => void;
   onOpenDocVerification: () => void;
   onOpenAdminPanel: () => void;
   onNavigateToBlog: () => void;
+  onNavigate?: (path: string) => void;
 }
 
 export const AboutUsPage: React.FC<AboutUsPageProps> = ({
@@ -28,250 +39,297 @@ export const AboutUsPage: React.FC<AboutUsPageProps> = ({
   aboutContent,
   boardMembers,
   photos,
-  isFullPage = false,
-  onBackToHome,
+  isFullPage = true,
+  showAdminControls = false,
   onOpenRegistration,
   onOpenDocVerification,
   onOpenAdminPanel,
-  onNavigateToBlog
+  onNavigate
 }) => {
   const t = translations[currentLang];
   const localizedAbout = getLocalizedAboutContent(currentLang, aboutContent);
   const localizedBoard = getLocalizedBoardMembers(currentLang, boardMembers);
   const auditPrice = formatCurrencyPrice(2500, selectedCurrency);
 
-  const getInitials = (name: string) => {
-    return name
+  const getInitials = (name: string) =>
+    name
       .split(' ')
       .filter(Boolean)
       .slice(0, 2)
       .map((part) => part[0]?.toUpperCase())
       .join('');
-  };
 
   return (
-    <section
-      id="about-us"
-      className={`${
-        isFullPage ? 'pt-28 pb-12 min-h-screen' : 'py-10 sm:py-12 border-t border-slate-800/80'
-      } bg-[#0B0F17] text-slate-300`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        {/* Top Breadcrumb / Navigation Bar when viewing as full page */}
-        {isFullPage && onBackToHome && (
-          <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-800">
+    <div id="about-us" className="min-h-screen bg-[#0B0F17] text-slate-300 pb-24">
+      {/* Independence Banner */}
+      <div className="bg-[#080B11] border-b border-slate-800/80 py-2.5 px-4">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
+          <p className="font-medium text-slate-200 flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] shrink-0" />
+            Independent due diligence and field verification. We do not buy, sell, or broker gold.
+          </p>
+          {showAdminControls && (
             <button
-              onClick={onBackToHome}
-              className="inline-flex items-center gap-2 text-xs font-semibold text-[#D4AF37] hover:text-[#FEF3C7] transition-colors whitespace-nowrap"
+              type="button"
+              onClick={onOpenAdminPanel}
+              className="inline-flex items-center gap-1.5 text-xs text-[#D4AF37] hover:underline cursor-pointer"
             >
-              <ArrowLeft className="w-4 h-4" />
-              <span>{t.aboutBackToHome}</span>
+              <Settings className="w-3.5 h-3.5" />
+              <span>Edit About & Board in Admin Panel</span>
             </button>
+          )}
+        </div>
+      </div>
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={onNavigateToBlog}
-                className="px-3.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-[#111722] border border-slate-800 rounded transition-colors whitespace-nowrap"
-              >
-                {t.aboutReadBlogBtn}
-              </button>
-              <button
-                onClick={onOpenAdminPanel}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-[#111722] border border-slate-800 rounded transition-colors whitespace-nowrap"
-              >
-                <Settings className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>{t.aboutEditAdminBtn}</span>
-              </button>
-            </div>
-          </div>
-        )}
+      {/* Section 1: Mission & Why the Organization Exists */}
+      <section className="py-14 lg:py-20 border-b border-slate-800/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            <div className="lg:col-span-7 space-y-5">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-[#D4AF37] uppercase tracking-widest">
+                <span>Mission & Independence</span>
+                <span aria-hidden="true">·</span>
+                <span>Est. {localizedAbout.establishedYear}</span>
+                <span aria-hidden="true">·</span>
+                <span>Kampala & Entebbe</span>
+              </div>
 
-        {/* Section 1: Institutional Mandate & Overview */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-          <div className="lg:col-span-7 space-y-6">
-            <div className="flex flex-wrap items-center gap-2 text-xs font-mono-data text-[#D4AF37]">
-              <span>{t.aboutBadge1}</span>
-              <span aria-hidden="true">·</span>
-              <span>Est. {localizedAbout.establishedYear}</span>
-              <span aria-hidden="true">·</span>
-              <span>{t.aboutBadge2}</span>
-            </div>
+              <h1 className="font-serif-display text-3xl sm:text-5xl font-bold text-white leading-[1.12] tracking-tight">
+                {localizedAbout.headline}
+              </h1>
 
-            <h1 className="font-cinzel text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight">
-              {localizedAbout.headline}
-            </h1>
+              <p className="text-base sm:text-lg text-slate-300 leading-relaxed reading-measure">
+                {localizedAbout.subheadline}
+              </p>
 
-            <p className="text-base sm:text-lg text-slate-300 leading-relaxed">
-              {localizedAbout.subheadline}
-            </p>
+              <div className="space-y-4 text-sm sm:text-base text-slate-400 leading-relaxed pt-2 reading-measure">
+                {localizedAbout.overviewParagraphs.map((paragraph, index) => (
+                  <p key={index}>{paragraph}</p>
+                ))}
+              </div>
 
-            <div className="space-y-4 text-sm sm:text-base text-slate-400 leading-relaxed pt-2">
-              {localizedAbout.overviewParagraphs.map((paragraph, index) => (
-                <p key={index}>{paragraph}</p>
-              ))}
-            </div>
-
-            <div className="pt-4 flex flex-wrap items-center gap-4">
-              <button
-                onClick={onOpenRegistration}
-                className="px-5 py-2.5 text-xs font-bold text-[#0B0F17] bg-[#D4AF37] hover:bg-[#FEF3C7] rounded transition-colors whitespace-nowrap"
-              >
-                {t.aboutRegisterBtn}
-              </button>
-              <button
-                onClick={onOpenDocVerification}
-                className="px-5 py-2.5 text-xs font-semibold text-white bg-[#111722] hover:bg-[#182232] border border-[#D4AF37]/40 rounded transition-colors whitespace-nowrap flex items-center gap-2"
-              >
-                <FileSearch className="w-4 h-4 text-[#D4AF37]" />
-                <span>
-                  {t.aboutAuditBtn} ({auditPrice})
-                </span>
-              </button>
-              {!isFullPage && (
+              {/* Single Primary Conversion Action + Secondary */}
+              <div className="pt-4 flex flex-wrap items-center gap-4">
                 <button
-                  onClick={onOpenAdminPanel}
-                  className="px-4 py-2.5 text-xs font-medium text-slate-300 hover:text-white bg-[#111722] border border-slate-800 rounded transition-colors whitespace-nowrap flex items-center gap-1.5"
+                  type="button"
+                  onClick={() => (onNavigate ? onNavigate('/verification') : onOpenDocVerification())}
+                  className="px-6 py-3.5 text-sm font-semibold text-slate-950 bg-[#D4AF37] hover:bg-[#c5a030] rounded-lg transition-colors inline-flex items-center gap-2 shadow-md cursor-pointer"
                 >
-                  <Settings className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  <span>{t.aboutEditAdminBtn}</span>
+                  <FileSearch className="w-4 h-4" />
+                  <span>Verify an Offer ({auditPrice})</span>
                 </button>
-              )}
-            </div>
-          </div>
-
-          {/* Right Column: Institutional Charter Box */}
-          <div className="lg:col-span-5 bg-[#111722] border border-slate-800 rounded-xl p-6 sm:p-8 space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-              <div>
-                <div className="text-xs font-mono-data text-[#D4AF37]">{t.aboutCharterBadge}</div>
-                <h2 className="font-cinzel text-lg font-bold text-white mt-0.5">
-                  {t.aboutCharterTitle}
-                </h2>
+                <button
+                  type="button"
+                  onClick={() => (onNavigate ? onNavigate('/expeditions') : onOpenRegistration())}
+                  className="px-6 py-3.5 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg transition-colors inline-flex items-center gap-2 cursor-pointer"
+                >
+                  <span>Explore 7-Day Expeditions</span>
+                  <ArrowRight className="w-4 h-4 text-[#D4AF37]" />
+                </button>
               </div>
-              <Shield className="w-6 h-6 text-[#D4AF37] shrink-0" />
             </div>
 
-            <p className="text-sm text-slate-200 leading-relaxed font-medium">
-              &ldquo;{localizedAbout.missionStatement}&rdquo;
-            </p>
-
-            <div className="space-y-4 pt-2 border-t border-slate-800/80 text-xs">
-              <div>
-                <div className="text-slate-500 font-mono-data mb-1">{t.aboutStatutoryLabel}</div>
-                <p className="text-slate-300 leading-relaxed">{localizedAbout.statutoryMandate}</p>
-              </div>
-
-              <div>
-                <div className="text-slate-500 font-mono-data mb-1">{t.aboutSecretariatLabel}</div>
-                <div className="flex items-start gap-2 text-slate-300">
-                  <MapPin className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
-                  <span>{localizedAbout.headquarters}</span>
+            {/* Strict Non-Transaction & Independence Policy Card */}
+            <div className="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                  <div className="text-xs font-mono uppercase tracking-wider text-[#D4AF37]">
+                    Strict Non-Transaction Policy
+                  </div>
+                  <h2 className="font-serif-display text-xl font-bold text-white mt-0.5">
+                    Why Independence Matters
+                  </h2>
                 </div>
+                <Shield className="w-6 h-6 text-[#D4AF37] shrink-0" />
               </div>
-            </div>
 
-            <div className="grid grid-cols-3 gap-3 pt-4 border-t border-slate-800 text-center">
-              <div className="p-3 rounded-lg bg-[#0B0F17] border border-slate-800/80">
-                <div className="font-mono-data text-lg font-bold text-white">$140M+</div>
-                <div className="text-[11px] text-slate-400 mt-0.5">{t.aboutKpi1Label}</div>
-              </div>
-              <div className="p-3 rounded-lg bg-[#0B0F17] border border-slate-800/80">
-                <div className="font-mono-data text-lg font-bold text-[#D4AF37]">100%</div>
-                <div className="text-[11px] text-slate-400 mt-0.5">{t.aboutKpi2Label}</div>
-              </div>
-              <div className="p-3 rounded-lg bg-[#0B0F17] border border-slate-800/80">
-                <div className="font-mono-data text-lg font-bold text-white">24h</div>
-                <div className="text-[11px] text-slate-400 mt-0.5">{t.aboutKpi3Label}</div>
+              <p className="text-sm text-slate-200 leading-relaxed">
+                &ldquo;{localizedAbout.missionStatement}&rdquo;
+              </p>
+
+              <div className="space-y-4 pt-2 border-t border-slate-800/80 text-xs">
+                <div>
+                  <div className="text-slate-400 font-mono uppercase tracking-wider mb-1">
+                    Statutory & Regulatory Scope
+                  </div>
+                  <p className="text-slate-300 leading-relaxed">{localizedAbout.statutoryMandate}</p>
+                </div>
+
+                <div>
+                  <div className="text-slate-400 font-mono uppercase tracking-wider mb-1">
+                    Field Operations Base
+                  </div>
+                  <div className="flex items-start gap-2 text-slate-300">
+                    <MapPin className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
+                    <span>{localizedAbout.headquarters}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Section 2: Board of Directors & Executive Leadership */}
-        <div className="space-y-10 pt-8 border-t border-slate-800/80">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div className="space-y-2 max-w-3xl">
-              <div className="flex items-center gap-2 text-xs font-mono-data text-[#D4AF37]">
-                <span>{t.aboutBoardBadge1}</span>
-                <span aria-hidden="true">·</span>
-                <span>{t.aboutBoardBadge2}</span>
-              </div>
-              <h2 className="font-cinzel text-2xl sm:text-3xl font-bold text-white">
-                {t.aboutBoardTitle}
-              </h2>
-              <p className="text-sm text-slate-400 leading-relaxed">
-                {t.aboutBoardSubtitle}
-              </p>
+      {/* Section 2: Who the Service Is For & Who It Is Not For + Field Capability */}
+      <section className="py-16 surface-ivory border-b border-stone-200/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="surface-ivory-card rounded-2xl p-6 sm:p-7">
+              <span className="text-xs font-mono uppercase tracking-wider text-emerald-700 font-semibold block mb-2">
+                Who This Service Is For
+              </span>
+              <h3 className="font-serif-display text-xl font-bold text-slate-900 mb-4">
+                Legitimate Market Participants
+              </h3>
+              <ul className="space-y-3 text-xs text-slate-700 leading-relaxed">
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                  <span>
+                    Bullion traders, commodity desks, and private principals evaluating active gold offers or long-term supply agreements.
+                  </span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                  <span>
+                    Institutional investors, sovereign funds, and family offices requiring discrete field due diligence before capital allocation.
+                  </span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                  <span>
+                    Academic researchers, ESG auditors, and policy specialists studying mineral traceability and regulatory frameworks.
+                  </span>
+                </li>
+              </ul>
             </div>
 
-            <button
-              onClick={onOpenAdminPanel}
-              className="self-start md:self-auto px-3.5 py-2 text-xs font-medium text-slate-300 hover:text-white bg-[#111722] border border-slate-800 hover:border-slate-700 rounded transition-colors whitespace-nowrap flex items-center gap-1.5"
-            >
-              <Settings className="w-3.5 h-3.5 text-[#D4AF37]" />
-              <span>{t.aboutBoardEditBtn}</span>
-            </button>
+            <div className="surface-ivory-card rounded-2xl p-6 sm:p-7">
+              <span className="text-xs font-mono uppercase tracking-wider text-red-700 font-semibold block mb-2">
+                Who This Service Is Not For
+              </span>
+              <h3 className="font-serif-display text-xl font-bold text-slate-900 mb-4">
+                Excluded Mandates
+              </h3>
+              <ul className="space-y-3 text-xs text-slate-700 leading-relaxed">
+                <li className="flex items-start gap-2.5">
+                  <XCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  <span>
+                    Anyone seeking a broker, commission agent, or intermediary to source or sell physical gold parcels.
+                  </span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <XCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  <span>
+                    Counterparties attempting to bypass Uganda Revenue Authority (URA) customs declarations, DGSM licensing, or ICGLR origin tracking.
+                  </span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <XCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  <span>
+                    Applicants who decline statutory OFAC, UN, UK HMT, EU sanctions, or PEP screening.
+                  </span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="surface-ivory-card rounded-2xl p-6 sm:p-7">
+              <span className="text-xs font-mono uppercase tracking-wider text-[#9A7418] font-semibold block mb-2">
+                Field Access & Operational Capability
+              </span>
+              <h3 className="font-serif-display text-xl font-bold text-slate-900 mb-4">
+                On-the-Ground Execution
+              </h3>
+              <ul className="space-y-3 text-xs text-slate-700 leading-relaxed">
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-[#9A7418] shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Registry Access:</strong> Direct in-person cadastre and license verification at DGSM headquarters in Entebbe.
+                  </span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-[#9A7418] shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Metallurgical Supervision:</strong> Witnessed induction melting and ISO-11426 cupellation fire assay at accredited refineries.
+                  </span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-[#9A7418] shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Secure Field Logistics:</strong> Escorted 4x4 and B6 armored convoy capability across Mubende, Kassanda, and Busia corridors.
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 3: Governance & Leadership */}
+      <section className="py-16 lg:py-20 border-b border-slate-800/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+          <div className="max-w-3xl space-y-2">
+            <div className="text-xs font-mono uppercase tracking-widest text-[#D4AF37]">
+              {t.aboutBoardBadge1} · {t.aboutBoardBadge2}
+            </div>
+            <h2 className="font-serif-display text-2xl sm:text-4xl font-bold text-white">
+              Governance & Leadership
+            </h2>
+            <p className="text-sm text-slate-400 leading-relaxed">
+              Our leadership combines metallurgical verification, mineral trade law, and secure field operations across Uganda.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
             {localizedBoard.map((member, idx) => (
               <article
                 key={member.id}
-                className="rounded-xl bg-[#111722] border border-slate-800 hover:border-[#D4AF37]/40 transition-colors flex flex-col justify-between overflow-hidden"
+                className="rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-colors flex flex-col justify-between overflow-hidden"
               >
                 <div>
-                  {/* Director Visual Header */}
                   <div className="relative h-56 bg-[#0B0F17] overflow-hidden border-b border-slate-800">
                     {member.imageUrl ? (
                       <img
                         src={member.imageUrl}
                         alt={`${member.name} — ${member.role}`}
                         referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover opacity-75"
+                        className="w-full h-full object-cover opacity-80"
                       />
                     ) : null}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#111722] via-[#0B0F17]/50 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-[#0B0F17]/40 to-transparent" />
 
-                    {/* Editorial Index & Monogram */}
                     <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-                      <span className="text-xs font-mono-data text-[#D4AF37] font-semibold">
-                        0{idx + 1} · {t.aboutBoardBadge2}
+                      <span className="text-xs font-mono text-[#D4AF37] font-semibold">
+                        0{idx + 1} · {member.designation}
                       </span>
-                      <div className="w-10 h-10 rounded-lg bg-[#0B0F17]/90 border border-[#D4AF37]/50 flex items-center justify-center font-cinzel text-sm font-bold text-[#D4AF37]">
+                      <div className="w-9 h-9 rounded-lg bg-[#0B0F17]/90 border border-[#D4AF37]/40 flex items-center justify-center font-serif-display text-xs font-bold text-[#D4AF37]">
                         {getInitials(member.name)}
                       </div>
                     </div>
 
-                    {/* Name & Primary Title Overlay */}
                     <div className="absolute bottom-4 left-5 right-5">
-                      <h3 className="font-cinzel text-xl font-bold text-white leading-snug">
+                      <h3 className="font-serif-display text-xl font-bold text-white leading-snug">
                         {member.name}
                       </h3>
-                      <p className="text-xs font-semibold text-[#D4AF37] mt-0.5">
-                        {member.role}
-                      </p>
+                      <p className="text-xs font-semibold text-[#D4AF37] mt-0.5">{member.role}</p>
                     </div>
                   </div>
 
-                  {/* Director Biography & Credentials */}
                   <div className="p-6 space-y-4">
                     <div>
-                      <div className="text-[11px] font-mono-data text-slate-500">
-                        {t.aboutCoreMandate}
+                      <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400">
+                        Core Focus
                       </div>
                       <div className="text-xs font-medium text-slate-200 mt-0.5 leading-snug">
                         {member.specialty}
                       </div>
                     </div>
 
-                    <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                      {member.bio}
-                    </p>
+                    <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">{member.bio}</p>
 
                     {member.credentials && member.credentials.length > 0 && (
                       <div className="pt-3 border-t border-slate-800/80 space-y-2">
-                        <div className="text-[11px] font-mono-data text-slate-500">
-                          {t.aboutKeyCredentials}
+                        <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400">
+                          Areas of Responsibility
                         </div>
                         <ul className="space-y-1.5">
                           {member.credentials.map((cred, cIdx) => (
@@ -286,19 +344,18 @@ export const AboutUsPage: React.FC<AboutUsPageProps> = ({
                   </div>
                 </div>
 
-                {/* Footer bar */}
                 <div className="px-6 py-3.5 bg-[#0B0F17]/60 border-t border-slate-800 flex items-center justify-between text-xs">
-                  <span className="text-slate-400 font-mono-data text-[11px]">
-                    {t.aboutDirectorateFooter}
+                  <span className="text-slate-400 font-mono text-[11px]">
+                    Kampala & Entebbe Directorate
                   </span>
                   {member.linkedinUrl && (
                     <a
                       href={member.linkedinUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[#D4AF37] hover:text-[#FEF3C7] font-medium transition-colors"
+                      className="inline-flex items-center gap-1 text-[#D4AF37] hover:text-amber-200 font-medium transition-colors"
                     >
-                      <span>{t.aboutExecProfile}</span>
+                      <span>Profile</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   )}
@@ -307,35 +364,29 @@ export const AboutUsPage: React.FC<AboutUsPageProps> = ({
             ))}
           </div>
         </div>
+      </section>
 
-        {/* Section 3: Field & Vault Photo Gallery (Managed via Admin Panel) */}
-        {photos.length > 0 && (
-          <div className="space-y-8 pt-8 border-t border-slate-800/80">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs font-mono-data text-[#D4AF37]">
-                  <span>{t.aboutGalleryBadge}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>{photos.length}</span>
-                </div>
-                <h3 className="font-cinzel text-2xl font-bold text-white">
-                  {t.aboutGalleryTitle}
-                </h3>
+      {/* Section 4: Annotated Field Photography */}
+      {photos.length > 0 && (
+        <section className="py-16 lg:py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+            <div className="max-w-2xl space-y-1">
+              <div className="text-xs font-mono uppercase tracking-widest text-[#D4AF37]">
+                Field Documentation · {photos.length} Photographs
               </div>
-
-              <button
-                onClick={onOpenAdminPanel}
-                className="self-start sm:self-auto px-3.5 py-2 text-xs font-medium text-slate-300 hover:text-white bg-[#111722] border border-slate-800 rounded transition-colors whitespace-nowrap"
-              >
-                {t.aboutGalleryEditBtn}
-              </button>
+              <h2 className="font-serif-display text-2xl sm:text-3xl font-bold text-white">
+                Annotated Field & Laboratory Photography
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-400">
+                Documented inspections across Entebbe assay laboratories, Mubende artisanal sites, and Busia processing operations.
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {photos.map((photo) => (
-                <div
+                <figure
                   key={photo.id}
-                  className="rounded-xl overflow-hidden bg-[#111722] border border-slate-800 flex flex-col justify-between"
+                  className="rounded-xl overflow-hidden bg-slate-900/80 border border-slate-800 flex flex-col justify-between"
                 >
                   <div className="relative aspect-[16/10] bg-[#0B0F17] overflow-hidden">
                     <img
@@ -345,21 +396,21 @@ export const AboutUsPage: React.FC<AboutUsPageProps> = ({
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <div className="p-5 space-y-2">
-                    <div className="flex items-center gap-2 text-[11px] font-mono-data text-slate-400">
+                  <figcaption className="p-5 space-y-2">
+                    <div className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
                       <span className="text-[#D4AF37]">{photo.category}</span>
                       <span aria-hidden="true">·</span>
                       <span>{photo.dateAdded}</span>
                     </div>
-                    <h4 className="text-sm font-bold text-white">{photo.title}</h4>
+                    <h3 className="text-sm font-bold text-white">{photo.title}</h3>
                     <p className="text-xs text-slate-400 leading-relaxed">{photo.caption}</p>
-                  </div>
-                </div>
+                  </figcaption>
+                </figure>
               ))}
             </div>
           </div>
-        )}
-      </div>
-    </section>
+        </section>
+      )}
+    </div>
   );
 };

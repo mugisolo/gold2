@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertOctagon, Check, RotateCcw, ArrowRight, ShieldCheck, HelpCircle, FileSearch } from 'lucide-react';
 import { Language, Currency } from '../types';
 import { translations, getLocalizedScamRules } from '../data/translations';
@@ -7,6 +7,7 @@ import { formatCurrencyPrice } from '../data/expeditionData';
 interface ScamImmunityToolProps {
   currentLang: Language;
   selectedCurrency?: Currency;
+  defaultExpanded?: boolean;
   onApplyForVettingWithData?: (score: number, flags: string[]) => void;
   onOpenDocVerification?: () => void;
 }
@@ -14,15 +15,19 @@ interface ScamImmunityToolProps {
 export const ScamImmunityTool: React.FC<ScamImmunityToolProps> = ({
   currentLang,
   selectedCurrency = 'USD',
+  defaultExpanded = true,
   onApplyForVettingWithData,
   onOpenDocVerification
 }) => {
   const t = translations[currentLang];
   const scamRules = getLocalizedScamRules(currentLang);
-  const [selectedFlags, setSelectedFlags] = useState<string[]>([
-    'deep-discount',
-    'advance-export-tax'
-  ]);
+  const [selectedFlags, setSelectedFlags] = useState<string[]>(
+    defaultExpanded ? ['deep-discount', 'advance-export-tax'] : []
+  );
+
+  useEffect(() => {
+    setSelectedFlags(defaultExpanded ? ['deep-discount', 'advance-export-tax'] : []);
+  }, [defaultExpanded]);
 
   const toggleFlag = (id: string) => {
     setSelectedFlags((prev) =>
@@ -75,7 +80,6 @@ export const ScamImmunityTool: React.FC<ScamImmunityToolProps> = ({
 
   const verdict = getRiskVerdict(displayRisk);
   const auditPrice = formatCurrencyPrice(2500, selectedCurrency);
-  const kycPrice = formatCurrencyPrice(1000, selectedCurrency);
 
   return (
     <section id="scam-immunity" className="py-10 sm:py-12 bg-[#0E141F] border-b border-slate-800 relative">
@@ -252,7 +256,7 @@ export const ScamImmunityTool: React.FC<ScamImmunityToolProps> = ({
               <div className="text-[11px] text-slate-400 text-center flex items-center justify-center gap-1.5">
                 <HelpCircle className="w-3.5 h-3.5 text-[#D4AF37]" />
                 <span>
-                  {auditPrice} (24h Report) · {kycPrice} KYC
+                  {auditPrice} (24–72h Report · VAT Incl.) · Choose Any Service or Tier
                 </span>
               </div>
             </div>

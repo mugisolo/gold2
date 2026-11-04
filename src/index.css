@@ -7,6 +7,8 @@
   --color-obsidian: #0B0F17;
   --color-slate-surface: #111722;
   --color-slate-card: #182232;
+  --color-ivory: #F8F6F1;
+  --color-ivory-surface: #F1EDE4;
   --color-gold: #D4AF37;
   --color-gold-champagne: #FEF3C7;
   --color-gold-dark: #A27B20;
@@ -25,9 +27,64 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Gold text accent for display headlines */
+.gold-gradient-text {
+  background: linear-gradient(90deg, #FEF3C7 0%, #D4AF37 50%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 /* Subtle gold shimmer line */
 .gold-gradient-border {
   border-image: linear-gradient(to right, rgba(212, 175, 55, 0.4), rgba(212, 175, 55, 0.05), rgba(212, 175, 55, 0.3)) 1;
+}
+
+/* Warm ivory neutral surface for long-form reading, comparisons, and forms */
+.surface-ivory {
+  background-color: #F8F6F1;
+  color: #1E293B;
+}
+
+.surface-ivory-card {
+  background-color: #FFFFFF;
+  border-color: #E2DDD3;
+  color: #0F172A;
+}
+
+/* Natural alignment: left-aligned in LTR, right-aligned in RTL (no global justification) */
+p,
+li,
+blockquote,
+dd {
+  text-align: start;
+  line-height: 1.62;
+}
+
+.reading-measure {
+  max-width: 68ch;
+}
+
+/* Accessible keyboard focus states */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #D4AF37;
+  outline-offset: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Custom scrollbar for institutional feel */
@@ -46,19 +103,103 @@
   background: #D4AF37;
 }
 
-/* Global Justified Text Boundaries & Compact Line Spacing Across All Pages */
-p,
-li,
-blockquote,
-dd,
-.justify-copy {
-  text-align: justify;
-  text-justify: inter-word;
-  line-height: 1.48;
-}
-
 section[id] {
-  scroll-margin-top: 5.5rem;
+  scroll-margin-top: 5rem;
 }
 
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    width: 210mm;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #0B0F17 !important;
+    color: #E2E8F0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Completely remove unrelated page chrome from print document flow */
+  header,
+  nav,
+  main,
+  footer,
+  aside,
+  .no-print,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Fallback visibility guard for any remaining non-receipt elements */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Reset modal backdrop & container ancestors of the printable receipt so they do not clip or offset A4 output */
+  body:has(#printable-invoice-receipt) div:has(#printable-invoice-receipt) {
+    visibility: visible !important;
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  #printable-invoice-receipt,
+  #printable-invoice-receipt * {
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #printable-invoice-receipt {
+    position: relative !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 186mm !important;
+    margin: 0 auto !important;
+    padding: 8mm !important;
+    border: 2px solid #D4AF37 !important;
+    border-radius: 8px !important;
+    background-color: #0B0F17 !important;
+    color: #E2E8F0 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Calibrate transaction QR code to an exact 2cm x 2cm physical size on printed documents */
+  #printable-invoice-receipt .uge-qr-print-svg,
+  .uge-qr-print-svg {
+    width: 2cm !important;
+    height: 2cm !important;
+    min-width: 2cm !important;
+    min-height: 2cm !important;
+    max-width: 2cm !important;
+    max-height: 2cm !important;
+    display: block !important;
+  }
+
+  #printable-invoice-receipt .uge-qr-print-box {
+    padding: 1.5mm !important;
+    background-color: #FFFFFF !important;
+    border: 1.5px solid #D4AF37 !important;
+  }
+}
 

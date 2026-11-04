@@ -176,8 +176,26 @@ export interface StaffMember {
   name: string;
   email: string;
   role: 'Senior Due Diligence Officer' | 'Metallurgical Forensic Lead' | 'Legal Compliance Counsel' | 'Field Logistics Lead';
+  accessLevel?: 'admin' | 'staff' | 'client';
   phone: string;
   activeCasesCount: number;
+}
+
+export interface AdminAuditLog {
+  id: string;
+  timestamp: string;
+  actorEmail: string;
+  actorRole: 'admin' | 'staff';
+  category:
+    | 'content_update'
+    | 'user_role_change'
+    | 'document_approval'
+    | 'kyc_clearance'
+    | 'ux_config'
+    | 'data_export';
+  action: string;
+  targetId: string;
+  details: string;
 }
 
 export interface FieldLog {
@@ -234,4 +252,5 @@ export interface FaqItem {
   answer: string;
   statutoryRef?: string;
 }
+
 

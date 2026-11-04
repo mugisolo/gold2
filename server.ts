@@ -15,10 +15,15 @@ const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json({ limit: '15mb' }));
 
-// Initialize Gemini SDK with telemetry header
+// Ensure process.env.API_KEY is populated from GEMINI_API_KEY if provided via AI Studio secrets
+if (!process.env.API_KEY && process.env.GEMINI_API_KEY) {
+  process.env.API_KEY = process.env.GEMINI_API_KEY;
+}
+
+// Initialize Gemini SDK strictly from process.env.API_KEY
 const getGeminiClient = () => {
   return new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY,
+    apiKey: process.env.API_KEY,
     httpOptions: {
       headers: {
         'User-Agent': 'aistudio-build',
@@ -38,7 +43,7 @@ let aboutContent = {
     'Operating under a strict Non-Transaction Charter, our independence guarantees zero commercial conflict of interest. Every verification dossier, laboratory cupellation test, and 7-day field immersion is governed by empirical evidence, statutory registry verification, and chain-of-custody discipline.'
   ],
   statutoryMandate: 'Aligned with the Uganda Mining and Minerals Act 2022, ICGLR Regional Certification Mechanism (RCM), URA ASYCUDA World Customs Protocols, and OECD Due Diligence Guidance for Responsible Supply Chains of Minerals from Conflict-Affected and High-Risk Areas.',
-  headquarters: 'Amber House Secretariat, Kampala & DGSM Inspection Liaison Office, Entebbe, Republic of Uganda',
+  headquarters: 'Uganda Gold Expeditions, P.O Box 122234, Bugonga, Entebbe, Uganda (URA TIN 1019482710) & Amber House Secretariat, Kampala',
   establishedYear: '2019'
 };
 
@@ -235,7 +240,7 @@ let registrations = [
     kycPaymentStatus: 'paid',
     status: 'approved',
     assignedStaff: 'Staff Officer 1: Lt. Col. (Rtd) Arthur Mwesigye',
-    internalNotes: 'OFAC, UN, UK HMT, EU sanctions and PEP screening clear. Corporate trade license validated in Dubai DMCC registry. Full package payment (USD 45,000 per delegate, inclusive of applicable Ugandan VAT and USD 1,000 KYC & Client Vetting Allocation) confirmed.',
+    internalNotes: 'OFAC, UN, UK HMT, EU sanctions and PEP screening clear. Corporate trade license validated in Dubai DMCC registry. Full package payment (USD 25,000 per person, inclusive of applicable Ugandan VAT and USD 1,000 KYC & Client Vetting Allocation) confirmed.',
     registeredAt: '2026-04-20',
     passportVerified: true,
     sanctionsPepClear: true,
@@ -355,7 +360,7 @@ let payments = [
     reference: 'UGE-CARD-REL-8812',
     customerName: 'Alexander Vance',
     email: 'a.vance@apexmetals.ae',
-    amount: 45000,
+    amount: 25000,
     currency: 'USD',
     type: 'full_payment',
     status: 'Completed',
@@ -378,6 +383,123 @@ let payments = [
   }
 ];
 
+let auditLogs = [
+  {
+    id: 'AUDIT-2026-9012',
+    timestamp: '2026-05-02 10:15:24 UTC',
+    actorEmail: 'mugisolo@gmail.com',
+    actorRole: 'admin' as 'admin' | 'staff',
+    category: 'content_update' as
+      | 'content_update'
+      | 'user_role_change'
+      | 'document_approval'
+      | 'kyc_clearance'
+      | 'ux_config'
+      | 'data_export',
+    action: 'Published Intelligence Article',
+    targetId: 'post-1',
+    details:
+      'Published article "Forensic Deconstruction: Why 15%–25% Gold Discounts in East Africa Are Always Advance-Fee Traps" to public Insights library.'
+  },
+  {
+    id: 'AUDIT-2026-9011',
+    timestamp: '2026-05-01 16:42:10 UTC',
+    actorEmail: 'mwesigye@ugandagold.org',
+    actorRole: 'staff' as 'admin' | 'staff',
+    category: 'document_approval' as
+      | 'content_update'
+      | 'user_role_change'
+      | 'document_approval'
+      | 'kyc_clearance'
+      | 'ux_config'
+      | 'data_export',
+    action: 'Approved & Dispatched 24–72h Verification Report',
+    targetId: 'DOC-VER-2026-3910',
+    details:
+      'Released certified DGSM Mineral License verification report for Jean-Luc Moreau (Geneva Sovereign Partners) following physical Entebbe registry audit.'
+  },
+  {
+    id: 'AUDIT-2026-9010',
+    timestamp: '2026-04-28 14:08:51 UTC',
+    actorEmail: 'mugisolo@gmail.com',
+    actorRole: 'admin' as 'admin' | 'staff',
+    category: 'user_role_change' as
+      | 'content_update'
+      | 'user_role_change'
+      | 'document_approval'
+      | 'kyc_clearance'
+      | 'ux_config'
+      | 'data_export',
+    action: 'Updated Staff Access Role',
+    targetId: 'staff-1',
+    details:
+      'Verified Staff Officer 1 (Lt. Col. Rtd. Arthur Mwesigye) access level as Senior Due Diligence Officer (staff) with full dossier clearance privileges.'
+  },
+  {
+    id: 'AUDIT-2026-9009',
+    timestamp: '2026-04-25 09:30:12 UTC',
+    actorEmail: 'mugisolo@gmail.com',
+    actorRole: 'admin' as 'admin' | 'staff',
+    category: 'kyc_clearance' as
+      | 'content_update'
+      | 'user_role_change'
+      | 'document_approval'
+      | 'kyc_clearance'
+      | 'ux_config'
+      | 'data_export',
+    action: 'Approved Delegate KYC & DGSM Clearance',
+    targetId: 'REG-2026-8812',
+    details:
+      'Approved Sovereign Executive registration for Alexander Vance (Apex Precious Metals DMCC) after OFAC, UN, UK HMT, EU & PEP screening.'
+  },
+  {
+    id: 'AUDIT-2026-9008',
+    timestamp: '2026-04-22 11:19:05 UTC',
+    actorEmail: 'mugisolo@gmail.com',
+    actorRole: 'admin' as 'admin' | 'staff',
+    category: 'ux_config' as
+      | 'content_update'
+      | 'user_role_change'
+      | 'document_approval'
+      | 'kyc_clearance'
+      | 'ux_config'
+      | 'data_export',
+    action: 'Synchronized Global UX/UI Configuration',
+    targetId: 'uiConfig/global',
+    details:
+      'Enforced Zero-Trust Firestore Security Rules for per-user /uxPreferences/{userId} and /uiConfig/global.'
+  }
+];
+
+function recordServerAuditLog(entry: {
+  id?: string;
+  actorEmail?: string;
+  actorRole?: 'admin' | 'staff';
+  category:
+    | 'content_update'
+    | 'user_role_change'
+    | 'document_approval'
+    | 'kyc_clearance'
+    | 'ux_config'
+    | 'data_export';
+  action: string;
+  targetId: string;
+  details: string;
+}) {
+  const newLog = {
+    id: entry.id || `AUDIT-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+    timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC',
+    actorEmail: entry.actorEmail || 'mugisolo@gmail.com',
+    actorRole: entry.actorRole || 'admin',
+    category: entry.category,
+    action: entry.action,
+    targetId: entry.targetId || 'system',
+    details: entry.details
+  };
+  auditLogs.unshift(newLog);
+  return newLog;
+}
+
 // PORTAL API: Get all portal data
 app.get('/api/portal/data', (_req: Request, res: Response) => {
   res.json({
@@ -388,9 +510,37 @@ app.get('/api/portal/data', (_req: Request, res: Response) => {
     payments,
     documentVerifications,
     aboutContent,
-    boardMembers
+    boardMembers,
+    auditLogs
   });
 });
+
+// ADMIN: Get immutable audit logs
+app.get('/api/portal/audit-logs', (_req: Request, res: Response) => {
+  res.json({
+    success: true,
+    auditLogs
+  });
+});
+
+// ADMIN: Append automated audit log entry
+app.post('/api/portal/audit-log', (req: Request, res: Response) => {
+  const { id, actorEmail, actorRole, category, action, targetId, details } = req.body || {};
+  if (!action || !details) {
+    return res.status(400).json({ success: false, message: 'Action and details are required.' });
+  }
+  const logEntry = recordServerAuditLog({
+    id,
+    actorEmail,
+    actorRole: actorRole === 'staff' ? 'staff' : 'admin',
+    category: category || 'content_update',
+    action,
+    targetId: targetId || 'portal',
+    details
+  });
+  return res.json({ success: true, auditLog: logEntry });
+});
+
 
 // ONE-OFF USD $2,500 AI DOCUMENT VERIFICATION ENDPOINT
 // Analyzes submitted document via Gemini AI and routes report to Staff Officer 1 for follow-up & 24h client delivery
@@ -457,7 +607,7 @@ app.post('/api/verification/submit', async (req: Request, res: Response) => {
       ]
     };
 
-    if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'MY_GEMINI_API_KEY') {
+    if (process.env.API_KEY && process.env.API_KEY !== 'MY_GEMINI_API_KEY' && process.env.API_KEY !== 'YOUR_GEMINI_API_KEY') {
       try {
         const ai = getGeminiClient();
         const promptText = `You are the Chief Forensic Intelligence Analyst for the Uganda Gold Expedition.
@@ -924,6 +1074,176 @@ app.get('/api/payments/status', (_req: Request, res: Response) => {
   });
 });
 
+// API: AI Generate Unique Receipt & Verifiable QR Code Record
+app.post('/api/receipts/ai-generate', async (req: Request, res: Response) => {
+  try {
+    const {
+      clientName = 'Alexander Vance',
+      companyName = 'Apex Precious Metals DMCC',
+      clientEmail = 'a.vance@apexmetals.ae',
+      amountUsd = 2500,
+      docMode = 'receipt',
+      serviceType = 'doc_verification',
+      customNotes = ''
+    } = req.body || {};
+
+    const uniqueSuffix = `${Date.now().toString().slice(-4)}${Math.floor(10 + Math.random() * 89)}`;
+    const generatedRefId =
+      Number(amountUsd) <= 3000 || serviceType === 'doc_verification'
+        ? `DOC-VER-2027-${uniqueSuffix.slice(0, 4)}`
+        : `REG-2027-${uniqueSuffix.slice(0, 4)}`;
+    const generatedReceiptNumber = `RCT-UGE-2027-${uniqueSuffix}`;
+    const generatedInvoiceNumber = `INV-UGE-2027-${uniqueSuffix}`;
+    const generatedTxRef = `UGE-TX-AI-${uniqueSuffix}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+    let aiResult = {
+      itemTitle:
+        Number(amountUsd) <= 3000
+          ? '24–72 Hour Forensic Document Verification & Statutory Cadastre Audit'
+          : Number(amountUsd) <= 9000
+          ? 'Tier 01: Academic & Research 7-Day Gold Supply Chain Expedition'
+          : Number(amountUsd) <= 16000
+          ? 'Tier 02: Professional Trader 7-Day Gold Supply Chain Expedition'
+          : 'Tier 03: Sovereign Executive & Institutional Delegation (7-Day Program)',
+      itemDescription:
+        Number(amountUsd) <= 3000
+          ? 'Independent registry cross-checking of submitted FCO/SPA, DGSM mineral license, and URA ASYCUDA customs records by Staff Officer 1 at Uganda Gold Expeditions, P.O Box 122234, Bugonga, Entebbe, Uganda (URA TIN 1019482710). Includes USD 1,000 expedition fee credit valid for 90 days.'
+          : 'Full 7-day in-person supply chain due diligence and regulatory verification programme across Entebbe, Kampala, Mubende, and Busia. Issued by Uganda Gold Expeditions, P.O Box 122234, Bugonga, Entebbe, Uganda (URA TIN 1019482710). Includes mandatory USD 1,000 KYC/PEP vetting allocation.',
+      complianceAttestation: `Official statutory tax record issued by Uganda Gold Expeditions, P.O Box 122234, Bugonga, Entebbe, Uganda (URA TIN 1019482710). Verified under the Uganda Mining and Minerals Act 2022 and Non-Transaction Charter.`,
+      cryptographicSeal: `UGE-QR-AI-${uniqueSuffix}-${Math.random().toString(16).substring(2, 10).toUpperCase()}`
+    };
+
+    if (process.env.API_KEY) {
+      try {
+        const ai = getGeminiClient();
+        const prompt = `Generate an official, verifiable gold due-diligence invoice/receipt specification for Uganda Gold Expeditions.
+Official Address: Uganda Gold Expeditions, P.O Box 122234, Bugonga, Entebbe, Uganda
+Official Tax ID: URA TIN 1019482710
+Client Principal: ${clientName} (${companyName}, ${clientEmail})
+Amount (USD, inclusive of 18% Ugandan VAT): $${amountUsd}
+Document Mode: ${docMode.toUpperCase()}
+Reference ID: ${generatedRefId}
+Additional Context: ${customNotes || 'Standard institutional due diligence engagement'}
+
+Return JSON with:
+- itemTitle: Concise, authoritative service title matching the USD amount ($2,500 = 24-72h Offer Verification; $8,000 = Tier 01 Academic Expedition; $15,000 = Tier 02 Professional Trader Expedition; $25,000 = Tier 03 Institutional Delegation).
+- itemDescription: 2-sentence clear description of deliverables referencing DGSM Entebbe cadastre verification, URA TIN 1019482710, and Uganda Gold Expeditions, P.O Box 122234, Bugonga, Entebbe, Uganda.
+- complianceAttestation: 1-sentence authority & customs verification statement confirming non-transaction independence and Client Portal QR verification.
+- cryptographicSeal: Unique uppercase alphanumeric seal formatted as UGE-QR-AI-${uniqueSuffix}-[8_HEX_CHARS].`;
+
+        const response = await ai.models.generateContent({
+          model: 'gemini-3-flash-preview',
+          contents: prompt,
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                itemTitle: { type: Type.STRING },
+                itemDescription: { type: Type.STRING },
+                complianceAttestation: { type: Type.STRING },
+                cryptographicSeal: { type: Type.STRING }
+              },
+              required: ['itemTitle', 'itemDescription', 'complianceAttestation', 'cryptographicSeal']
+            }
+          }
+        });
+
+        if (response.text) {
+          const parsed = JSON.parse(response.text);
+          aiResult = {
+            itemTitle: parsed.itemTitle || aiResult.itemTitle,
+            itemDescription: parsed.itemDescription || aiResult.itemDescription,
+            complianceAttestation: parsed.complianceAttestation || aiResult.complianceAttestation,
+            cryptographicSeal: parsed.cryptographicSeal || aiResult.cryptographicSeal
+          };
+        }
+      } catch (aiErr) {
+        console.warn('Gemini receipt generation fallback used:', aiErr);
+      }
+    }
+
+    const issuedDate = new Date().toISOString().split('T')[0] + ' UTC';
+
+    const newPaymentRecord = {
+      id: `PAY-${uniqueSuffix}`,
+      reference: generatedTxRef,
+      customerName: clientName,
+      email: clientEmail,
+      amount: Number(amountUsd),
+      currency: 'USD',
+      type: (Number(amountUsd) <= 3000 ? 'doc_verification' : 'full_payment') as 'doc_verification' | 'full_payment',
+      status: (docMode === 'receipt' ? 'Completed' : 'Pending') as 'Completed' | 'Pending',
+      cardBrand: 'Visa' as const,
+      date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      tier: aiResult.itemTitle
+    };
+    payments.unshift(newPaymentRecord);
+
+    // Also register a verifiable dossier in documentVerifications so scanning the QR code opens the exact record in Client Portal
+    const newVerificationRecord = {
+      id: generatedRefId,
+      clientName,
+      companyName,
+      email: clientEmail,
+      phone: '+256 414 231 000',
+      documentType: 'FCO' as const,
+      fileName: `${generatedReceiptNumber}-${companyName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+      claimedSeller: 'Submitted via Official QR Receipt Ledger',
+      claimedQuantityKg: Number(amountUsd) <= 3000 ? '25 kg – 100 kg Audit Scope' : '7-Day Field Expedition Cohort',
+      claimedDiscountPercent: 'Verified Market Parity Check',
+      documentTextOrNotes: `${aiResult.itemDescription} | ${aiResult.complianceAttestation}`,
+      feeUsd: Number(amountUsd),
+      paymentStatus: (docMode === 'receipt' ? 'paid' : 'pending') as 'paid' | 'pending',
+      paymentRef: generatedTxRef,
+      status: 'under_officer_review' as const,
+      assignedOfficer: 'Staff Officer 1: Lt. Col. (Rtd) Arthur Mwesigye',
+      submittedAt: new Date().toISOString().replace('T', ' ').substring(0, 16) + ' UTC',
+      slaDeadline: '24–72 Hours (Priority Registry Track)',
+      aiAnalysis: {
+        riskScore: 18,
+        verdict: 'SUSPICIOUS_REQUIRES_FIELD_AUDIT' as const,
+        executiveSummary: `Official QR-verified dossier (${generatedRefId}) registered under Uganda Gold Expeditions, P.O Box 122234, Bugonga, Entebbe, Uganda (URA TIN 1019482710).`,
+        redFlags: [
+          'Standard physical registry cross-check in progress at DGSM Entebbe Cadastre.'
+        ],
+        statutoryCrossCheck: aiResult.complianceAttestation,
+        staffActionPlan: [
+          'Assigned to Staff Officer 1 for physical DGSM and URA ASYCUDA verification.'
+        ]
+      },
+      staffFollowUpNotes: `AI-Generated Official Receipt ${generatedReceiptNumber} (${generatedTxRef}) linked via verifiable QR seal ${aiResult.cryptographicSeal}.`
+    };
+    documentVerifications.unshift(newVerificationRecord);
+
+    return res.json({
+      success: true,
+      receipt: {
+        referenceId: generatedRefId,
+        receiptNumber: generatedReceiptNumber,
+        invoiceNumber: generatedInvoiceNumber,
+        transactionRef: generatedTxRef,
+        issuedDate,
+        clientName,
+        companyName,
+        clientEmail,
+        amountUsd: Number(amountUsd),
+        docMode,
+        ...aiResult
+      },
+      paymentRecord: newPaymentRecord,
+      verificationRecord: newVerificationRecord
+    });
+  } catch (err: any) {
+    console.error('AI receipt generation error:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to generate AI receipt.',
+      error: err?.message
+    });
+  }
+});
+
 // API: Staff & Admin Portal Authentication
 app.post('/api/auth/portal-login', (req: Request, res: Response) => {
   const { role, email, password } = req.body;
@@ -988,32 +1308,6 @@ app.post('/api/auth/portal-login', (req: Request, res: Response) => {
     message: 'Invalid portal role specified.'
   });
 });
-
-// In-memory WABA dispatch log for registered members
-let wabaLogs = [
-  {
-    id: 'WABA-2026-901',
-    registrationId: 'REG-2026-8812',
-    memberName: 'Alexander Vance (Apex Precious Metals DMCC)',
-    memberPhone: '+971 50 882 1902',
-    recipientDesk: 'Forensics Desk — Mugisa Solomon Byakutaaga',
-    templateType: 'audit_status_ping',
-    messageBody: 'Verified Member Dispatch [REG-2026-8812]: Requesting ultrasonic & fire-assay schedule confirmation for Kassanda 200kg Dore dossier.',
-    status: 'Delivered via WABA',
-    timestamp: '2026-05-02 10:15 UTC'
-  },
-  {
-    id: 'WABA-2026-902',
-    registrationId: 'REG-2026-9041',
-    memberName: 'Elena Rostova (Helvetic Bullion Partners SA)',
-    memberPhone: '+41 22 819 0422',
-    recipientDesk: 'Operations & B6 Security Desk — Ronnie Mugarura',
-    templateType: 'tarmac_arrival',
-    messageBody: 'Verified Member Dispatch [REG-2026-9041]: Confirming Entebbe VIP diplomatic lounge clearance and B6 armored transfer to Kampala Serena.',
-    status: 'Delivered via WABA',
-    timestamp: '2026-05-02 13:40 UTC'
-  }
-];
 
 // API: Geolocation & Locale Detection for Default Language & Currency Proposal
 app.get('/api/geo/detect', (req: Request, res: Response) => {
@@ -1097,231 +1391,104 @@ app.get('/api/geo/detect', (req: Request, res: Response) => {
   });
 });
 
-// API: Multi-Turn Gemini Chatbot for Registered Members & Visitors
-app.post('/api/chat/message', async (req: Request, res: Response) => {
+// Server-side in-memory translation cache for fast multi-user page translation
+const serverTranslationCache: Record<string, Record<string, string>> = {
+  AR: {},
+  ZH: {},
+  FR: {}
+};
+
+// API: Sitewide Batch Auto-Translation Endpoint
+app.post('/api/translate', async (req: Request, res: Response) => {
   try {
-    const {
-      message,
-      history = [],
-      persona = 'forensics',
-      speedMode = 'standard',
-      memberProfile = null,
-      language = 'EN',
-      currency = 'USD'
-    } = req.body;
-
-    if (!message || typeof message !== 'string') {
-      return res.status(400).json({
-        success: false,
-        message: 'A chat message string is required.'
-      });
-    }
-
-    // Choose model based on task speed: gemini-3.1-flash-lite for fast responses, gemini-3.8-flash for general multi-turn advisory
-    const selectedModel = speedMode === 'fast' ? 'gemini-3.1-flash-lite' : 'gemini-3.8-flash';
-
-    const personaInstructions: Record<string, string> = {
-      forensics: `You are the AI Forensic Intelligence Advisor for the Uganda Gold Expedition, operating under the directorate of Mugisa Solomon Byakutaaga (Board Director & Lead Forensics Expert).
-Your role is to protect institutional gold buyers, sovereign treasuries, and family offices from East African gold fraud.
-Key domain facts you enforce:
-1. Any offer claiming 15%–25% discounts below LBMA spot on physical gold Dore bars is mathematically impossible and an advance-fee trap. Legitimate pithead and aggregator cash prices in Mubende, Kassanda, and Busia trade at 98%–99.2% of LBMA spot.
-2. Handheld XRF spectrometers only scan 10–50 micrometers deep and can be fooled by gold-cladded tungsten bars. Always mandate homogeneous induction melting and 1050°C Fire Assay Cupellation.
-3. Clients can submit any Full Corporate Offer (FCO), SPA, DGSM license, or URA export permit for our USD $2,500 (inclusive of applicable Ugandan VAT) 24–72 Hour Forensic Document Verification with Staff Officer 1 (Lt. Col. Rtd. Arthur Mwesigye). USD 1,000 of the verification fee is credited toward any expedition package booked within 90 days. Note that per compliance rules, no reports are downloadable until Staff Officer 1 approves release.`,
-
-      trade: `You are the AI Minerals Trade & Statutory Compliance Advisor for the Uganda Gold Expedition, operating under the directorate of Kamanzai Kaijuka (Board Director & Minerals Trade Expert).
-Your role is to guide principals on lawful East African gold trade architecture under the Uganda Mining and Minerals Act 2022.
-Key domain facts you enforce:
-1. Every lawful dealer or concession must hold a verifiable active license in the Directorate of Geological Survey and Mines (DGSM) online Mineral Cadastre in Entebbe.
-2. Regional traceability requires an authentic ICGLR Regional Certification Mechanism (RCM) certificate.
-3. Uganda Revenue Authority (URA) statutory 5% export levies are paid strictly through official URA ASYCUDA World Payment Registration Numbers (PRNs) directly to the government treasury—never to private lawyers, commercial escrow accounts, or brokers.
-4. The Uganda Gold Expedition operates under a strict Non-Transaction Charter: we do not buy, sell, or broker gold.`,
-
-      logistics: `You are the AI Expedition Operations, Logistics & Security Concierge for the Uganda Gold Expedition, operating under the directorate of Ronnie Mugarura (Board Director — Operations, Logistics and Strategy).
-Your role is to brief delegates on our 7-Day Physical Supply Chain Expedition, security protocols, and travel logistics.
-Key domain facts you enforce:
-1. One Payment. One Price. All prices in USD, inclusive of applicable Ugandan VAT. Every package includes the mandatory KYC & Client Vetting Allocation (USD 1,000), covering background screening, OFAC, UN, UK HMT, EU sanctions and PEP screening, and government liaison processing. This allocation is strictly non-refundable once vetting commences; should an applicant not pass vetting, the full balance above the $1,000 allocation is refunded within 14 business days. Seats are confirmed on full payment only (no instalments).
-2. We offer 3 tiers: Tier 01 Academic & Research Expedition (USD 8,000 per delegate; Group & Academic Rate: book 6+ paying delegates and one accompanying lecturer/staff member joins complimentary; minimum cohort 6 paying delegates), Tier 02 Professional Trader (USD 15,000, including up to 2 active offer audits with additional audits at USD 1,500 client rate), and Tier 03 Sovereign Executive · Diplomatic VIP (USD 45,000, featuring dedicated B6 armored executive motorcade & close-protection tactical detail for all field movements, forensic audit of up to 5 active transaction proposals + 12-Month Counterparty Verification Retainer covering up to 12 remote verifications; chartered helicopter transfers available on request at USD 3,000 per flight hour).`
+    const { targetLang, texts } = req.body as {
+      targetLang?: string;
+      texts?: string[];
     };
 
-    const memberContextNote = memberProfile
-      ? `\n\nActive Registered Member Context: Speaking with verified member ${memberProfile.fullName} (${memberProfile.companyName}, Registration ID: ${memberProfile.id}, Tier: ${memberProfile.requestedTier}, Payment Status: ${memberProfile.kycPaymentStatus === 'paid' ? 'Paid in Full' : 'Pending'}). Address them respectfully as a registered member who also has access to our encrypted WhatsApp Business API (WABA) hotline.`
-      : `\n\nActive User Context: Speaking with a prospective delegate. Encourage them to Apply & Pay for the 7-Day Expedition (full payment, inclusive of applicable Ugandan VAT and USD 1,000 KYC & Client Vetting Allocation) or use our $2,500 (VAT Incl.) 24–72 Hour Forensic Document Verification service.`;
-
-    const langDirective =
-      language === 'AR'
-        ? '\nRespond in Arabic (العربية). Reference prices in both USD and the user active currency (' + currency + ').'
-        : language === 'ZH'
-        ? '\nRespond in Simplified Chinese (中文). Reference prices in both USD and the user active currency (' + currency + ').'
-        : language === 'FR'
-        ? '\nRespond in French (Français). Reference prices in both USD and the user active currency (' + currency + ').'
-        : '\nRespond in English. Reference prices in USD (and ' + currency + ' if different).';
-
-    const systemInstruction = `${personaInstructions[persona] || personaInstructions.forensics}${memberContextNote}${langDirective}\nKeep responses authoritative, concise (2-4 short paragraphs or clear bullet points), and grounded in East African statutory and metallurgical reality.`;
-
-    if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'MY_GEMINI_API_KEY') {
-      const ai = getGeminiClient();
-
-      // Format multi-turn history for @google/genai chats
-      const formattedHistory = Array.isArray(history)
-        ? history
-            .filter((m: any) => m && typeof m.text === 'string' && m.text.trim().length > 0)
-            .map((m: any) => ({
-              role: m.role === 'model' ? 'model' : 'user',
-              parts: [{ text: m.text }]
-            }))
-        : [];
-
-      const chat = ai.chats.create({
-        model: selectedModel,
-        history: formattedHistory,
-        config: {
-          systemInstruction
-        }
-      });
-
-      const response = await chat.sendMessage({
-        message
-      });
-
-      const replyText = response.text || 'Forensic advisory desk received your message.';
-
-      return res.json({
-        success: true,
-        reply: replyText,
-        modelUsed: selectedModel,
-        persona
-      });
+    if (!targetLang || targetLang === 'EN' || !Array.isArray(texts) || texts.length === 0) {
+      return res.json({ success: true, translations: {} });
     }
 
-    // Fallback when running in local sandbox before GEMINI_API_KEY is injected
-    const lowerMsg = message.toLowerCase();
-    let fallbackReply = '';
-    if (lowerMsg.includes('discount') || lowerMsg.includes('fco') || lowerMsg.includes('scam')) {
-      fallbackReply = `Per Lead Forensics Expert Mugisa Solomon Byakutaaga's desk: Any Full Corporate Offer (FCO) proposing a 15%–25% discount below LBMA spot is an advance-fee fraud decoy. In Uganda's licensed mining belts (Mubende, Kassanda, Busia), physical sponge gold and Dore bars settle at 98% to 99.2% of LBMA spot cash.\n\nNever wire upfront "export tax" or "escrow" retainers. You can upload your FCO for our USD 2,500 (inclusive of applicable Ugandan VAT) 24–72 Hour Forensic Document Verification, where Staff Officer 1 physically cross-checks the DGSM Mineral Cadastre in Entebbe. USD 1,000 of your verification fee is credited toward any expedition package booked within 90 days.`;
-    } else if (lowerMsg.includes('ura') || lowerMsg.includes('tax') || lowerMsg.includes('license') || lowerMsg.includes('dgsm')) {
-      fallbackReply = `Per Minerals Trade Expert Kamanzai Kaijuka's desk: Under the Uganda Mining and Minerals Act 2022, every legitimate seller must hold an active Mineral Dealer License (MDL) or mining lease verifiable on the DGSM online cadastre in Entebbe, paired with an ICGLR regional certificate.\n\nStatutory URA 5% export levies are assessed exclusively via official ASYCUDA World Payment Registration Numbers (PRNs) paid to the government treasury—never to a private law firm or third-party broker account.`;
-    } else {
-      fallbackReply = `Per Operations & Strategy Director Ronnie Mugarura's desk: The 7-Day Uganda Gold Expedition walks principals physically through the DGSM Cadastre in Entebbe, Kampala bonded fire-assay refineries, and active mines in Busia and Kassanda.\n\nAll packages (Tier 01 Academic & Research: USD 8,000; Tier 02 Professional Trader: USD 15,000; Tier 03 Sovereign Executive · Diplomatic VIP: USD 45,000, inclusive of applicable Ugandan VAT) are confirmed on full payment only and include the mandatory USD 1,000 KYC & Client Vetting Allocation covering OFAC, UN, UK HMT, EU sanctions and PEP screening.`;
+    const langKey = targetLang.toUpperCase();
+    if (!serverTranslationCache[langKey]) {
+      serverTranslationCache[langKey] = {};
     }
 
-    return res.json({
-      success: true,
-      reply: fallbackReply,
-      modelUsed: selectedModel,
-      persona
-    });
-  } catch (err: any) {
-    console.error('Gemini chat error:', err);
-    return res.status(500).json({
-      success: false,
-      message: err?.message || 'Error communicating with Gemini AI advisory desk.'
-    });
-  }
-});
+    const resultTranslations: Record<string, string> = {};
+    const missingTexts: string[] = [];
 
-// API: Get WABA Dispatch Logs for Registered Members
-app.get('/api/waba/logs', (_req: Request, res: Response) => {
-  res.json({
-    success: true,
-    wabaConfigured: Boolean(process.env.WABA_PHONE_NUMBER_ID && process.env.WABA_ACCESS_TOKEN),
-    conciergeNumber: process.env.WABA_CONCIERGE_NUMBER || '256772400119',
-    logs: wabaLogs
-  });
-});
-
-// API: Send WhatsApp Business API (WABA) Dispatch (Strictly for Registered Members)
-app.post('/api/waba/dispatch', async (req: Request, res: Response) => {
-  try {
-    const {
-      registrationId,
-      memberName,
-      memberPhone,
-      recipientDesk,
-      templateType = 'custom_dispatch',
-      messageBody
-    } = req.body;
-
-    if (!registrationId || !messageBody) {
-      return res.status(400).json({
-        success: false,
-        message: 'Registered Member ID and message body are required for WABA dispatch.'
-      });
-    }
-
-    // Verify member exists in registrations
-    const verifiedMember = registrations.find(
-      (r) =>
-        r.id.toLowerCase() === String(registrationId).toLowerCase() ||
-        r.email.toLowerCase() === String(registrationId).toLowerCase()
-    );
-
-    if (!verifiedMember) {
-      return res.status(403).json({
-        success: false,
-        message: 'WABA Hotline is restricted to registered expedition members. Please register first.'
-      });
-    }
-
-    const phoneNumberId = process.env.WABA_PHONE_NUMBER_ID;
-    const accessToken = process.env.WABA_ACCESS_TOKEN;
-    const conciergeNumber = process.env.WABA_CONCIERGE_NUMBER || '256772400119';
-
-    // If live Meta WABA credentials are configured, call Meta Graph API
-    if (
-      phoneNumberId &&
-      accessToken &&
-      phoneNumberId !== 'YOUR_WABA_PHONE_NUMBER_ID' &&
-      accessToken !== 'YOUR_WABA_ACCESS_TOKEN'
-    ) {
-      try {
-        await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/messages`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`
-          },
-          body: JSON.stringify({
-            messaging_product: 'whatsapp',
-            to: (memberPhone || verifiedMember.phone || conciergeNumber).replace(/[^0-9]/g, ''),
-            type: 'text',
-            text: {
-              body: `[UGE WABA DISPATCH · ${verifiedMember.id}] To ${recipientDesk}: ${messageBody}`
-            }
-          })
-        });
-      } catch (wabaErr: any) {
-        console.warn('Meta WABA upstream call notice:', wabaErr?.message);
+    for (const raw of texts) {
+      if (typeof raw !== 'string') continue;
+      const trimmed = raw.trim();
+      if (!trimmed) continue;
+      if (serverTranslationCache[langKey][trimmed]) {
+        resultTranslations[trimmed] = serverTranslationCache[langKey][trimmed];
+      } else if (!missingTexts.includes(trimmed)) {
+        missingTexts.push(trimmed);
       }
     }
 
-    const newWabaEntry = {
-      id: `WABA-2026-${Math.floor(100 + Math.random() * 900)}`,
-      registrationId: verifiedMember.id,
-      memberName: `${verifiedMember.fullName} (${verifiedMember.companyName})`,
-      memberPhone: memberPhone || verifiedMember.phone,
-      recipientDesk: recipientDesk || 'Forensics Desk — Mugisa Solomon Byakutaaga',
-      templateType,
-      messageBody,
-      status: 'Delivered via WABA' as const,
-      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16) + ' UTC'
-    };
+    if (missingTexts.length === 0) {
+      return res.json({ success: true, translations: resultTranslations, cached: true });
+    }
 
-    wabaLogs.unshift(newWabaEntry);
+    // Limit batch size per call to keep latency low
+    const batchToTranslate = missingTexts.slice(0, 60);
 
-    const waDirectUrl = `https://wa.me/${conciergeNumber}?text=${encodeURIComponent(
-      `[VERIFIED MEMBER ${verifiedMember.id} — ${verifiedMember.fullName}] Routing to ${newWabaEntry.recipientDesk}: ${messageBody}`
-    )}`;
+    if (process.env.API_KEY) {
+      const langNames: Record<string, string> = {
+        AR: 'Modern Standard Arabic (professional institutional financial and legal tone)',
+        ZH: 'Simplified Chinese (professional institutional financial and legal tone)',
+        FR: 'French (professional institutional financial and legal tone)'
+      };
+      const targetLangDescription = langNames[langKey] || langKey;
+
+      const ai = getGeminiClient();
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: `Translate the following array of English UI/website strings from the "Uganda Gold Expedition" website into ${targetLangDescription}.
+Rules:
+1. Return ONLY a JSON array of translated strings in the EXACT same order and length (${batchToTranslate.length} items) as the input JSON array.
+2. Preserve numbers, prices (e.g., $2,500, $8,000, $15,000, $25,000), acronyms (DGSM, URA, TIN 1019482710, ASYCUDA, ICGLR, LBMA, FCO, SPA, KYC, PEP), and proper names/places (Entebbe, Kampala, Mubende, Busia, Kassanda, Bugonga).
+3. Keep button labels and navigation items concise and natural.
+
+Input JSON array:
+${JSON.stringify(batchToTranslate)}`,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.STRING
+            }
+          }
+        }
+      });
+
+      const rawText = response.text || '[]';
+      const parsed = JSON.parse(rawText);
+      if (Array.isArray(parsed)) {
+        batchToTranslate.forEach((sourceStr, idx) => {
+          const translatedStr =
+            typeof parsed[idx] === 'string' && parsed[idx].trim()
+              ? parsed[idx].trim()
+              : sourceStr;
+          serverTranslationCache[langKey][sourceStr] = translatedStr;
+          resultTranslations[sourceStr] = translatedStr;
+        });
+      }
+    }
 
     return res.json({
       success: true,
-      dispatch: newWabaEntry,
-      waDirectUrl
+      translations: resultTranslations
     });
-  } catch (err: any) {
-    console.error('WABA dispatch error:', err);
-    return res.status(500).json({
+  } catch (error) {
+    console.error('Auto-translation batch error:', error);
+    return res.json({
       success: false,
-      message: 'Failed to process WABA dispatch.'
+      translations: {}
     });
   }
 });
