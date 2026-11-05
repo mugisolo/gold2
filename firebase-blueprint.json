@@ -21,7 +21,7 @@
       "properties": {
         "userId": { "type": "string", "description": "Owner Firebase Auth UID" },
         "language": { "type": "string", "enum": ["EN", "FR", "AR", "ZH", "RU"], "description": "Selected UI language" },
-        "currency": { "type": "string", "enum": ["USD", "EUR", "GBP", "AED", "CNY", "UGX"], "description": "Selected settlement & display currency" },
+        "currency": { "type": "string", "enum": ["USD"], "description": "Selected settlement & display currency (USD only)" },
         "defaultPage": { "type": "string", "maxLength": 128, "description": "Preferred landing route path" },
         "compactMode": { "type": "boolean", "description": "Compact data-table density toggle" },
         "rtlEnabled": { "type": "boolean", "description": "Right-to-Left layout direction state" },
@@ -181,24 +181,46 @@
     },
     "ContentPost": {
       "title": "ContentPost",
-      "description": "Forensic intelligence dispatch or regulatory alert article",
+      "description": "Forensic intelligence dispatch, regulatory alert, or field due-diligence briefing article",
       "type": "object",
       "properties": {
         "id": { "type": "string", "description": "Post ID" },
+        "slug": { "type": "string", "maxLength": 160, "description": "Canonical URL slug" },
         "title": { "type": "string", "description": "Article headline" },
+        "h1": { "type": "string", "maxLength": 300, "description": "Visible H1 heading" },
+        "seoTitle": { "type": "string", "maxLength": 160, "description": "SEO title tag" },
+        "seoDescription": { "type": "string", "maxLength": 320, "description": "SEO meta description" },
         "category": {
           "type": "string",
-          "enum": ["Field Dispatch", "Regulatory Alert", "Scam Case Study", "Intelligence Briefing", "Market Update"]
+          "enum": [
+            "Offer Risk",
+            "Regulation",
+            "Field Methods",
+            "Metallurgy",
+            "Field Dispatch",
+            "Regulatory Alert",
+            "Scam Case Study",
+            "Intelligence Briefing",
+            "Market Update"
+          ]
         },
         "summary": { "type": "string", "description": "Executive summary" },
         "body": { "type": "string", "description": "Full article body" },
         "author": { "type": "string", "description": "Author name" },
         "authorRole": { "type": "string", "description": "Author board designation" },
+        "reviewer": { "type": "string", "maxLength": 150, "description": "Qualified expert reviewer" },
+        "reviewerRole": { "type": "string", "maxLength": 150, "description": "Expert reviewer role" },
         "date": { "type": "string", "description": "Publication date" },
+        "updatedDate": { "type": "string", "maxLength": 64, "description": "Last reviewed date" },
         "published": { "type": "boolean", "description": "Public visibility flag" },
         "imageUrl": { "type": "string", "description": "Featured image URL" },
+        "imageAlt": { "type": "string", "maxLength": 300, "description": "Descriptive image alt text" },
         "readTime": { "type": "string", "description": "Estimated read time" },
-        "tags": { "type": "array", "items": { "type": "string" } }
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "sources": { "type": "array", "items": { "type": "string" } },
+        "limitations": { "type": "string", "maxLength": 1500, "description": "Scope and methodological limitations statement" },
+        "nextStepLabel": { "type": "string", "maxLength": 160, "description": "CTA label" },
+        "nextStepPath": { "type": "string", "maxLength": 160, "description": "CTA route path" }
       },
       "required": ["id", "title", "category", "summary", "body", "author", "date", "published"]
     },
@@ -274,6 +296,40 @@
         "details": { "type": "string", "description": "Detailed summary of the administrative change" }
       },
       "required": ["id", "timestamp", "actorEmail", "actorRole", "category", "action", "targetId", "details"]
+    },
+    "NewsletterSubscriber": {
+      "title": "NewsletterSubscriber",
+      "description": "Visitor or institutional principal subscribed to the Uganda Gold Expedition Field Intelligence & Regulatory Briefing newsletter",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$", "description": "Unique subscription document ID" },
+        "email": { "type": "string", "format": "email", "minLength": 3, "maxLength": 254, "pattern": "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$", "description": "Subscriber email address" },
+        "fullName": { "type": "string", "minLength": 1, "maxLength": 120, "description": "Subscriber full name" },
+        "organization": { "type": "string", "minLength": 1, "maxLength": 160, "description": "Subscriber organization or desk" },
+        "interestTrack": {
+          "type": "string",
+          "enum": [
+            "All Briefings & Field Dispatches",
+            "Forensic Fraud Alerts & Scam Deconstructions",
+            "DGSM & URA Regulatory Updates",
+            "7-Day Expedition Cohort Announcements"
+          ],
+          "description": "Selected intelligence briefing focus track"
+        },
+        "source": {
+          "type": "string",
+          "enum": ["footer", "blog", "homepage", "website"],
+          "description": "Origin page or widget where subscription occurred"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "unsubscribed"],
+          "description": "Subscription delivery status"
+        },
+        "subscribedAt": { "type": "string", "minLength": 8, "maxLength": 64, "description": "UTC timestamp when subscribed" },
+        "userId": { "type": "string", "maxLength": 128, "description": "Optional Firebase Auth UID if subscribed while signed in" }
+      },
+      "required": ["id", "email", "interestTrack", "source", "status", "subscribedAt"]
     }
   },
   "firestore": {
@@ -324,7 +380,12 @@
     "/auditLogs/{logId}": {
       "schema": { "$ref": "#/entities/AdminAuditLog" },
       "description": "Immutable administrative audit logs (staff/admin read and create, no update or delete)"
+    },
+    "/newsletterSubscribers/{subscriberId}": {
+      "schema": { "$ref": "#/entities/NewsletterSubscriber" },
+      "description": "Dedicated newsletter subscribers collection storing emails and briefing preferences from Footer, Blog, and Homepage signup forms"
     }
   }
 }
+
 

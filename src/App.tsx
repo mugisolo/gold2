@@ -80,95 +80,16 @@ import {
   type UxPreferencesDoc
 } from './services/firebase';
 import { SiteAutoTranslator } from './services/autoTranslate';
-import { ArrowRight, ShieldCheck, Lock, UserCheck, Globe } from 'lucide-react';
-
-const ROUTE_SEO: Record<string, { title: string; description: string }> = {
-  '/': {
-    title: 'Uganda Gold Expedition | Independent Gold Due Diligence & Offer Verification',
-    description:
-      'Independent due diligence and field verification in Uganda. Verify a gold offer in 24–72 hours or join a 7-day field expedition across Entebbe, Kampala, Mubende, and Busia.'
-  },
-  '/verification': {
-    title: '24–72-Hour Offer Verification | Uganda Gold Expedition',
-    description:
-      'Submit an FCO, SPA, DGSM mineral license, or URA customs document for 24–72-hour registry cross-checking by our Kampala and Entebbe due-diligence team.'
-  },
-  '/expeditions': {
-    title: '7-Day Field Expeditions Overview | Uganda Gold Expedition',
-    description:
-      'Compare our 7-day on-the-ground gold supply-chain verification programmes for professional traders, academic researchers, and institutional delegations.'
-  },
-  '/expeditions/professional': {
-    title: 'Professional Trader Expedition (Tier 02) | Uganda Gold Expedition',
-    description:
-      '7-day commercial due-diligence programme for bullion buyers and commodity desks, including 1-on-1 counterparty offer audits and accredited refinery fire assay.'
-  },
-  '/expeditions/academic': {
-    title: 'Academic & Research Expedition (Tier 01) | Uganda Gold Expedition',
-    description:
-      'Empirical 7-day field curriculum examining the Uganda Mining and Minerals Act 2022, artisanal and industrial extraction, and ICGLR traceability.'
-  },
-  '/expeditions/institutional': {
-    title: 'Institutional & Private Delegations (Tier 03) | Uganda Gold Expedition',
-    description:
-      'Confidential field scoping, regulatory access, and B6 armored logistics for sovereign funds, central bank observers, and private family offices.'
-  },
-  '/expeditions/itinerary': {
-    title: 'Full 7-Day Field Itinerary | Uganda Gold Expedition',
-    description:
-      'Day-by-day schedule covering DGSM Entebbe cadastre lookups, metallurgical forensics, Mubende artisanal pits, Busia industrial processing, and URA customs.'
-  },
-  '/expeditions/dates': {
-    title: '2027 Cohort Dates, Packages & Inclusions | Uganda Gold Expedition',
-    description:
-      'Review upcoming 7-day cohort dates, seat availability, and package inclusions across Tier 01 ($8,000), Tier 02 ($15,000), and Tier 03 ($25,000).'
-  },
-  '/risk-compliance': {
-    title: 'Risk & Compliance Learning Hub | Uganda Gold Expedition',
-    description:
-      'Plain-language guides, statutory references, and regulatory glossary covering DGSM licensing, URA ASYCUDA customs, ICGLR certification, and fire assay.'
-  },
-  '/risk-compliance/supply-chain': {
-    title: 'Supply-Chain Stages & Interactive Map | Uganda Gold Expedition',
-    description:
-      'Explore the five stages of Uganda’s regulated gold supply chain and inspect extraction corridors, smelting hubs, and export checkpoints.'
-  },
-  '/risk-compliance/scam-check': {
-    title: 'Scam-Risk Assessment Tool | Uganda Gold Expedition',
-    description:
-      'Screen a gold offer against common pricing, customs, banking, and assay warning signs and review recommended due-diligence steps.'
-  },
-  '/about': {
-    title: 'About Us, Mission & Independence | Uganda Gold Expedition',
-    description:
-      'Learn about our strict non-transaction charter, executive leadership, field verification capabilities, and annotated operational photography.'
-  },
-  '/insights': {
-    title: 'Insights & Intelligence Library | Uganda Gold Expedition',
-    description:
-      'Field dispatches, regulatory briefings, and metallurgical verification guides from our Kampala and Entebbe directorate.'
-  },
-  '/faq': {
-    title: 'Frequently Asked Questions | Uganda Gold Expedition',
-    description:
-      'Answers to common questions on East African gold pricing, DGSM license verification, URA export levies, fire assay, and expedition logistics.'
-  },
-  '/contact': {
-    title: 'Contact & Executive Briefing Requests | Uganda Gold Expedition',
-    description:
-      'Request a confidential institutional briefing, academic group arrangement, or speak with our Kampala and Entebbe due-diligence desk.'
-  },
-  '/apply': {
-    title: 'Expedition Application & Vetting Workflow | Uganda Gold Expedition',
-    description:
-      'Complete your 6-step expedition application, statutory KYC/PEP screening, Non-Transaction Agreement signature, and programme settlement.'
-  },
-  '/portal': {
-    title: 'Authenticated Client Portal | Uganda Gold Expedition',
-    description:
-      'Access your verification reports, expedition application status, digital signatures, payment receipts, and member concierge.'
-  }
-};
+import {
+  OfflineFieldStatusBanner,
+  loadOfflineExpeditionSnapshot,
+  saveOfflineExpeditionSnapshot
+} from './components/PWAOfflineManager';
+import { ArrowRight, ShieldCheck, Lock, UserCheck, Globe, AlertTriangle } from 'lucide-react';
+import {
+  resolveSeoMetadata,
+  getRedirectDestination
+} from './data/seoRoutes';
 
 function normalizePathname(rawPath: string): string {
   if (!rawPath) return '/';
@@ -256,20 +177,64 @@ export default function App() {
   const [paymentType, setPaymentType] = useState<'full' | 'doc_verification'>('full');
   const [preloadedScamNotes, setPreloadedScamNotes] = useState<string>('');
 
-  // Portal Data States
-  const [posts, setPosts] = useState<ContentPost[]>(INITIAL_POSTS);
-  const [photos, setPhotos] = useState<PhotoItem[]>(INITIAL_PHOTOS);
-  const [aboutContent, setAboutContent] = useState<AboutContent>(INITIAL_ABOUT_CONTENT);
-  const [boardMembers, setBoardMembers] = useState<BoardMember[]>(INITIAL_BOARD_MEMBERS);
-  const [registrations, setRegistrations] =
-    useState<ExpeditionRegistration[]>(INITIAL_REGISTRATIONS);
-  const [staff, setStaff] = useState<StaffMember[]>(INITIAL_STAFF);
-  const [fieldLogs, setFieldLogs] = useState<FieldLog[]>(INITIAL_FIELD_LOGS);
-  const [payments, setPayments] = useState<PaymentRecord[]>(INITIAL_PAYMENTS);
-  const [documentVerifications, setDocumentVerifications] = useState<DocumentVerification[]>(
-    INITIAL_DOCUMENT_VERIFICATIONS
+  // Portal Data States (Initialized from latest cached offline expedition snapshot if available)
+  const cachedOfflineSnapshot = loadOfflineExpeditionSnapshot();
+  const [posts, setPosts] = useState<ContentPost[]>(
+    () => (cachedOfflineSnapshot?.posts as ContentPost[]) || INITIAL_POSTS
   );
-  const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>(INITIAL_AUDIT_LOGS);
+  const [photos, setPhotos] = useState<PhotoItem[]>(
+    () => (cachedOfflineSnapshot?.photos as PhotoItem[]) || INITIAL_PHOTOS
+  );
+  const [aboutContent, setAboutContent] = useState<AboutContent>(
+    () => (cachedOfflineSnapshot?.aboutContent as AboutContent) || INITIAL_ABOUT_CONTENT
+  );
+  const [boardMembers, setBoardMembers] = useState<BoardMember[]>(
+    () => (cachedOfflineSnapshot?.boardMembers as BoardMember[]) || INITIAL_BOARD_MEMBERS
+  );
+  const [registrations, setRegistrations] = useState<ExpeditionRegistration[]>(
+    () =>
+      (cachedOfflineSnapshot?.registrations as ExpeditionRegistration[]) || INITIAL_REGISTRATIONS
+  );
+  const [staff, setStaff] = useState<StaffMember[]>(INITIAL_STAFF);
+  const [fieldLogs, setFieldLogs] = useState<FieldLog[]>(
+    () => (cachedOfflineSnapshot?.fieldLogs as FieldLog[]) || INITIAL_FIELD_LOGS
+  );
+  const [payments, setPayments] = useState<PaymentRecord[]>(
+    () => (cachedOfflineSnapshot?.payments as PaymentRecord[]) || INITIAL_PAYMENTS
+  );
+  const [documentVerifications, setDocumentVerifications] = useState<DocumentVerification[]>(
+    () =>
+      (cachedOfflineSnapshot?.documentVerifications as DocumentVerification[]) ||
+      INITIAL_DOCUMENT_VERIFICATIONS
+  );
+  const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>(
+    () => (cachedOfflineSnapshot?.auditLogs as AdminAuditLog[]) || INITIAL_AUDIT_LOGS
+  );
+
+  // Sync latest expedition & dossier state into local offline snapshot for remote field access
+  useEffect(() => {
+    saveOfflineExpeditionSnapshot({
+      posts,
+      photos,
+      aboutContent,
+      boardMembers,
+      registrations,
+      fieldLogs,
+      payments,
+      documentVerifications,
+      auditLogs
+    });
+  }, [
+    posts,
+    photos,
+    aboutContent,
+    boardMembers,
+    registrations,
+    fieldLogs,
+    payments,
+    documentVerifications,
+    auditLogs
+  ]);
 
   // Handle browser back/forward navigation
   useEffect(() => {
@@ -280,13 +245,44 @@ export default function App() {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
-  // Update page title and meta description per route
+  // Update page title, meta description, canonical, robots, OpenGraph, and JSON-LD per route
   useEffect(() => {
-    const seo = ROUTE_SEO[currentPath] || ROUTE_SEO['/'];
-    document.title = seo.title;
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) {
-      metaDesc.setAttribute('content', seo.description);
+    const redirectTarget = getRedirectDestination(currentPath);
+    if (redirectTarget) {
+      if (typeof window !== 'undefined') {
+        window.history.replaceState({}, '', redirectTarget);
+      }
+      setCurrentPath(redirectTarget);
+      return;
+    }
+
+    const meta = resolveSeoMetadata(currentPath);
+    document.title = meta.title;
+
+    const setMetaContent = (selector: string, content: string) => {
+      const el = document.querySelector(selector);
+      if (el) el.setAttribute('content', content);
+    };
+
+    setMetaContent('meta[name="description"]', meta.description);
+    setMetaContent('meta[name="robots"]', meta.robots);
+    setMetaContent('meta[property="og:type"]', meta.ogType);
+    setMetaContent('meta[property="og:title"]', meta.title);
+    setMetaContent('meta[property="og:description"]', meta.description);
+    setMetaContent('meta[property="og:url"]', meta.canonicalUrl);
+    setMetaContent('meta[name="twitter:title"]', meta.title);
+    setMetaContent('meta[name="twitter:description"]', meta.description);
+
+    const canonicalLink = document.querySelector('link[rel="canonical"]');
+    if (canonicalLink) {
+      canonicalLink.setAttribute('href', meta.canonicalUrl);
+    }
+
+    const ldScript =
+      document.getElementById('uge-json-ld') ||
+      document.getElementById('seo-structured-data');
+    if (ldScript) {
+      ldScript.textContent = JSON.stringify(meta.jsonLd);
     }
   }, [currentPath]);
 
@@ -301,18 +297,24 @@ export default function App() {
       }
       const refParam = params.get('ref') || params.get('tx');
       const emailParam = params.get('email');
-      const norm = normalizePathname(base);
+      const rawNorm = normalizePathname(base);
+      const norm = getRedirectDestination(rawNorm) || rawNorm;
+      const finalTargetUrl = `${norm}?${queryStr}`;
       if (norm === '/portal') {
         if (refParam) setClientPortalRefFilter(refParam);
         if (emailParam) setClientPortalEmailFilter(emailParam);
         setIsClientPortalOpen(true);
       }
-      if (typeof window !== 'undefined' && window.location.pathname + window.location.search !== targetUrl) {
-        window.history.pushState({}, '', targetUrl);
+      if (
+        typeof window !== 'undefined' &&
+        window.location.pathname + window.location.search !== finalTargetUrl
+      ) {
+        window.history.pushState({}, '', finalTargetUrl);
       }
       setCurrentPath(norm);
     } else {
-      const norm = normalizePathname(targetUrl);
+      const rawNorm = normalizePathname(targetUrl);
+      const norm = getRedirectDestination(rawNorm) || rawNorm;
       if (norm === '/portal') {
         setIsClientPortalOpen(true);
       }
@@ -322,10 +324,11 @@ export default function App() {
       setCurrentPath(norm);
     }
 
+    const savedPage = normalizePathname(targetUrl);
     saveUxPreferencesToFirestore({
       language: currentLang,
       currency: selectedCurrency,
-      defaultPage: normalizePathname(targetUrl)
+      defaultPage: getRedirectDestination(savedPage) || savedPage
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -363,12 +366,7 @@ export default function App() {
           ) {
             setCurrentLang(geo.proposedLang as Language);
           }
-          if (
-            geo?.proposedCurrency &&
-            ['USD', 'EUR', 'AED', 'GBP', 'CNY', 'UGX'].includes(geo.proposedCurrency)
-          ) {
-            setSelectedCurrency(geo.proposedCurrency as Currency);
-          }
+          setSelectedCurrency('USD');
         })
         .catch(() => {});
     }
@@ -410,7 +408,7 @@ export default function App() {
           if (snap.exists()) {
             const data = snap.data() as UxPreferencesDoc;
             if (data.language) setCurrentLang(data.language);
-            if (data.currency) setSelectedCurrency(data.currency);
+            setSelectedCurrency('USD');
           }
         },
         (err) => {
@@ -515,8 +513,7 @@ export default function App() {
 
       const regsQuery = query(
         collection(db, 'registrations'),
-        where('userId', '==', user.uid),
-        orderBy('registeredAt', 'desc')
+        where('userId', '==', user.uid)
       );
       unsubRegs = onSnapshot(
         regsQuery,
@@ -537,8 +534,7 @@ export default function App() {
 
       const docsQuery = query(
         collection(db, 'documentVerifications'),
-        where('userId', '==', user.uid),
-        orderBy('submittedAt', 'desc')
+        where('userId', '==', user.uid)
       );
       unsubDocs = onSnapshot(
         docsQuery,
@@ -1113,14 +1109,29 @@ export default function App() {
 
   // Render active route page
   const renderRouteContent = () => {
-    if (currentPath === '/verification') {
+    if (currentPath === '/' || currentPath === '/portal') {
+      return (
+        <HomePage
+          currency={selectedCurrency}
+          onNavigate={handleNavigate}
+          onOpenDocVerifyModal={() => setIsDocVerificationOpen(true)}
+          onOpenRegistrationModal={(tier) => {
+            if (tier === 'academic' || tier === 'trader' || tier === 'sovereign') {
+              setSelectedTier(tier);
+            }
+            setIsRegistrationOpen(true);
+          }}
+          posts={posts}
+        />
+      );
+    }
+
+    if (currentPath === '/offer-verification' || currentPath === '/verification') {
       return (
         <VerificationPage
-          currentLang={currentLang}
-          selectedCurrency={selectedCurrency}
+          currency={selectedCurrency}
+          onOpenDocVerifyModal={() => setIsDocVerificationOpen(true)}
           onNavigate={handleNavigate}
-          onVerificationCreated={handleVerificationCreated}
-          onOpenClientPortalWithEmail={(email: string) => handleOpenClientPortal(email)}
         />
       );
     }
@@ -1136,7 +1147,10 @@ export default function App() {
       );
     }
 
-    if (currentPath === '/expeditions/professional') {
+    if (
+      currentPath === '/expeditions/professional-traders' ||
+      currentPath === '/expeditions/professional'
+    ) {
       return (
         <ProfessionalExpeditionPage
           currentLang={currentLang}
@@ -1147,7 +1161,10 @@ export default function App() {
       );
     }
 
-    if (currentPath === '/expeditions/academic') {
+    if (
+      currentPath === '/expeditions/academic-research' ||
+      currentPath === '/expeditions/academic'
+    ) {
       return (
         <AcademicExpeditionPage
           currentLang={currentLang}
@@ -1158,7 +1175,10 @@ export default function App() {
       );
     }
 
-    if (currentPath === '/expeditions/institutional') {
+    if (
+      currentPath === '/expeditions/institutional-vip' ||
+      currentPath === '/expeditions/institutional'
+    ) {
       return (
         <InstitutionalExpeditionPage
           currentLang={currentLang}
@@ -1180,7 +1200,11 @@ export default function App() {
       );
     }
 
-    if (currentPath === '/expeditions/dates') {
+    if (
+      currentPath === '/expeditions/dates-packages' ||
+      currentPath === '/expeditions/dates' ||
+      currentPath === '/packages'
+    ) {
       return (
         <DatesPackagesPage
           currentLang={currentLang}
@@ -1234,30 +1258,31 @@ export default function App() {
           onBackToHome={() => handleNavigate('/')}
           onNavigate={handleNavigate}
           onOpenRegistration={() => handleNavigate('/apply')}
-          onOpenDocVerification={() => handleNavigate('/verification')}
+          onOpenDocVerification={() => handleNavigate('/offer-verification')}
           onOpenAdminPanel={() => handleOpenAdminWithTab('about-board')}
           onNavigateToBlog={() => handleNavigate('/insights')}
         />
       );
     }
 
-    if (currentPath === '/insights' || currentPath.startsWith('/insights/')) {
+    if (
+      currentPath === '/insights' ||
+      currentPath.startsWith('/insights/') ||
+      currentPath === '/blog' ||
+      currentPath.startsWith('/blog/')
+    ) {
       const slug = currentPath.startsWith('/insights/')
         ? currentPath.replace('/insights/', '').trim()
+        : currentPath.startsWith('/blog/')
+        ? currentPath.replace('/blog/', '').trim()
         : undefined;
       return (
         <BlogPage
           currentLang={currentLang}
           selectedCurrency={selectedCurrency}
           posts={posts}
-          isFullPage={true}
-          activeSlug={slug}
-          showAdminControls={isAdminAuthenticated}
-          onBackToHome={() => handleNavigate('/')}
+          activePostId={slug}
           onNavigate={handleNavigate}
-          onOpenAdminPanel={() => handleOpenAdminWithTab('content')}
-          onOpenDocVerification={() => handleNavigate('/verification')}
-          onOpenRegistration={() => handleNavigate('/apply')}
         />
       );
     }
@@ -1279,7 +1304,7 @@ export default function App() {
           <FaqSection
             currentLang={currentLang}
             selectedCurrency={selectedCurrency}
-            onOpenDocVerification={() => handleNavigate('/verification')}
+            onOpenDocVerification={() => handleNavigate('/offer-verification')}
             onOpenRegistration={() => handleNavigate('/apply')}
           />
         </div>
@@ -1323,15 +1348,56 @@ export default function App() {
       return <LegalGovernancePage activeTab="terms" onNavigate={handleNavigate} />;
     }
 
-    // Default: Concise 8-Section Homepage (/)
+    // Unknown route: Dedicated 404 Not Found view
     return (
-      <HomePage
-        currentLang={currentLang}
-        selectedCurrency={selectedCurrency}
-        boardMembers={boardMembers}
-        photos={photos}
-        onNavigate={handleNavigate}
-      />
+      <section className="min-h-[70vh] bg-[#0B0F17] flex items-center justify-center px-4 py-16">
+        <div className="max-w-2xl w-full bg-[#111722] border border-slate-800 rounded-2xl p-8 sm:p-10 text-center">
+          <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-5">
+            <AlertTriangle className="w-6 h-6 text-[#D4AF37]" />
+          </div>
+          <p className="text-xs font-mono uppercase tracking-widest text-[#D4AF37] mb-2">
+            HTTP 404 · Route Not Found
+          </p>
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white mb-3">
+            Page not found
+          </h1>
+          <p className="text-sm text-slate-300 leading-relaxed mb-8">
+            The requested path (<code className="text-[#D4AF37] font-mono">{currentPath}</code>) does
+            not match an active public briefing, verification desk, or field expedition page.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => handleNavigate('/offer-verification')}
+              className="px-5 py-2.5 rounded-lg bg-[#D4AF37] hover:bg-[#c59f2d] text-slate-950 font-semibold text-xs inline-flex items-center gap-2 transition-colors cursor-pointer"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Verify an Offer</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleNavigate('/expeditions')}
+              className="px-4 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 font-semibold text-xs transition-colors cursor-pointer"
+            >
+              Explore Expeditions
+            </button>
+            <button
+              type="button"
+              onClick={() => handleNavigate('/risk-compliance')}
+              className="px-4 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 font-semibold text-xs transition-colors cursor-pointer"
+            >
+              Risk &amp; Compliance
+            </button>
+            <button
+              type="button"
+              onClick={() => handleNavigate('/insights')}
+              className="px-4 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 font-semibold text-xs transition-colors cursor-pointer"
+            >
+              Field Insights
+            </button>
+          </div>
+        </div>
+      </section>
     );
   };
 
@@ -1353,6 +1419,7 @@ export default function App() {
         currentLang={currentLang}
         selectedCurrency={selectedCurrency}
         currentPath={currentPath}
+        posts={posts}
         onNavigate={handleNavigate}
         onLanguageChange={handleLanguageChange}
         onOpenClientPortal={() => {
@@ -1363,6 +1430,11 @@ export default function App() {
             setIsPortalAuthOpen(true);
           }
         }}
+      />
+
+      {/* Offline Field Mode Connectivity & Service Worker Cache Banner */}
+      <OfflineFieldStatusBanner
+        onOpenClientPortal={() => handleOpenClientPortal(authenticatedIdentity)}
       />
 
       {/* Subtle Auto-Translation Progress Indicator when translating uncached page content */}
@@ -1479,22 +1551,24 @@ export default function App() {
         }}
       />
 
-      {/* Sticky Mobile Primary Action Bar (Shown on mobile viewports when not already inside /verification or /apply) */}
-      {currentPath !== '/verification' && currentPath !== '/apply' && (
-        <div className="lg:hidden sticky bottom-0 z-30 bg-[#0B0F17]/95 backdrop-blur-md border-t border-slate-800 px-4 py-2.5 flex items-center justify-between gap-3">
-          <div className="text-xs">
-            <span className="font-semibold text-white block">Active gold offer or visit?</span>
-            <span className="text-[11px] text-slate-400">24–72h Verification · 7-Day Expedition</span>
-          </div>
-          <button
-            type="button"
-            onClick={() =>
-              handleNavigate(
-                currentPath.startsWith('/expeditions') ? '/apply' : '/verification'
-              )
-            }
-            className="px-4 py-2 rounded-lg bg-[#D4AF37] text-slate-950 font-semibold text-xs inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
-          >
+      {/* Sticky Mobile Primary Action Bar (Shown on mobile viewports when not already inside /offer-verification or /apply) */}
+      {currentPath !== '/offer-verification' &&
+        currentPath !== '/verification' &&
+        currentPath !== '/apply' && (
+          <div className="lg:hidden sticky bottom-0 z-30 bg-[#0B0F17]/95 backdrop-blur-md border-t border-slate-800 px-4 py-2.5 flex items-center justify-between gap-3">
+            <div className="text-xs">
+              <span className="font-semibold text-white block">Active gold offer or visit?</span>
+              <span className="text-[11px] text-slate-400">24–72h Verification · 7-Day Expedition</span>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                handleNavigate(
+                  currentPath.startsWith('/expeditions') ? '/apply' : '/offer-verification'
+                )
+              }
+              className="px-4 py-2 rounded-lg bg-[#D4AF37] text-slate-950 font-semibold text-xs inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
+            >
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>
               {currentPath.startsWith('/expeditions') ? 'Start Application' : 'Verify an Offer'}
@@ -1603,7 +1677,7 @@ export default function App() {
           }}
           onOpenDocVerification={() => {
             setIsClientPortalOpen(false);
-            handleNavigate('/verification');
+            handleNavigate('/offer-verification');
           }}
           onOpenRegistration={() => {
             setIsClientPortalOpen(false);

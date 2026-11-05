@@ -2,17 +2,11 @@ import { ItineraryDay, PackageTier, ScamRule, Currency } from '../types';
 
 export const CURRENCY_RATES: Record<Currency, { symbol: string; rate: number; label: string }> = {
   USD: { symbol: '$', rate: 1.0, label: 'US Dollar (USD)' },
-  EUR: { symbol: '€', rate: 0.92, label: 'Euro (EUR)' },
-  AED: { symbol: 'AED ', rate: 3.67, label: 'UAE Dirham (AED)' },
-  GBP: { symbol: '£', rate: 0.79, label: 'British Pound (GBP)' },
-  CNY: { symbol: '¥', rate: 7.23, label: 'Chinese Yuan (CNY)' },
-  UGX: { symbol: 'UGX ', rate: 3720, label: 'Ugandan Shilling (UGX)' },
 };
 
-export function formatCurrencyPrice(amountUsd: number, currency: Currency = 'USD'): string {
-  const rateObj = CURRENCY_RATES[currency] || CURRENCY_RATES.USD;
-  const converted = Math.round(amountUsd * rateObj.rate);
-  return `${rateObj.symbol}${converted.toLocaleString()}`;
+export function formatCurrencyPrice(amountUsd: number, _currency: Currency = 'USD'): string {
+  const converted = Math.round(amountUsd * CURRENCY_RATES.USD.rate);
+  return `${CURRENCY_RATES.USD.symbol}${converted.toLocaleString()}`;
 }
 
 export const UPCOMING_COHORTS = [
@@ -67,14 +61,14 @@ export const ITINERARY_DAYS: ItineraryDay[] = [
     location: "Mubende – Kassanda Gold Corridor",
     timeSlot: "06:30 – 19:00",
     focus: "Raw Extraction Economics, Sluicing, Purity & Middleman Markups",
-    description: "Travel via Armored 4x4 Convoy to the operational artisanal pitheads in Central Uganda. Witness firsthand artisanal gold panning, gravity concentration, and local mercury-amalgam methods. Observe how raw dust is weighed, the true local spot discount (often only 1-3% below international spot at the pithead), and why 'cheap local gold' is a mathematical myth.",
+    description: "Travel via Armored 4x4 Convoy to the operational artisanal pitheads in Central Uganda. Witness firsthand artisanal gold panning, gravity concentration, and local processing methods. Observe how raw doré is weighed, how local pithead purchasing typically tracks close to international spot rates after assay and refining costs, and why deep discount claims warrant scrutiny.",
     keyActivities: [
       "Walk the operational pits and interact with licensed artisanal mining associations",
       "Observe live gravity sluicing and panning from raw quartz vein material",
       "Verify real pit-head transactional prices and weigh raw sponge gold on field scales",
       "Examine local security protocols, community agreements, and regional supply chain middlemen"
     ],
-    riskDeconstructed: "The 'Village Elder with 500kg of cheap dust' myth: understanding actual artisanal output limits (grams, not metric tons).",
+    riskDeconstructed: "Unsubstantiated claims of multi-hundred-kilogram artisanal stockpiles offered at deep discounts: understanding actual artisanal output limits and aggregation structures.",
     executiveDeliverable: "Field Geology & Artisanal Supply Flow Chart with Real Pit-Head Unit Economics."
   },
   {
@@ -231,33 +225,33 @@ export const EXPEDITION_PACKAGES: PackageTier[] = [
 export const MARKET_REALITIES = [
   {
     id: 'discrepancy',
-    metric: "$700M+",
-    metricSub: "Monthly Export Value",
-    title: "The Massive Supply Discrepancy",
+    metric: "ICGLR RCM",
+    metricSub: "Regional Traceability Standard",
+    title: "Cross-Border Origin & Transit Verification",
     tag: "Transit Hub Reality",
-    description: "Uganda's official customs records reveal hundreds of millions of dollars in monthly gold exports, vastly exceeding domestic geological extraction. The country serves as East Africa's primary regional processing and smelting bridge.",
-    implication: "Without forensic chain-of-custody tracking, international buyers inadvertently step into conflict minerals, smuggling pipelines, or fabricated transit records.",
-    keyStat: "94% of transit flows originate outside national borders; verification of cross-border ICGLR stamps is critical."
+    description: "Bank of Uganda and customs trade statistics show that gold represents one of Uganda's largest export earners, combining domestic extraction with regional refining flows.",
+    implication: "Without structured chain-of-custody verification, buyers face heightened exposure to undocumented cross-border origin, conflict-affected supply chains, or altered transit paperwork.",
+    keyStat: "Cross-border consignments require verifiable ICGLR Regional Certification Mechanism (RCM) and URA ASYCUDA customs documentation."
   },
   {
     id: 'discount-trap',
-    metric: "25% OFF",
-    metricSub: "The Classic Bait",
-    title: "The 'Discount Gold' Trap",
+    metric: "15%–25%",
+    metricSub: "Common Unsolicited Discount Claim",
+    title: "Deep Discount & Advance-Fee Risk",
     tag: "Advance Fee Anatomy",
-    description: "London Bullion Market Association (LBMA) gold is the most liquid monetary commodity on Earth, trading at tight spot margins. Any offer proposing gold at 10%, 15%, or 25% below spot is a mathematical impossibility designed to lure deposits.",
-    implication: "The seller demands $40,000 – $250,000 in upfront 'export taxes', 'customs bonds', or 'security logistics'—only for the escrow lawyer and gold to vanish.",
-    keyStat: "Real pithead gold trades at only 1-3% below spot; deep discounts are universally fraudulent."
+    description: "Because refined gold trades near global LBMA benchmark rates, unsolicited commercial offers advertising 15% to 25% discounts below spot diverge sharply from local Kampala and Entebbe refinery purchasing economics.",
+    implication: "High-risk offers frequently request upfront buyer payments for purported export taxes, customs bonds, or legal escrow fees before independent fire assay.",
+    keyStat: "Licensed local aggregators and refineries typically purchase doré close to spot parity after purity and refining adjustments."
   },
   {
     id: 'forgery-industry',
-    metric: "99.8%",
-    metricSub: "Counterfeit Rate in WhatsApp Deals",
-    title: "The Forgery Industry",
-    tag: "Synthetic Documentation",
-    description: "A sophisticated cottage industry manufactures photorealistic fake export permits, forged DGSM signatures, fraudulent URA customs stamps, and counterfeit Bank of Uganda clearance certificates that easily fool foreign buyers on paper.",
-    implication: "Relying on PDF documents sent via WhatsApp or email without on-site cadastre cross-referencing guarantees total capital loss.",
-    keyStat: "Over 40 counterfeit document varieties are cataloged and deconstructed in our Day 2 Scam Academy."
+    metric: "DGSM & URA",
+    metricSub: "Primary Registry Verification",
+    title: "Synthetic & Altered Documentation",
+    tag: "Document Verification",
+    description: "Unsolicited offers sent via email or messaging platforms frequently attach altered PDF mineral licences, expired exploration permits, or unverified customs templates.",
+    implication: "Relying solely on digital PDFs without cross-checking the official DGSM mineral cadastre and URA payment portals exposes capital to severe counterparty fraud.",
+    keyStat: "Over 40 recurring document alteration patterns are examined in our Day 2 document and metallurgy workshop."
   }
 ];
 
@@ -268,7 +262,7 @@ export const SCAM_RULES: ScamRule[] = [
     description: "Seller promises gold bars or dust at 12% to 30% discount below international LBMA spot price.",
     riskScore: 35,
     category: 'pricing',
-    explanation: "FATAL RED FLAG: Gold is universally convertible currency. No legitimate miner or refiner gives away free millions when local refiners pay 98-99% of spot in cash within 2 hours."
+    explanation: "HIGH-RISK PRICING INDICATOR: Gold is a globally liquid monetary asset. Deep discount offers diverge from local licensed refinery purchasing rates and frequently accompany advance-fee requests."
   },
   {
     id: 'advance-export-tax',
@@ -276,7 +270,7 @@ export const SCAM_RULES: ScamRule[] = [
     description: "Seller asks buyer to wire $30k–$150k for 'URA 5% export clearance', 'UN transit certificate', or 'customs bonded warehouse fee' before shipment.",
     riskScore: 30,
     category: 'customs',
-    explanation: "CLASSIC ADVANCE-FEE FRAUD: Under authentic trade architecture, export levies are paid directly through official URA tax portal against genuine assay, or cleared through bonded bank letters of credit."
+    explanation: "ADVANCE-FEE RISK: Under Ugandan customs procedure, statutory export assessments are paid via official URA Payment Registration Numbers (PRNs) tied to verified ASYCUDA declarations, not informal third-party accounts."
   },
   {
     id: 'fake-escrow-lawyer',
@@ -284,7 +278,7 @@ export const SCAM_RULES: ScamRule[] = [
     description: "Seller insists funds be held in a private lawyer's account in Kampala rather than a Tier-1 institutional commercial bank with MT103 conditional field 72.",
     riskScore: 25,
     category: 'banking',
-    explanation: "COLLUSION HAZARD: Rogue legal practitioners frequently create one-off escrow accounts and release funds the moment unverified paperwork is presented, leaving the buyer with zero legal recourse."
+    explanation: "ESCROW GOVERNANCE RISK: Unregulated third-party escrow accounts lack institutional bullion custody controls and may disburse funds before independent fire assay completion."
   },
   {
     id: 'drc-origin-untraceable',
@@ -292,7 +286,7 @@ export const SCAM_RULES: ScamRule[] = [
     description: "Gold alleged to be from artisanal mines in Eastern DRC or South Sudan, accompanied by photo-scanned ICGLR / CEEC certificates.",
     riskScore: 20,
     category: 'documentation',
-    explanation: "CHAIN OF CUSTODY VIOLATION: Unverified transit gold violates the Regional Certification Mechanism. Over 90% of WhatsApp ICGLR certificates are forged with fake QR codes leading to cloned verification servers."
+    explanation: "CHAIN OF CUSTODY RISK: Cross-border mineral consignments require verifiable ICGLR Regional Certification Mechanism (RCM) certificates cross-checked against issuing authority records."
   },
   {
     id: 'cif-dubai-free-shipping',
@@ -300,7 +294,7 @@ export const SCAM_RULES: ScamRule[] = [
     description: "Seller claims they will fly the gold to buyer's destination refinery at their cost, but requests buyer to pay 'cargo insurance' or 'private charter flight security'.",
     riskScore: 25,
     category: 'customs',
-    explanation: "THE GHOST CARRIER SCAM: Scammers pose as private freight companies, issuing bogus airway bills (AWB) from nonexistent air couriers, repeatedly demanding fees for 'customs impoundment release'."
+    explanation: "LOGISTICS FEE RISK: Unverified freight intermediaries frequently issue non-standard airway bills while requesting advance insurance or customs release fees."
   },
   {
     id: 'refusal-physical-refinery-assay',
@@ -308,7 +302,7 @@ export const SCAM_RULES: ScamRule[] = [
     description: "Seller will only allow visual inspection at a hotel suite or private office, refusing to walk into an accredited bonded refinery for drill & fire assay before funds transfer.",
     riskScore: 30,
     category: 'pricing',
-    explanation: "COUNTERFEIT BULLION: Genuine sellers welcome certified refinery fire assay. Hesitation indicates gilded brass, tungsten-powder cores, or alloyed scrap."
+    explanation: "METALLURGICAL VERIFICATION RISK: Surface visual checks or handheld XRF cannot verify internal bar homogeneity. Refusal of independent melting and fire assay is a major red flag."
   }
 ];
 

@@ -271,7 +271,7 @@ export const translations: Record<Language, TranslationStrings> = {
     heroTitleLine1: 'Don’t Wire a Single Dollar',
     heroTitleHighlight: 'Until You Walk the Supply Chain.',
     heroTitleLine2: 'Or Verify Your Offer in 24–72 Hours.',
-    heroSubtitle: "The world's only hands-on anti-fraud & due-diligence expedition across East Africa's gold trade architecture. Can't fly immediately? Submit any Full Corporate Offer (FCO), SPA, or license for a one-off 24–72 Hour Forensic Document Verification by our AI + Field Officer desk.",
+    heroSubtitle: "Independent gold offer verification and guided field expeditions across Uganda's physical supply chain. Submit an FCO, SPA, or mineral licence for a 24–72 hour review before committing funds.",
     heroPillar1Title: '7-Day Physical Immersion',
     heroPillar1Sub: 'DGSM Cadastre, Refineries & Mines',
     heroPillar2Title: '24–72 Hour Forensic Document Verification',
@@ -1471,27 +1471,27 @@ export function getLocalizedMarketRealities(lang: Language) {
         tag: 'حقيقة مركز العبور الإقليمي',
         description: 'تكشف السجلات الجمركية الرسمية في أوغندا عن صادرات ذهب شهرية بمئات الملايين من الدولارات، مما يتجاوز بكثير الاستخراج الجيولوجي المحلي. تعمل البلاد كجسر رئيسي للمعالجة والصهر في شرق أفريقيا.',
         implication: 'بدون تتبع جنائي لسلسلة الحيازة، يقع المشترون الدوليون في فخ معادن النزاعات أو شبكات التهريب أو سجلات العبور المزيفة.',
-        keyStat: '94% من تدفقات العبور تنشأ خارج الحدود الوطنية؛ لذا فإن التحقق من أختام ICGLR أمر بالغ الأهمية.'
+        keyStat: 'تتطلب الشحنات العابرة للحدود التحقق من شهادات الآلية الإقليمية للإشهاد (ICGLR RCM) وبيانات جمارك URA.'
       },
       {
         id: 'discount-trap',
-        metric: 'خصم 25%',
-        metricSub: 'الطُعم الكلاسيكي للاحتيال',
-        title: 'فخ "الذهب المخفض"',
-        tag: 'تشريح احتيال الرسوم المسبقة',
-        description: 'الذهب المعتمد وفق معيار LBMA هو الأصل النقدي الأكثر سيولة على وجه الأرض. أي عرض يقترح بيع الذهب بخصم 10% أو 15% أو 25% أقل من السعر الفوري هو استحالة رياضية مصممة لاستدراج الدفعات المقدمة.',
-        implication: 'يطلب البائع من 40,000 إلى 250,000 دولار مقدماً كـ "ضرائب تصدير" أو "تأمين جمركي" — ليختفي بعدها المحامي والذهب تماماً.',
-        keyStat: 'يُتداول الذهب الحقيقي عند فوهة المنجم بخصم 1-3% فقط عن السعر الفوري؛ الخصومات الكبيرة احتيالية دائماً.'
+        metric: '15%–25%',
+        metricSub: 'ادعاءات الخصم الشائعة',
+        title: 'مخاطر الخصومات الكبيرة والرسوم المسبقة',
+        tag: 'تشريح مخاطر الرسوم المسبقة',
+        description: 'يتداول الذهب المعتمد قريباً من الأسعار الفورية العالمية لبورصة لندن (LBMA). العروض التي تروج لخصومات 15% إلى 25% مع طلب رسوم مسبقة تستوجب تدقيقاً مستقلاً.',
+        implication: 'تطلب العروض عالية المخاطر دفعات مسبقة كـ "ضرائب تصدير" أو "تأمين جمركي" قبل إجراء الفحص المخبري المستقل.',
+        keyStat: 'يُشترى الذهب الخام محلياً بهوامش قريبة من السعر الفوري بعد احتساب النقاء وتكاليف التكرير.'
       },
       {
         id: 'forgery-industry',
-        metric: '99.8%',
-        metricSub: 'نسبة التزوير في صفقات الواتساب',
-        title: 'صناعة الوثائق المزورة',
-        tag: 'مستندات مصطنعة عالية الدقة',
-        description: 'تقوم شبكات متخصصة بتصنيع تصاريح تصدير مزيفة وتوقيعات منسوبة لـ DGSM وأختام جمارك URA وشهادات تخليص مزورة تخدع المشترين الأجانب بسهولة على الورق.',
-        implication: 'الاعتماد على ملفات PDF المرسلة عبر الواتساب أو البريد الإلكتروني دون مطابقة ميدانية للسجل المعدني يضمن خسارة رأس المال بالكامل.',
-        keyStat: 'يتم تفكيك أكثر من 40 نوعاً من الوثائق المزورة عملياً في مختبر اليوم الثاني من البعثة.'
+        metric: 'DGSM & URA',
+        metricSub: 'التحقق من السجلات الرسمية',
+        title: 'مخاطر المستندات المعدلة أو غير الموثقة',
+        tag: 'تدقيق الوثائق',
+        description: 'تتضمن العديد من العروض المتداولة عبر البريد أو تطبيقات المراسلة تراخيص معدنية منتهية أو قوالب جمركية غير موثقة.',
+        implication: 'الاعتماد على ملفات PDF فقط دون مطابقة سجل المعادن الرسمي (DGSM) يعرض رأس المال لمخاطر جسيمة.',
+        keyStat: 'يتم فحص أكثر من 40 نمطاً متكرراً لتعديل الوثائق عملياً في مختبر اليوم الثاني من البعثة.'
       }
     ];
   }
@@ -1499,66 +1499,66 @@ export function getLocalizedMarketRealities(lang: Language) {
     return [
       {
         id: 'discrepancy',
-        metric: '$7亿+',
-        metricSub: '月度黄金出口额',
-        title: '巨大的供应量剪刀差',
-        tag: '区域转口枢纽真相',
-        description: '乌干达官方海关记录显示每月黄金出口额高达数亿美元，远超其本土矿山开采量。该国实际上承担着东非首要的区域黄金加工与熔炼桥梁角色。',
-        implication: '如果缺乏取证级监管链溯源，国际买家极易误入冲突矿产、走私管道或完全伪造的过境记录陷阱。',
-        keyStat: '94% 的过境黄金源自邻国；核验跨境 ICGLR 区域认证印章真伪至关重要。'
+        metric: 'ICGLR RCM',
+        metricSub: '区域溯源标准',
+        title: '跨境原产地与转口合规核查',
+        tag: '区域转口枢纽背景',
+        description: '乌干达官方贸易数据显示黄金是该国最主要的出口商品之一，融合了本土开采与区域精炼加工链条。',
+        implication: '若缺乏结构化的监管链核查，国际买家可能面临未申报跨境来源、冲突矿产或转口单证不符的合规风险。',
+        keyStat: '跨境黄金批次需核验 ICGLR 区域认证机制 (RCM) 证书及 URA ASYCUDA 海关申报记录。'
       },
       {
         id: 'discount-trap',
-        metric: '25% 折扣',
-        metricSub: '经典诈骗诱饵',
-        title: '“高折扣黄金”致命陷阱',
-        tag: '预付费用诈骗解剖',
-        description: '伦敦金银市场协会 (LBMA) 黄金是地球上流动性最强的货币资产。任何声称低于国际现货价 10%、15% 或 25% 的黄金报价在数学和经济学上都是绝对不可能的，纯粹是为了骗取定金。',
-        implication: '卖方会要求买方预付 4万 至 25万美元的“出口税”、“海关保税费”或“安保费”——随后托管律师与黄金人间蒸发。',
-        keyStat: '矿坑源头真实黄金仅比国际现货低 1%–3%；一切深度折扣报价 100% 属于诈骗。'
+        metric: '15%–25%',
+        metricSub: '常见非邀约报价折扣',
+        title: '深度折扣与预付费用风险',
+        tag: '预付费用风险解析',
+        description: '由于精炼黄金交易价格紧贴 LBMA 国际现货基准，宣称低于现货价 15% 至 25% 的非邀约报价与坎帕拉及恩德培持牌精炼厂的实际收购行情严重背离。',
+        implication: '高风险报价通常要求买方在独立火试金检测前预付所谓的“出口税”、“海关保税费”或第三方律师托管费。',
+        keyStat: '持牌收购商与精炼厂在扣除纯度折算与精炼费后，通常以接近国际现货价收购合质金。'
       },
       {
         id: 'forgery-industry',
-        metric: '99.8%',
-        metricSub: 'WhatsApp 报价单伪造率',
-        title: '高度产业化的假证工厂',
-        tag: '高仿合成文件',
-        description: '成熟的地下假证产业专门制造照片级逼真的假出口许可证、伪造的 DGSM 官员签名、假 URA 海关印章以及伪造的乌干达央行清关证书，极易在纸面上蒙蔽外国买家。',
-        implication: '仅凭 WhatsApp 或邮件收到的 PDF 文件而不进行现场矿权登记处交叉核对，必然导致本金全损。',
-        keyStat: '我们在第2天“防诈学院”实验室中收录并现场拆解超过 40 种真实缴获的伪造文件。'
+        metric: 'DGSM & URA',
+        metricSub: '官方登记处交叉核验',
+        title: '合成与篡改单证风险',
+        tag: '单证合规核验',
+        description: '通过电子邮件或即时通讯工具发送的非邀约报价常附带篡改的 PDF 矿权许可证、过期勘探证或未经核实的海关模板。',
+        implication: '仅凭电子 PDF 文件而不与 DGSM 矿权登记处及 URA 官方缴款系统交叉核对，将使资金面临严重的交易对手欺诈风险。',
+        keyStat: '我们在第2天单证与冶金实验室中梳理并解析超过 40 种常见的单证篡改特征。'
       }
     ];
   }
   return [
     {
       id: 'discrepancy',
-      metric: '700 M$+',
-      metricSub: 'Valeur Mensuelle des Exportations',
-      title: 'La Disproportion Massive de l’Offre',
-      tag: 'Réalité du Hub de Transit',
-      description: "Les registres douaniers officiels de l'Ouganda révèlent des centaines de millions de dollars d'exportations mensuelles d'or, dépassant largement l'extraction nationale. Le pays sert de pont régional de fusion et d'affinage.",
-      implication: 'Sans suivi forensique de la chaîne de traçabilité, les acheteurs internationaux tombent dans les minerais de conflit ou des documents de transit fabriqués.',
-      keyStat: '94 % des flux de transit proviennent hors des frontières ; la vérification des sceaux CIRGL (ICGLR) est vitale.'
+      metric: 'ICGLR RCM',
+      metricSub: 'Norme de Traçabilité Régionale',
+      title: 'Vérification de l’Origine et du Transit Régional',
+      tag: 'Réalité du Hub Régional',
+      description: "Les statistiques commerciales officielles montrent que l'or constitue l'un des principaux postes d'exportation de l'Ouganda, combinant extraction nationale et flux d'affinage régionaux.",
+      implication: "Sans vérification structurée de la chaîne de traçabilité, les acheteurs s'exposent à des origines transfrontalières non documentées ou à des certificats altérés.",
+      keyStat: 'Les lots transfrontaliers exigent des certificats CIRGL (ICGLR RCM) et des déclarations douanières URA ASYCUDA vérifiables.'
     },
     {
       id: 'discount-trap',
-      metric: '-25 %',
-      metricSub: 'L’Appât Classique',
-      title: 'Le Piège de « l’Or à Prix Cassé »',
-      tag: 'Anatomie des Frais Avancés',
-      description: "L'or LBMA est la matière première monétaire la plus liquide au monde. Toute offre proposant de l'or à 10 %, 15 % ou 25 % sous le cours spot est une impossibilité mathématique conçue pour soutirer des acomptes.",
-      implication: "Le vendeur exige 40 000 $ à 250 000 $ d'avance pour des « taxes d'exportation » ou « frais de douane » — avant que l'avocat séquestre et l'or ne disparaissent.",
-      keyStat: 'Le vrai or au puits de mine se négocie à seulement 1 à 3 % sous le spot ; les fortes remises sont toujours frauduleuses.'
+      metric: '15 %–25 %',
+      metricSub: 'Remise Annoncée Fréquente',
+      title: 'Risque des Remises Profondes et Frais Avancés',
+      tag: 'Analyse des Frais Avancés',
+      description: "L'or affiné se négociant près des cours LBMA, les offres non sollicitées annonçant 15 % à 25 % sous le spot divergent fortement des marges d'achat des raffineries agréées à Kampala et Entebbe.",
+      implication: "Les offres à haut risque demandent souvent des paiements initiaux pour de prétendues taxes d'exportation ou frais de séquestre avant toute coupellation indépendante.",
+      keyStat: "Les raffineries agréées achètent le doré à des niveaux proches du cours spot après ajustement de pureté et frais d'affinage."
     },
     {
       id: 'forgery-industry',
-      metric: '99,8 %',
-      metricSub: 'Taux de Contrefaçon sur WhatsApp',
-      title: 'L’Industrie de la Falsification',
-      tag: 'Documentation Synthétique',
-      description: "Une véritable industrie parallèle fabrique de faux permis d'exportation photoréalistes, des signatures DGSM falsifiées, de faux cachets URA et des certificats contrefaits de la Banque d'Ouganda.",
-      implication: 'Se fier à des fichiers PDF envoyés par WhatsApp ou e-mail sans vérification sur place au cadastre garantit une perte totale du capital.',
-      keyStat: 'Plus de 40 variétés de faux documents sont cataloguées et déconstruites lors du Jour 2 à la Scam Academy.'
+      metric: 'DGSM & URA',
+      metricSub: 'Vérification au Registre Officiel',
+      title: 'Documents Altérés ou Non Vérifiés',
+      tag: 'Audit Documentaire',
+      description: "Les offres transmises par messagerie ou courriel joignent fréquemment des licences minières PDF modifiées, des permis expirés ou des modèles douaniers non vérifiés.",
+      implication: "Se fier uniquement à des fichiers PDF sans contrôle direct au cadastre minier DGSM expose le capital à un risque élevé de fraude documentaire.",
+      keyStat: 'Plus de 40 schémas récurrents de falsification documentaire sont examinés lors de notre atelier du Jour 2.'
     }
   ];
 }

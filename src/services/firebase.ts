@@ -14,6 +14,7 @@ import {
   doc,
   setDoc,
   getDoc,
+  getDocs,
   deleteDoc,
   getDocFromServer,
   collection,
@@ -26,16 +27,32 @@ import {
 import appletConfig from '../../firebase-applet-config.json';
 import type { Language, Currency } from '../types';
 
-// Read Firebase configuration from VITE_ environment variables first (Cloud Run production standard),
-// falling back to provisioned firebase-applet-config.json in the AI Studio preview environment.
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || appletConfig.apiKey,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || appletConfig.authDomain,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || appletConfig.projectId,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || appletConfig.storageBucket,
+// Your web app's Firebase configuration
+export const firebaseConfig = {
+  apiKey:
+    import.meta.env.VITE_FIREBASE_API_KEY ||
+    appletConfig.apiKey ||
+    'AIzaSyCXwJhkqc_8sedq-rFymP0sN1_AQCjPbok',
+  authDomain:
+    import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ||
+    appletConfig.authDomain ||
+    'gen-lang-client-0760457427.firebaseapp.com',
+  projectId:
+    import.meta.env.VITE_FIREBASE_PROJECT_ID ||
+    appletConfig.projectId ||
+    'gen-lang-client-0760457427',
+  storageBucket:
+    import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ||
+    appletConfig.storageBucket ||
+    'gen-lang-client-0760457427.firebasestorage.app',
   messagingSenderId:
-    import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || appletConfig.messagingSenderId,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || appletConfig.appId,
+    import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ||
+    appletConfig.messagingSenderId ||
+    '237362850028',
+  appId:
+    import.meta.env.VITE_FIREBASE_APP_ID ||
+    appletConfig.appId ||
+    '1:237362850028:web:873add24a6bc225e361dc9',
   measurementId:
     import.meta.env.VITE_FIREBASE_MEASUREMENT_ID ||
     appletConfig.measurementId ||
@@ -45,28 +62,30 @@ const firebaseConfig = {
 const firestoreDatabaseId =
   import.meta.env.VITE_FIREBASE_DATABASE_ID ||
   appletConfig.firestoreDatabaseId ||
-  '(default)';
+  'ai-studio-ugandagoldexpedi-476c4b9a-025f-424f-9374-3db4e69233bf';
 
-// Initialize Firebase App, Auth, Firestore, and Analytics (singleton pattern)
+// Initialize Firebase
 export const app: FirebaseApp =
   getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+
+export let analytics: Analytics | null = null;
+if (typeof window !== 'undefined') {
+  try {
+    analytics = getAnalytics(app);
+  } catch {
+    isAnalyticsSupported()
+      .then((supported) => {
+        if (supported && !analytics) {
+          analytics = getAnalytics(app);
+        }
+      })
+      .catch(() => {});
+  }
+}
 
 export const auth: Auth = getAuth(app);
 
 export const db: Firestore = getFirestore(app, firestoreDatabaseId);
-
-export let analytics: Analytics | null = null;
-if (typeof window !== 'undefined') {
-  isAnalyticsSupported()
-    .then((supported) => {
-      if (supported) {
-        analytics = getAnalytics(app);
-      }
-    })
-    .catch(() => {
-      // Analytics is optional in restricted iframe contexts
-    });
-}
 
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });

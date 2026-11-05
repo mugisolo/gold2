@@ -27,48 +27,48 @@ const REGIONAL_HUBS: Array<{
 }> = [
   {
     id: 'dubai',
-    label: 'Dubai / MENA (AR · AED)',
+    label: 'Dubai / MENA (AR · USD)',
     countryCode: 'AE',
     countryName: 'United Arab Emirates',
     cityOrRegion: 'Dubai DMCC / Abu Dhabi',
     lang: 'AR',
-    currency: 'AED'
+    currency: 'USD'
   },
   {
     id: 'geneva-paris',
-    label: 'Geneva / Paris (FR · EUR)',
+    label: 'Geneva / Paris (FR · USD)',
     countryCode: 'CH',
     countryName: 'Switzerland & France',
     cityOrRegion: 'Geneva / Paris Bullion Hub',
     lang: 'FR',
-    currency: 'EUR'
+    currency: 'USD'
   },
   {
     id: 'shanghai-hk',
-    label: 'Shanghai / HK (ZH · CNY)',
+    label: 'Shanghai / HK (ZH · USD)',
     countryCode: 'CN',
     countryName: 'China / Hong Kong SAR',
     cityOrRegion: 'Shanghai / Hong Kong Gold Exchange',
     lang: 'ZH',
-    currency: 'CNY'
+    currency: 'USD'
   },
   {
     id: 'london',
-    label: 'London LBMA (EN · GBP)',
+    label: 'London LBMA (EN · USD)',
     countryCode: 'GB',
     countryName: 'United Kingdom',
     cityOrRegion: 'London Bullion Market (LBMA)',
     lang: 'EN',
-    currency: 'GBP'
+    currency: 'USD'
   },
   {
     id: 'kampala',
-    label: 'Kampala / Entebbe (EN · UGX)',
+    label: 'Kampala / Entebbe (EN · USD)',
     countryCode: 'UG',
     countryName: 'Republic of Uganda',
     cityOrRegion: 'Kampala & Entebbe Directorate',
     lang: 'EN',
-    currency: 'UGX'
+    currency: 'USD'
   },
   {
     id: 'newyork',
@@ -91,19 +91,17 @@ function detectFromClientTimezoneAndLocale(): GeoLocationProposal {
   const lowerTz = tz.toLowerCase();
   const lowerLang = navLang.toLowerCase();
 
-  // Check East Africa / Uganda
   if (lowerTz.includes('kampala') || lowerTz.includes('nairobi') || lowerTz.includes('entebbe')) {
     return {
       countryCode: 'UG',
       countryName: 'Uganda / East Africa',
       cityOrRegion: tz,
       proposedLang: 'EN',
-      proposedCurrency: 'UGX',
+      proposedCurrency: 'USD',
       detectionMethod: 'timezone_locale'
     };
   }
 
-  // Check Middle East / Gulf
   if (
     lowerTz.includes('dubai') ||
     lowerTz.includes('riyadh') ||
@@ -119,12 +117,11 @@ function detectFromClientTimezoneAndLocale(): GeoLocationProposal {
       countryName: 'Middle East & Gulf (MENA)',
       cityOrRegion: tz,
       proposedLang: 'AR',
-      proposedCurrency: 'AED',
+      proposedCurrency: 'USD',
       detectionMethod: 'timezone_locale'
     };
   }
 
-  // Check Greater China / Singapore / East Asia
   if (
     lowerTz.includes('shanghai') ||
     lowerTz.includes('hong_kong') ||
@@ -138,24 +135,22 @@ function detectFromClientTimezoneAndLocale(): GeoLocationProposal {
       countryName: 'Greater China / Asia Hub',
       cityOrRegion: tz,
       proposedLang: 'ZH',
-      proposedCurrency: 'CNY',
+      proposedCurrency: 'USD',
       detectionMethod: 'timezone_locale'
     };
   }
 
-  // Check UK
   if (lowerTz.includes('london') || lowerLang.includes('en-gb')) {
     return {
       countryCode: 'GB',
       countryName: 'United Kingdom',
       cityOrRegion: tz,
       proposedLang: 'EN',
-      proposedCurrency: 'GBP',
+      proposedCurrency: 'USD',
       detectionMethod: 'timezone_locale'
     };
   }
 
-  // Check Francophone Europe & Africa
   if (
     lowerTz.includes('paris') ||
     lowerTz.includes('brussels') ||
@@ -171,19 +166,18 @@ function detectFromClientTimezoneAndLocale(): GeoLocationProposal {
       countryName: 'Francophone / European Hub',
       cityOrRegion: tz,
       proposedLang: 'FR',
-      proposedCurrency: 'EUR',
+      proposedCurrency: 'USD',
       detectionMethod: 'timezone_locale'
     };
   }
 
-  // Check other European timezones
   if (lowerTz.startsWith('europe/')) {
     return {
       countryCode: 'EU',
       countryName: 'European Union',
       cityOrRegion: tz,
       proposedLang: 'EN',
-      proposedCurrency: 'EUR',
+      proposedCurrency: 'USD',
       detectionMethod: 'timezone_locale'
     };
   }
@@ -193,57 +187,52 @@ function detectFromClientTimezoneAndLocale(): GeoLocationProposal {
     countryName: 'Uganda / East Africa',
     cityOrRegion: 'Africa/Kampala',
     proposedLang: 'EN',
-    proposedCurrency: 'UGX',
+    proposedCurrency: 'USD',
     detectionMethod: 'timezone_locale'
   };
 }
 
 function mapCoordinatesToProposal(lat: number, lon: number): GeoLocationProposal {
-  // East Africa / Uganda bounding box
   if (lat >= -5 && lat <= 6 && lon >= 28 && lon <= 42) {
     return {
       countryCode: 'UG',
       countryName: 'Republic of Uganda (GPS Verified)',
       cityOrRegion: `${lat.toFixed(2)}°N, ${lon.toFixed(2)}°E · Kampala/Entebbe`,
       proposedLang: 'EN',
-      proposedCurrency: 'UGX',
+      proposedCurrency: 'USD',
       detectionMethod: 'gps_coordinates'
     };
   }
-  // Middle East / Arabian Peninsula
   if (lat >= 12 && lat <= 36 && lon >= 34 && lon <= 60) {
     return {
       countryCode: 'AE',
       countryName: 'UAE / Gulf Region (GPS Verified)',
       cityOrRegion: `${lat.toFixed(2)}°N, ${lon.toFixed(2)}°E · MENA Hub`,
       proposedLang: 'AR',
-      proposedCurrency: 'AED',
+      proposedCurrency: 'USD',
       detectionMethod: 'gps_coordinates'
     };
   }
-  // East Asia / China
   if (lat >= 18 && lat <= 50 && lon >= 95 && lon <= 135) {
     return {
       countryCode: 'CN',
       countryName: 'Greater China (GPS Verified)',
       cityOrRegion: `${lat.toFixed(2)}°N, ${lon.toFixed(2)}°E · Asia Hub`,
       proposedLang: 'ZH',
-      proposedCurrency: 'CNY',
+      proposedCurrency: 'USD',
       detectionMethod: 'gps_coordinates'
     };
   }
-  // UK & Ireland
   if (lat >= 49.8 && lat <= 60 && lon >= -10 && lon <= 2) {
     return {
       countryCode: 'GB',
       countryName: 'United Kingdom (GPS Verified)',
       cityOrRegion: `${lat.toFixed(2)}°N, ${lon.toFixed(2)}°E · London LBMA`,
       proposedLang: 'EN',
-      proposedCurrency: 'GBP',
+      proposedCurrency: 'USD',
       detectionMethod: 'gps_coordinates'
     };
   }
-  // Western / Central Europe (France, Switzerland, Belgium, Germany, etc.)
   if (lat >= 36 && lat <= 55 && lon >= -5 && lon <= 25) {
     const isFrancophoneZone = lon >= -5 && lon <= 8.5 && lat >= 42 && lat <= 51;
     return {
@@ -251,7 +240,7 @@ function mapCoordinatesToProposal(lat: number, lon: number): GeoLocationProposal
       countryName: isFrancophoneZone ? 'France / Switzerland (GPS Verified)' : 'European Union (GPS Verified)',
       cityOrRegion: `${lat.toFixed(2)}°N, ${lon.toFixed(2)}°E · Europe`,
       proposedLang: isFrancophoneZone ? 'FR' : 'EN',
-      proposedCurrency: 'EUR',
+      proposedCurrency: 'USD',
       detectionMethod: 'gps_coordinates'
     };
   }
@@ -409,26 +398,11 @@ export const GeoLocationProposalBanner: React.FC<GeoLocationProposalBannerProps>
               </select>
             </div>
 
-            {/* Proposed Currency Selector */}
+            {/* Currency Display (USD Only) */}
             <div className="inline-flex items-center gap-1.5 bg-[#111722] border border-slate-700 rounded-lg px-2.5 py-1 text-xs">
               <Coins className="w-3.5 h-3.5 text-[#D4AF37]" />
               <span className="text-slate-400 text-[11px]">{t.geoProposedCurrLabel}:</span>
-              <select
-                value={draftCurrency}
-                onChange={(e) => {
-                  const newCurr = e.target.value as Currency;
-                  setDraftCurrency(newCurr);
-                  onApplySettings(draftLang, newCurr);
-                }}
-                className="bg-transparent text-[#D4AF37] font-mono-data font-bold outline-none cursor-pointer text-xs"
-                aria-label="Proposed Currency"
-              >
-                {(['USD', 'EUR', 'AED', 'GBP', 'CNY', 'UGX'] as Currency[]).map((curr) => (
-                  <option key={curr} value={curr} className="bg-[#111722] text-white">
-                    {curr}
-                  </option>
-                ))}
-              </select>
+              <span className="text-[#D4AF37] font-mono-data font-bold text-xs">USD</span>
             </div>
 
             {/* Apply Proposed Button */}

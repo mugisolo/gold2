@@ -2,6 +2,13 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // ===============================================================
+    // Global Safety Net (Default-Deny Catch-All)
+    // ===============================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ===============================================================
     // Global Helper Functions
     // ===============================================================
     function isSignedIn() {
@@ -67,7 +74,7 @@ service cloud.firestore {
         ]) &&
         data.userId == userId &&
         data.language in ['EN', 'FR', 'AR', 'ZH', 'RU'] &&
-        data.currency in ['USD', 'EUR', 'GBP', 'AED', 'CNY', 'UGX'] &&
+        data.currency == 'USD' &&
         data.updatedAt is string && data.updatedAt.size() >= 8 && data.updatedAt.size() <= 64 &&
         (!('defaultPage' in data) || (data.defaultPage is string && data.defaultPage.size() <= 128)) &&
         (!('compactMode' in data) || data.compactMode is bool) &&
@@ -112,6 +119,7 @@ service cloud.firestore {
         data.statutoryMandate is string && data.statutoryMandate.size() >= 5 && data.statutoryMandate.size() <= 2000 &&
         data.headquarters is string && data.headquarters.size() >= 2 && data.headquarters.size() <= 300 &&
         data.overviewParagraphs is list && data.overviewParagraphs.size() >= 1 && data.overviewParagraphs.size() <= 20 &&
+        data.overviewParagraphs[0] is string && data.overviewParagraphs[0].size() <= 2000 &&
         (!('establishedYear' in data) || (data.establishedYear is string && data.establishedYear.size() <= 16)) &&
         (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
     }
@@ -183,15 +191,38 @@ service cloud.firestore {
 
     function isValidPost(data) {
       return hasRequiredFields(['id', 'title', 'category', 'summary', 'body', 'author', 'date', 'published']) &&
-        hasOnlyAllowedFields(['id', 'title', 'category', 'summary', 'body', 'author', 'authorRole', 'date', 'published', 'imageUrl', 'readTime', 'tags']) &&
+        hasOnlyAllowedFields([
+          'id', 'slug', 'title', 'h1', 'seoTitle', 'seoDescription',
+          'category', 'summary', 'body', 'author', 'authorRole',
+          'reviewer', 'reviewerRole', 'date', 'updatedDate',
+          'published', 'imageUrl', 'imageAlt', 'readTime',
+          'tags', 'sources', 'limitations', 'nextStepLabel', 'nextStepPath'
+        ]) &&
         data.id is string && data.id.size() >= 1 && data.id.size() <= 100 &&
         data.title is string && data.title.size() >= 3 && data.title.size() <= 300 &&
-        data.category in ['Field Dispatch', 'Regulatory Alert', 'Scam Case Study', 'Intelligence Briefing', 'Market Update'] &&
+        data.category in [
+          'Offer Risk', 'Regulation', 'Field Methods', 'Metallurgy',
+          'Field Dispatch', 'Regulatory Alert', 'Scam Case Study',
+          'Intelligence Briefing', 'Market Update'
+        ] &&
         data.summary is string && data.summary.size() >= 3 && data.summary.size() <= 1000 &&
         data.body is string && data.body.size() >= 10 && data.body.size() <= 25000 &&
         data.author is string && data.author.size() >= 2 && data.author.size() <= 150 &&
         data.date is string && data.date.size() >= 8 && data.date.size() <= 64 &&
-        data.published is bool;
+        data.published is bool &&
+        (!('slug' in data) || (data.slug is string && data.slug.size() <= 160)) &&
+        (!('h1' in data) || (data.h1 is string && data.h1.size() <= 300)) &&
+        (!('seoTitle' in data) || (data.seoTitle is string && data.seoTitle.size() <= 160)) &&
+        (!('seoDescription' in data) || (data.seoDescription is string && data.seoDescription.size() <= 320)) &&
+        (!('reviewer' in data) || (data.reviewer is string && data.reviewer.size() <= 150)) &&
+        (!('reviewerRole' in data) || (data.reviewerRole is string && data.reviewerRole.size() <= 150)) &&
+        (!('updatedDate' in data) || (data.updatedDate is string && data.updatedDate.size() <= 64)) &&
+        (!('imageAlt' in data) || (data.imageAlt is string && data.imageAlt.size() <= 300)) &&
+        (!('limitations' in data) || (data.limitations is string && data.limitations.size() <= 1500)) &&
+        (!('nextStepLabel' in data) || (data.nextStepLabel is string && data.nextStepLabel.size() <= 160)) &&
+        (!('nextStepPath' in data) || (data.nextStepPath is string && data.nextStepPath.size() <= 160)) &&
+        (!('tags' in data) || (data.tags is list && data.tags.size() <= 20)) &&
+        (!('sources' in data) || (data.sources is list && data.sources.size() <= 20));
     }
 
     function isValidPhoto(data) {
@@ -244,11 +275,35 @@ service cloud.firestore {
         data.details is string && data.details.size() >= 2 && data.details.size() <= 2000;
     }
 
+    function isValidNewsletterSubscriber(data, subscriberId) {
+      return hasRequiredFields(['id', 'email', 'interestTrack', 'source', 'status', 'subscribedAt']) &&
+        hasOnlyAllowedFields([
+          'id', 'email', 'fullName', 'organization',
+          'interestTrack', 'source', 'status', 'subscribedAt', 'userId'
+        ]) &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 128 &&
+        data.id == subscriberId &&
+        isValidEmail(data.email) &&
+        data.interestTrack in [
+          'All Briefings & Field Dispatches',
+          'Forensic Fraud Alerts & Scam Deconstructions',
+          'DGSM & URA Regulatory Updates',
+          '7-Day Expedition Cohort Announcements'
+        ] &&
+        data.source in ['footer', 'blog', 'homepage', 'website'] &&
+        data.status in ['active', 'unsubscribed'] &&
+        data.subscribedAt is string && data.subscribedAt.size() >= 8 && data.subscribedAt.size() <= 64 &&
+        (!('fullName' in data) || (data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 120)) &&
+        (!('organization' in data) || (data.organization is string && data.organization.size() <= 1 && data.organization.size() <= 160)) &&
+        (!('userId' in data) || (isSignedIn() && data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 && data.userId == request.auth.uid));
+    }
+
     // ===============================================================
     // Collection Security Rules
     // ===============================================================
     match /users/{userId} {
-      allow get, list: if isOwner(userId) || isAdmin();
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isOwner(userId) || isAdmin();
       allow create: if isValidId(userId) &&
         isValidUserProfile(request.resource.data, userId) &&
         ((isOwner(userId) && request.resource.data.role == 'client') || isAdmin());
@@ -257,16 +312,17 @@ service cloud.firestore {
         request.resource.data.uid == resource.data.uid &&
         request.resource.data.createdAt == resource.data.createdAt &&
         ((isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin());
-      allow delete: if isAdmin();
+      allow delete: if isValidId(userId) && isAdmin();
     }
 
     // UX/UI Per-User Interface Preferences (Language, Currency, RTL, Compact Density)
     match /uxPreferences/{userId} {
-      allow get, list: if isOwner(userId) || isAdmin();
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isOwner(userId) || isAdmin();
       allow create, update: if isOwner(userId) &&
         isValidId(userId) &&
         isValidUxPreferences(request.resource.data, userId);
-      allow delete: if isOwner(userId) || isAdmin();
+      allow delete: if isValidId(userId) && (isOwner(userId) || isAdmin());
     }
 
     // Global UX/UI Configuration & Module Visibility Rules
@@ -275,7 +331,7 @@ service cloud.firestore {
       allow create, update: if isAdmin() &&
         isValidId(configId) &&
         isValidUiConfig(request.resource.data, configId);
-      allow delete: if isAdmin();
+      allow delete: if isValidId(configId) && isAdmin();
     }
 
     // About Us Institutional Copy & UX Content
@@ -284,7 +340,7 @@ service cloud.firestore {
       allow create, update: if isAdmin() &&
         isValidId(docId) &&
         isValidAboutContent(request.resource.data, docId);
-      allow delete: if isAdmin();
+      allow delete: if isValidId(docId) && isAdmin();
     }
 
     // Board of Directors UX Profile Cards
@@ -293,11 +349,12 @@ service cloud.firestore {
       allow create, update: if isAdmin() &&
         isValidId(memberId) &&
         isValidBoardMember(request.resource.data, memberId);
-      allow delete: if isAdmin();
+      allow delete: if isValidId(memberId) && isAdmin();
     }
 
     match /registrations/{registrationId} {
-      allow get, list: if isSignedIn() && (resource.data.userId == request.auth.uid || isStaffOrAdmin());
+      allow get: if isValidId(registrationId) && isSignedIn() && (resource.data.userId == request.auth.uid || isStaffOrAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isStaffOrAdmin());
       allow create: if isSignedIn() &&
         isValidId(registrationId) &&
         isValidRegistration(request.resource.data) &&
@@ -311,11 +368,12 @@ service cloud.firestore {
           (resource.data.userId == request.auth.uid && request.resource.data.status == resource.data.status) ||
           isStaffOrAdmin()
         );
-      allow delete: if isAdmin();
+      allow delete: if isValidId(registrationId) && isAdmin();
     }
 
     match /documentVerifications/{verificationId} {
-      allow get, list: if isSignedIn() && (resource.data.userId == request.auth.uid || isStaffOrAdmin());
+      allow get: if isValidId(verificationId) && isSignedIn() && (resource.data.userId == request.auth.uid || isStaffOrAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isStaffOrAdmin());
       allow create: if isSignedIn() &&
         isValidId(verificationId) &&
         isValidDocumentVerification(request.resource.data) &&
@@ -329,29 +387,32 @@ service cloud.firestore {
           (resource.data.userId == request.auth.uid && request.resource.data.status == resource.data.status) ||
           isStaffOrAdmin()
         );
-      allow delete: if isAdmin();
+      allow delete: if isValidId(verificationId) && isAdmin();
     }
 
     match /posts/{postId} {
-      allow get, list: if isSignedIn() && (resource.data.published == true || isStaffOrAdmin());
+      allow get: if isValidId(postId) && isSignedIn() && (resource.data.published == true || isStaffOrAdmin());
+      allow list: if isSignedIn() && (resource.data.published == true || isStaffOrAdmin());
       allow create, update: if isAdmin() && isValidId(postId) && isValidPost(request.resource.data);
-      allow delete: if isAdmin();
+      allow delete: if isValidId(postId) && isAdmin();
     }
 
     match /photos/{photoId} {
       allow get, list: if isSignedIn();
       allow create, update: if isAdmin() && isValidId(photoId) && isValidPhoto(request.resource.data);
-      allow delete: if isAdmin();
+      allow delete: if isValidId(photoId) && isAdmin();
     }
 
     match /fieldLogs/{logId} {
-      allow get, list: if isStaffOrAdmin();
+      allow get: if isValidId(logId) && isStaffOrAdmin();
+      allow list: if isStaffOrAdmin();
       allow create, update: if isStaffOrAdmin() && isValidId(logId) && isValidFieldLog(request.resource.data);
-      allow delete: if isAdmin();
+      allow delete: if isValidId(logId) && isAdmin();
     }
 
     match /payments/{paymentId} {
-      allow get, list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow get: if isValidId(paymentId) && isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       allow create: if isSignedIn() &&
         isValidId(paymentId) &&
         isValidPayment(request.resource.data) &&
@@ -360,18 +421,44 @@ service cloud.firestore {
         isValidId(paymentId) &&
         isValidPayment(request.resource.data) &&
         request.resource.data.userId == resource.data.userId;
-      allow delete: if isAdmin();
+      allow delete: if isValidId(paymentId) && isAdmin();
     }
 
     // Immutable Administrative Audit Logs (Read-only after creation; no update or delete allowed)
     match /auditLogs/{logId} {
-      allow get, list: if isStaffOrAdmin();
+      allow get: if isValidId(logId) && isStaffOrAdmin();
+      allow list: if isStaffOrAdmin();
       allow create: if isStaffOrAdmin() && isValidId(logId) && isValidAuditLog(request.resource.data);
       allow update, delete: if false;
     }
 
-    match /{document=**} {
-      allow read, write: if false;
+    // Dedicated Newsletter Subscribers Collection (/newsletterSubscribers/{subscriberId})
+    match /newsletterSubscribers/{subscriberId} {
+      allow get: if isValidId(subscriberId) && (
+        isStaffOrAdmin() ||
+        (isSignedIn() && resource.data.userId == request.auth.uid)
+      );
+      allow list: if isStaffOrAdmin() || (
+        isSignedIn() && resource.data.userId == request.auth.uid
+      );
+      allow create: if isValidId(subscriberId) &&
+        isValidNewsletterSubscriber(request.resource.data, subscriberId) &&
+        request.resource.data.status == 'active';
+      allow update: if isValidId(subscriberId) &&
+        isValidNewsletterSubscriber(request.resource.data, subscriberId) &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.subscribedAt == resource.data.subscribedAt &&
+        (
+          isAdmin() ||
+          (
+            isSignedIn() &&
+            resource.data.userId == request.auth.uid &&
+            request.resource.data.userId == resource.data.userId &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'interestTrack'])
+          )
+        );
+      allow delete: if isValidId(subscriberId) && isAdmin();
     }
   }
 }

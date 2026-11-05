@@ -51,13 +51,27 @@
   color: #0F172A;
 }
 
-/* Natural alignment: left-aligned in LTR, right-aligned in RTL (no global justification) */
+/* Justified text boundaries across all prose, descriptions, and list items (neither left-only nor right-only ragged edges) */
 p,
 li,
 blockquote,
-dd {
-  text-align: start;
-  line-height: 1.62;
+dd,
+.reading-measure,
+.prose-justify {
+  text-align: justify !important;
+  text-justify: inter-word;
+  hyphens: auto;
+  line-height: 1.65;
+}
+
+/* Keep short badges, buttons, and table headers centered or naturally aligned inside interactive controls */
+button,
+nav a,
+input,
+select,
+th {
+  text-align: center;
+  hyphens: none;
 }
 
 .reading-measure {
@@ -105,6 +119,137 @@ textarea:focus-visible,
 
 section[id] {
   scroll-margin-top: 5rem;
+}
+
+/* Mobile, Tablet & Desktop Responsive Viewport & Width Safeguards */
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Constrain sitewide container width so navigation, tabs, and content fit comfortably inside standard screens */
+.max-w-7xl {
+  max-width: 1120px !important;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px; /* Prevents iOS Safari auto-zoom on input focus */
+  }
+}
+
+/*
+ * html2pdf.js Mobile & Tablet Export Lock (.uge-pdf-export-lock)
+ * Ensures that when 'Download as PDF' is triggered on small mobile or tablet viewports,
+ * the receipt renders in an unclipped A4-proportioned container (740px wide), keeping the
+ * URA TIN header strictly at the top and the 2cm x 2cm QR code strictly in the bottom
+ * verification footer with zero overlap.
+ */
+.uge-pdf-export-staging {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 780px !important;
+  padding: 20px !important;
+  background-color: #0B0F17 !important;
+  z-index: -9999 !important;
+  pointer-events: none !important;
+  overflow: visible !important;
+}
+
+#printable-invoice-receipt.uge-pdf-export-lock,
+.uge-pdf-export-lock {
+  width: 740px !important;
+  min-width: 740px !important;
+  max-width: 740px !important;
+  padding: 24px !important;
+  margin: 0 auto !important;
+  box-sizing: border-box !important;
+  background-color: #0B0F17 !important;
+  color: #E2E8F0 !important;
+  border: 2px solid #D4AF37 !important;
+  border-radius: 12px !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 18px !important;
+  overflow: visible !important;
+}
+
+.uge-pdf-export-lock #uge-company-compliance-header {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  position: relative !important;
+  z-index: 1 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.uge-pdf-export-lock #uge-ura-tin-header-box {
+  text-align: right !important;
+  flex-shrink: 0 !important;
+  border-top: none !important;
+  padding-top: 0 !important;
+}
+
+.uge-pdf-export-lock #uge-doc-meta-subheader {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  width: 100% !important;
+}
+
+.uge-pdf-export-lock #uge-billing-summary-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 14px !important;
+  width: 100% !important;
+}
+
+.uge-pdf-export-lock #uge-qr-verification-footer {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 20px !important;
+  position: relative !important;
+  clear: both !important;
+  margin-top: 16px !important;
+  padding-top: 16px !important;
+  border-top: 1px solid #1E293B !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.uge-pdf-export-lock .uge-qr-print-svg {
+  width: 2cm !important;
+  height: 2cm !important;
+  min-width: 2cm !important;
+  min-height: 2cm !important;
+  max-width: 2cm !important;
+  max-height: 2cm !important;
+  display: block !important;
+  flex-shrink: 0 !important;
+}
+
+.uge-pdf-export-lock .uge-qr-print-box {
+  padding: 6px !important;
+  background-color: #FFFFFF !important;
+  border: 2px solid #D4AF37 !important;
+  flex-shrink: 0 !important;
 }
 
 @media print {
@@ -184,6 +329,26 @@ section[id] {
     break-inside: avoid !important;
   }
 
+  #printable-invoice-receipt #uge-company-compliance-header {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    position: relative !important;
+  }
+
+  #printable-invoice-receipt #uge-qr-verification-footer {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    position: relative !important;
+    clear: both !important;
+    margin-top: 16px !important;
+  }
+
   /* Calibrate transaction QR code to an exact 2cm x 2cm physical size on printed documents */
   #printable-invoice-receipt .uge-qr-print-svg,
   .uge-qr-print-svg {
@@ -194,12 +359,15 @@ section[id] {
     max-width: 2cm !important;
     max-height: 2cm !important;
     display: block !important;
+    flex-shrink: 0 !important;
   }
 
   #printable-invoice-receipt .uge-qr-print-box {
     padding: 1.5mm !important;
     background-color: #FFFFFF !important;
     border: 1.5px solid #D4AF37 !important;
+    flex-shrink: 0 !important;
   }
 }
+
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { Globe, MapPin, Coins, Lock } from 'lucide-react';
 import { Language, Currency } from '../types';
 import { translations } from '../data/translations';
+import { PWAInstallButton } from './PWAOfflineManager';
 
 interface FooterProps {
   currentLang: Language;
@@ -36,9 +37,9 @@ export const Footer: React.FC<FooterProps> = ({
       role="contentinfo"
       className="bg-[#080B11] border-t border-slate-800/90 text-slate-400 text-xs"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-7">
         {/* Top Footer Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 pb-10 border-b border-slate-800/80">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 pb-6 border-b border-slate-800/80">
           {/* Col 1: Brand & Independence Statement */}
           <div className="lg:col-span-2 space-y-3">
             <a
@@ -88,8 +89,8 @@ export const Footer: React.FC<FooterProps> = ({
             <ul className="space-y-2">
               <li>
                 <a
-                  href="/verification"
-                  onClick={(e) => handleLink(e, '/verification')}
+                  href="/offer-verification"
+                  onClick={(e) => handleLink(e, '/offer-verification')}
                   className="hover:text-[#D4AF37] transition-colors"
                 >
                   24–72-Hour Offer Verification
@@ -106,17 +107,17 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <a
-                  href="/expeditions/professional"
-                  onClick={(e) => handleLink(e, '/expeditions/professional')}
+                  href="/expeditions/professional-traders"
+                  onClick={(e) => handleLink(e, '/expeditions/professional-traders')}
                   className="hover:text-[#D4AF37] transition-colors"
                 >
-                  Professional Trader Expedition
+                  Professional Traders Expedition
                 </a>
               </li>
               <li>
                 <a
-                  href="/expeditions/academic"
-                  onClick={(e) => handleLink(e, '/expeditions/academic')}
+                  href="/expeditions/academic-research"
+                  onClick={(e) => handleLink(e, '/expeditions/academic-research')}
                   className="hover:text-[#D4AF37] transition-colors"
                 >
                   Academic &amp; Research Expedition
@@ -124,11 +125,11 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <a
-                  href="/expeditions/institutional"
-                  onClick={(e) => handleLink(e, '/expeditions/institutional')}
+                  href="/expeditions/institutional-vip"
+                  onClick={(e) => handleLink(e, '/expeditions/institutional-vip')}
                   className="hover:text-[#D4AF37] transition-colors"
                 >
-                  Institutional &amp; Private Delegations
+                  Institutional &amp; VIP Delegations
                 </a>
               </li>
               <li>
@@ -137,13 +138,13 @@ export const Footer: React.FC<FooterProps> = ({
                   onClick={(e) => handleLink(e, '/expeditions/itinerary')}
                   className="hover:text-[#D4AF37] transition-colors"
                 >
-                  Full Seven-Day Itinerary
+                  7-Day Field Itinerary
                 </a>
               </li>
               <li>
                 <a
-                  href="/expeditions/dates"
-                  onClick={(e) => handleLink(e, '/expeditions/dates')}
+                  href="/expeditions/dates-packages"
+                  onClick={(e) => handleLink(e, '/expeditions/dates-packages')}
                   className="hover:text-[#D4AF37] transition-colors"
                 >
                   Dates, Packages &amp; Inclusions
@@ -189,9 +190,18 @@ export const Footer: React.FC<FooterProps> = ({
                 <a
                   href="/insights"
                   onClick={(e) => handleLink(e, '/insights')}
+                  className="hover:text-[#D4AF37] transition-colors font-semibold text-[#D4AF37]"
+                >
+                  Insights &amp; Field Briefings
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/insights/gold-discount-advance-fee-traps"
+                  onClick={(e) => handleLink(e, '/insights/gold-discount-advance-fee-traps')}
                   className="hover:text-[#D4AF37] transition-colors"
                 >
-                  Insights &amp; Articles
+                  Deep Discount &amp; Advance-Fee Risk
                 </a>
               </li>
               <li>
@@ -291,7 +301,7 @@ export const Footer: React.FC<FooterProps> = ({
         </div>
 
         {/* Middle Utility Bar: Language Selection, Currency Selection, and Authenticated Operations Access */}
-        <div className="py-6 border-b border-slate-800/70 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="py-4 border-b border-slate-800/70 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-6">
             {/* Language Switcher */}
             <div className="flex items-center gap-2">
@@ -318,41 +328,26 @@ export const Footer: React.FC<FooterProps> = ({
               </div>
             </div>
 
-            {/* Currency Switcher */}
-            {onCurrencyChange && (
-              <div className="flex items-center gap-2">
-                <span className="text-slate-400 flex items-center gap-1.5">
-                  <Coins className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  <span>{t.currencyLabel}:</span>
-                </span>
-                <div className="flex items-center gap-1 font-mono-data">
-                  {(['USD', 'EUR', 'AED', 'GBP', 'CNY', 'UGX'] as Currency[]).map((curr) => (
-                    <button
-                      key={curr}
-                      type="button"
-                      onClick={() => onCurrencyChange(curr)}
-                      aria-pressed={selectedCurrency === curr}
-                      className={`px-2 py-1 rounded transition-colors ${
-                        selectedCurrency === curr
-                          ? 'bg-[#D4AF37] text-[#0B0F17] font-bold'
-                          : 'text-slate-400 hover:text-white bg-[#111722]'
-                      }`}
-                    >
-                      {curr}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Currency Display (USD Only) */}
+            <div className="flex items-center gap-2">
+              <span className="text-slate-400 flex items-center gap-1.5">
+                <Coins className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>{t.currencyLabel}:</span>
+              </span>
+              <span className="px-2 py-1 rounded bg-[#D4AF37] text-[#0B0F17] font-mono-data font-bold">
+                USD ($)
+              </span>
+            </div>
           </div>
 
-          {/* Discreet Operational Access for Staff & Administration (kept out of public header) */}
-          <div className="flex items-center gap-4 text-[11px] text-slate-500">
+          {/* Offline Field App Install + Discreet Operational Access for Staff & Administration */}
+          <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-500">
+            <PWAInstallButton compact />
             {onOpenStaffAuth && (
               <button
                 type="button"
                 onClick={onOpenStaffAuth}
-                className="hover:text-slate-300 transition-colors flex items-center gap-1"
+                className="hover:text-slate-300 transition-colors flex items-center gap-1 py-1"
               >
                 <Lock className="w-3 h-3" />
                 <span>Staff Sign-In</span>
@@ -362,7 +357,7 @@ export const Footer: React.FC<FooterProps> = ({
               <button
                 type="button"
                 onClick={onOpenAdminAuth}
-                className="hover:text-slate-300 transition-colors flex items-center gap-1"
+                className="hover:text-slate-300 transition-colors flex items-center gap-1 py-1"
               >
                 <Lock className="w-3 h-3" />
                 <span>Administration</span>

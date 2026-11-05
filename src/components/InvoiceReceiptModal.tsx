@@ -287,14 +287,27 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
     }
   };
 
-  // Dedicated 'Download as PDF' button using html2pdf.js preserving exact formatting & QR alignment
+  // Dedicated 'Download as PDF' button using html2pdf.js preserving exact formatting & QR alignment on mobile, tablet, and desktop
   const handleDownloadPdf = async () => {
     const targetElement =
       printableSheetRef.current || document.getElementById('printable-invoice-receipt');
     if (!targetElement || isExportingPdf) return;
 
     setIsExportingPdf(true);
+
+    // Create an unclipped offscreen A4 staging container on document.body so mobile modal overflow/width never clips or overlaps the URA TIN header and 2cm x 2cm QR code
+    const stagingContainer = document.createElement('div');
+    stagingContainer.className = 'uge-pdf-export-staging';
+    const exportClone = targetElement.cloneNode(true) as HTMLElement;
+    exportClone.classList.add('uge-pdf-export-lock');
+    stagingContainer.appendChild(exportClone);
+    document.body.appendChild(stagingContainer);
+
     try {
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      );
+
       const pdfFileName = `${
         docMode === 'receipt' ? receiptNumber : invoiceNumber
       }-Uganda-Gold-Expedition.pdf`;
@@ -314,7 +327,11 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
               scale: 2,
               useCORS: true,
               backgroundColor: '#0B0F17',
-              logging: false
+              logging: false,
+              windowWidth: 960,
+              width: 740,
+              scrollX: 0,
+              scrollY: 0
             },
             jsPDF: {
               unit: 'mm',
@@ -322,7 +339,7 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
               orientation: 'portrait'
             }
           })
-          .from(targetElement)
+          .from(exportClone)
           .save();
       } else {
         handlePrintDocument();
@@ -330,6 +347,9 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
     } catch {
       handlePrintDocument();
     } finally {
+      if (stagingContainer.parentNode) {
+        stagingContainer.parentNode.removeChild(stagingContainer);
+      }
       setIsExportingPdf(false);
     }
   };
@@ -460,31 +480,42 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[65] overflow-y-auto bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
-      <div className="relative w-full max-w-3xl bg-[#111722] border border-[#D4AF37]/60 rounded-2xl shadow-2xl overflow-hidden my-4">
-        {/* Top Bar */}
-        <div className="bg-[#182232] px-5 py-3.5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 print:hidden">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-[#D4AF37]/15 border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37]">
-              <QrCode className="w-5 h-5" />
+    <div className="fixed inset-0 z-[65] overflow-y-auto bg-black/85 backdrop-blur-md flex items-start sm:items-center justify-center p-2 sm:p-4">
+      <div className="relative w-full max-w-3xl bg-[#111722] border border-[#D4AF37]/60 rounded-2xl shadow-2xl overflow-hidden my-2 sm:my-4">
+        {/* Top Bar — Mobile & Tablet Responsive */}
+        <div className="bg-[#182232] px-3.5 sm:px-5 py-3 sm:py-3.5 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden">
+          <div className="flex items-start sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-lg bg-[#D4AF37]/15 border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] shrink-0">
+                <QrCode className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="font-cinzel text-sm sm:text-lg font-bold text-white leading-snug">
+                  Sovereign Invoice &amp; Verifiable QR Receipt Generator
+                </h3>
+                <p className="text-[10px] sm:text-[11px] font-mono-data text-[#D4AF37] truncate">
+                  {OFFICIAL_UGE_ADDRESS.toUpperCase()} · {OFFICIAL_URA_TIN}
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-cinzel text-base sm:text-lg font-bold text-white">
-                Sovereign Invoice &amp; Verifiable QR Receipt Generator
-              </h3>
-              <p className="text-[11px] font-mono-data text-[#D4AF37]">
-                {OFFICIAL_UGE_ADDRESS.toUpperCase()} · {OFFICIAL_URA_TIN}
-              </p>
-            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close modal"
+              className="sm:hidden p-2 min-h-[40px] min-w-[40px] flex items-center justify-center text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors shrink-0"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2">
             {/* Switch between Invoice & QR Receipt */}
             <div className="inline-flex rounded-lg bg-[#0B0F17] p-1 border border-slate-800">
               <button
                 type="button"
                 onClick={() => setDocMode('invoice')}
-                className={`px-3 py-1 rounded-md text-xs font-mono-data font-bold flex items-center gap-1.5 transition-colors ${
+                className={`px-2.5 sm:px-3 py-1.5 min-h-[36px] rounded-md text-xs font-mono-data font-bold flex items-center gap-1.5 transition-colors ${
                   docMode === 'invoice'
                     ? 'bg-[#D4AF37] text-[#0B0F17]'
                     : 'text-slate-400 hover:text-white'
@@ -496,7 +527,7 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
               <button
                 type="button"
                 onClick={() => setDocMode('receipt')}
-                className={`px-3 py-1 rounded-md text-xs font-mono-data font-bold flex items-center gap-1.5 transition-colors ${
+                className={`px-2.5 sm:px-3 py-1.5 min-h-[36px] rounded-md text-xs font-mono-data font-bold flex items-center gap-1.5 transition-colors ${
                   docMode === 'receipt'
                     ? 'bg-emerald-400 text-[#0B0F17]'
                     : 'text-slate-400 hover:text-white'
@@ -507,42 +538,45 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
               </button>
             </div>
 
-            <button
-              type="button"
-              onClick={handleDownloadPdf}
-              disabled={isExportingPdf}
-              title="Download as PDF (A4)"
-              className="px-3 py-1.5 text-xs font-mono-data font-bold text-[#0B0F17] bg-[#D4AF37] hover:bg-[#FEF3C7] rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-60 shadow-sm"
-            >
-              {isExportingPdf ? (
-                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <FileDown className="w-3.5 h-3.5" />
-              )}
-              <span>{isExportingPdf ? 'Exporting PDF...' : 'Download as PDF'}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleDownloadPdf}
+                disabled={isExportingPdf}
+                title="Download as PDF (A4)"
+                className="px-3 py-1.5 min-h-[38px] text-xs font-mono-data font-bold text-[#0B0F17] bg-[#D4AF37] hover:bg-[#FEF3C7] rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-60 shadow-sm whitespace-nowrap"
+              >
+                {isExportingPdf ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <FileDown className="w-3.5 h-3.5" />
+                )}
+                <span>{isExportingPdf ? 'Exporting PDF...' : 'Download as PDF'}</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={handlePrintDocument}
-              title="Print A4 Output"
-              className="px-2.5 py-1.5 text-xs font-mono-data font-bold text-slate-200 bg-[#0B0F17] hover:bg-slate-800 border border-slate-700 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <Printer className="w-3.5 h-3.5 text-[#D4AF37]" />
-              <span className="hidden sm:inline">Print A4</span>
-            </button>
+              <button
+                type="button"
+                onClick={handlePrintDocument}
+                title="Print A4 Output"
+                className="px-2.5 py-1.5 min-h-[38px] text-xs font-mono-data font-bold text-slate-200 bg-[#0B0F17] hover:bg-slate-800 border border-slate-700 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
+              >
+                <Printer className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span className="hidden md:inline">Print A4</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close modal"
+                className="hidden sm:flex p-1.5 min-h-[38px] min-w-[38px] items-center justify-center text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="p-5 sm:p-6 space-y-5">
+        <div className="p-3.5 sm:p-6 space-y-4 sm:space-y-5">
           {/* AI Unique Receipt & Verifiable QR Generator Bar */}
           <div className="p-3.5 rounded-xl bg-gradient-to-r from-[#182232] via-[#131C2B] to-[#182232] border border-[#D4AF37]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden">
             <div className="space-y-0.5">
@@ -647,20 +681,9 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
               <span className="text-[10px] font-mono-data text-slate-400 uppercase">
                 Currency:
               </span>
-              {(['USD', 'UGX', 'EUR', 'AED', 'GBP', 'CNY'] as Currency[]).map((curr) => (
-                <button
-                  key={curr}
-                  type="button"
-                  onClick={() => setDisplayCurrency(curr)}
-                  className={`px-1.5 py-0.5 rounded text-[10px] font-mono-data font-bold ${
-                    displayCurrency === curr
-                      ? 'bg-[#D4AF37] text-[#0B0F17]'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  {curr}
-                </button>
-              ))}
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono-data font-bold bg-[#D4AF37] text-[#0B0F17]">
+                USD ($)
+              </span>
             </div>
           </div>
 
@@ -705,24 +728,27 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
           <div
             id="printable-invoice-receipt"
             ref={printableSheetRef}
-            className="rounded-xl bg-[#0B0F17] border-2 border-[#D4AF37]/60 p-5 sm:p-6 space-y-5 shadow-inner"
+            className="rounded-xl bg-[#0B0F17] border-2 border-[#D4AF37]/60 p-4 sm:p-6 space-y-5 shadow-inner overflow-hidden"
           >
             {/* OFFICIAL UGANDA GOLD EXPEDITION COMPANY HEADER (Top of A4 Print Output for Professional Compliance) */}
-            <div className="pb-4 border-b-2 border-[#D4AF37]/40 space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#111722] border border-[#D4AF37]/30 rounded-xl p-3.5">
-                <div className="flex items-center gap-3.5">
+            <div className="pb-4 border-b-2 border-[#D4AF37]/40 space-y-3 relative z-10">
+              <div
+                id="uge-company-compliance-header"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 bg-[#111722] border border-[#D4AF37]/30 rounded-xl p-3.5"
+              >
+                <div className="flex items-center gap-3">
                   <img
                     src="/assets/aistudio/uge-logo-emblem-dark.png"
                     alt="Uganda Gold Expedition Official Emblem"
                     crossOrigin="anonymous"
-                    className="w-14 h-14 object-contain shrink-0"
+                    className="w-12 h-12 sm:w-14 sm:h-14 object-contain shrink-0"
                   />
-                  <div className="space-y-0.5">
-                    <div className="font-cinzel font-bold text-base sm:text-lg text-white tracking-wider">
+                  <div className="space-y-0.5 min-w-0">
+                    <div className="font-cinzel font-bold text-sm sm:text-lg text-white tracking-wider">
                       UGANDA GOLD <span className="text-[#D4AF37]">EXPEDITION</span>
                     </div>
-                    <p className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
+                    <p className="text-xs font-semibold text-slate-200 flex items-start sm:items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-[#D4AF37] shrink-0 mt-0.5 sm:mt-0" />
                       <span>{OFFICIAL_UGE_ADDRESS}</span>
                     </p>
                     <p className="text-[11px] text-slate-400">
@@ -731,7 +757,10 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
                   </div>
                 </div>
 
-                <div className="sm:text-right font-mono-data space-y-1 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-800">
+                <div
+                  id="uge-ura-tin-header-box"
+                  className="sm:text-right font-mono-data space-y-1 border-t sm:border-t-0 pt-2.5 sm:pt-0 border-slate-800 shrink-0"
+                >
                   <div className="inline-block px-2.5 py-1 rounded bg-[#D4AF37]/15 border border-[#D4AF37]/50 text-[#D4AF37] font-bold text-xs">
                     {OFFICIAL_URA_TIN}
                   </div>
@@ -745,10 +774,13 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
               </div>
 
               {/* Document Serial & Metadata Sub-Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+              <div
+                id="uge-doc-meta-subheader"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1"
+              >
                 <div className="flex flex-wrap items-center gap-2">
                   <span
-                    className={`text-[11px] font-mono-data font-bold px-2.5 py-1 rounded uppercase border ${
+                    className={`text-[10px] sm:text-[11px] font-mono-data font-bold px-2.5 py-1 rounded uppercase border ${
                       docMode === 'receipt'
                         ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500'
                         : 'bg-amber-950/80 text-amber-300 border-amber-500'
@@ -776,7 +808,10 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
             </div>
 
             {/* Billed Principal & Statutory Settlement Summary inside Printable Sheet */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-3 border-b border-slate-800/80 text-xs">
+            <div
+              id="uge-billing-summary-grid"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-3 border-b border-slate-800/80 text-xs"
+            >
               <div className="p-3 rounded-lg bg-[#111722] border border-slate-800/90 space-y-0.5">
                 <div className="text-[10px] font-mono-data uppercase text-[#D4AF37] font-bold">
                   Billed Principal / Organization
@@ -851,8 +886,11 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
             </div>
 
             {/* QR CODE RECEIPT & CLIENT PORTAL TRANSACTION LINK FOR AUTHORITIES & LOGISTICS PARTNERS */}
-            <div className="pt-4 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-5">
-              <div className="space-y-2 flex-1">
+            <div
+              id="uge-qr-verification-footer"
+              className="pt-4 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-5 relative clear-both"
+            >
+              <div className="space-y-2 flex-1 min-w-0 w-full">
                 <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 font-mono-data uppercase">
                   <ShieldCheck className="w-4 h-4 shrink-0" />
                   <span>
@@ -878,7 +916,7 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-slate-400">QR Cryptographic Seal:</span>
-                    <span className="text-[#D4AF37] font-bold">{qrDigest}</span>
+                    <span className="text-[#D4AF37] font-bold break-all">{qrDigest}</span>
                   </div>
                   <div className="text-slate-400">
                     Registered Issuer:{' '}
@@ -897,20 +935,23 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
                     <button
                       type="button"
                       onClick={() => onVerifyRecordInPortal(referenceId, clientEmail)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#182232] hover:bg-[#222E42] border border-[#D4AF37]/50 text-[#D4AF37] text-[11px] font-mono-data font-bold transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-lg bg-[#182232] hover:bg-[#222E42] border border-[#D4AF37]/50 text-[#D4AF37] text-[11px] font-mono-data font-bold transition-colors cursor-pointer"
                     >
-                      <QrCode className="w-3.5 h-3.5" />
+                      <QrCode className="w-3.5 h-3.5 shrink-0" />
                       <span>Verify Transaction Record in Client Portal →</span>
                     </button>
                   </div>
                 )}
               </div>
 
-              {/* Rendered qrcode.react QRCodeSVG with Embedded UGE Logo (Calibrated for 2cm x 2cm Print Scannability) */}
-              <div className="flex flex-col items-center gap-1.5 shrink-0">
+              {/* Rendered qrcode.react QRCodeSVG with Embedded UGE Logo (Calibrated for 2cm x 2cm Print & Mobile Export Scannability) */}
+              <div
+                id="uge-qr-code-container"
+                className="flex flex-col items-center gap-1.5 shrink-0 pt-2 md:pt-0"
+              >
                 <div
                   ref={qrSvgWrapperRef}
-                  className="uge-qr-print-box p-2.5 print:p-1 rounded-xl bg-white border-2 border-[#D4AF37] shadow-lg flex items-center justify-center"
+                  className="uge-qr-print-box p-2 print:p-1 rounded-xl bg-white border-2 border-[#D4AF37] shadow-lg flex items-center justify-center shrink-0"
                 >
                   <QRCodeSVG
                     value={qrVerificationPayload}
@@ -919,7 +960,7 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
                     fgColor="#0B0F17"
                     level="H"
                     includeMargin={false}
-                    className="uge-qr-print-svg w-32 h-32 print:w-[2cm] print:h-[2cm]"
+                    className="uge-qr-print-svg w-[2cm] h-[2cm] sm:w-28 sm:h-28 print:w-[2cm] print:h-[2cm] block shrink-0"
                     title={`Client Portal Transaction Verification QR Code for ${referenceId}`}
                     imageSettings={{
                       src: UGE_QR_LOGO_DATA_URI,
@@ -941,12 +982,12 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-1 print:hidden">
+          {/* Action Buttons — Mobile & Tablet Touch-Optimized */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1 print:hidden">
             <button
               type="button"
               onClick={handleCopyVerificationString}
-              className="px-3.5 py-2 text-xs font-mono-data text-slate-300 hover:text-white bg-[#182232] border border-slate-700 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="w-full sm:w-auto justify-center px-3.5 py-2.5 min-h-[42px] text-xs font-mono-data text-slate-300 hover:text-white bg-[#182232] border border-slate-700 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               {copiedPayload ? (
                 <>
@@ -961,22 +1002,22 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
               )}
             </button>
 
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={handlePrintDocument}
-                className="px-3.5 py-2.5 text-xs font-bold text-white bg-[#182232] hover:bg-slate-800 border border-slate-700 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
+                className="justify-center px-3.5 py-2.5 min-h-[42px] text-xs font-bold text-white bg-[#182232] hover:bg-slate-800 border border-slate-700 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
               >
-                <Printer className="w-4 h-4 text-[#D4AF37]" />
+                <Printer className="w-4 h-4 text-[#D4AF37] shrink-0" />
                 <span>Print A4</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleDownloadPrintableHtml}
-                className="px-3.5 py-2.5 text-xs font-bold text-slate-200 bg-[#182232] hover:bg-slate-800 border border-[#D4AF37]/50 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
+                className="justify-center px-3.5 py-2.5 min-h-[42px] text-xs font-bold text-slate-200 bg-[#182232] hover:bg-slate-800 border border-[#D4AF37]/50 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
               >
-                <Download className="w-4 h-4 text-[#D4AF37]" />
+                <Download className="w-4 h-4 text-[#D4AF37] shrink-0" />
                 <span>Download HTML</span>
               </button>
 
@@ -984,12 +1025,12 @@ export const InvoiceReceiptModal: React.FC<InvoiceReceiptModalProps> = ({
                 type="button"
                 onClick={handleDownloadPdf}
                 disabled={isExportingPdf}
-                className="px-4 py-2.5 text-xs font-bold text-[#0B0F17] bg-[#D4AF37] hover:bg-[#FEF3C7] rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-[#D4AF37]/20 cursor-pointer disabled:opacity-60"
+                className="col-span-2 sm:col-span-1 justify-center px-4 py-2.5 min-h-[42px] text-xs font-bold text-[#0B0F17] bg-[#D4AF37] hover:bg-[#FEF3C7] rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-[#D4AF37]/20 cursor-pointer disabled:opacity-60"
               >
                 {isExportingPdf ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
                 ) : (
-                  <FileDown className="w-4 h-4" />
+                  <FileDown className="w-4 h-4 shrink-0" />
                 )}
                 <span>
                   {isExportingPdf ? 'Generating A4 PDF...' : 'Download as PDF'}

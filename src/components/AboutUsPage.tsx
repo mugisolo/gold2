@@ -95,7 +95,7 @@ export const AboutUsPage: React.FC<AboutUsPageProps> = ({
               </div>
 
               <h1 className="font-serif-display text-3xl sm:text-5xl font-bold text-white leading-[1.12] tracking-tight">
-                {localizedAbout.headline}
+                Independent due diligence, conducted in the field
               </h1>
 
               <p className="text-base sm:text-lg text-slate-300 leading-relaxed reading-measure">
@@ -112,7 +112,7 @@ export const AboutUsPage: React.FC<AboutUsPageProps> = ({
               <div className="pt-4 flex flex-wrap items-center gap-4">
                 <button
                   type="button"
-                  onClick={() => (onNavigate ? onNavigate('/verification') : onOpenDocVerification())}
+                  onClick={() => (onNavigate ? onNavigate('/offer-verification') : onOpenDocVerification())}
                   className="px-6 py-3.5 text-sm font-semibold text-slate-950 bg-[#D4AF37] hover:bg-[#c5a030] rounded-lg transition-colors inline-flex items-center gap-2 shadow-md cursor-pointer"
                 >
                   <FileSearch className="w-4 h-4" />
@@ -150,7 +150,7 @@ export const AboutUsPage: React.FC<AboutUsPageProps> = ({
               <div className="space-y-4 pt-2 border-t border-slate-800/80 text-xs">
                 <div>
                   <div className="text-slate-400 font-mono uppercase tracking-wider mb-1">
-                    Statutory & Regulatory Scope
+                    Statutory &amp; Regulatory Scope
                   </div>
                   <p className="text-slate-300 leading-relaxed">{localizedAbout.statutoryMandate}</p>
                 </div>
@@ -173,6 +173,21 @@ export const AboutUsPage: React.FC<AboutUsPageProps> = ({
       {/* Section 2: Who the Service Is For & Who It Is Not For + Field Capability */}
       <section className="py-16 surface-ivory border-b border-stone-200/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-stone-200">
+            <div>
+              <span className="text-xs font-mono uppercase tracking-widest text-[#9A7418] block mb-1">
+                Mandate &amp; Field Scope
+              </span>
+              <h2 className="font-serif-display text-2xl sm:text-3xl font-bold text-slate-900">
+                Independence Charter &amp; Operational Boundaries
+              </h2>
+            </div>
+            <img
+              src="/assets/aistudio/uganda-gold-expedition-logo-for-light-backgrounds_79479d7f.png"
+              alt="Uganda Gold Expedition emblem on light background"
+              className="h-16 w-auto object-contain"
+            />
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="surface-ivory-card rounded-2xl p-6 sm:p-7">
               <span className="text-xs font-mono uppercase tracking-wider text-emerald-700 font-semibold block mb-2">

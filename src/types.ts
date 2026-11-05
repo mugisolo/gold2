@@ -1,6 +1,6 @@
 export type Language = 'EN' | 'AR' | 'ZH' | 'FR';
 
-export type Currency = 'USD' | 'EUR' | 'AED' | 'GBP' | 'CNY' | 'UGX';
+export type Currency = 'USD';
 
 export interface GeoLocationProposal {
   countryCode: string;
@@ -127,17 +127,29 @@ export interface DocumentVerification {
 
 export interface ContentPost {
   id: string;
+  slug?: string;
   title: string;
-  category: 'Field Dispatch' | 'Regulatory Alert' | 'Intelligence Briefing' | 'Market Update';
+  h1?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  category: 'Offer Risk' | 'Regulation' | 'Field Methods' | 'Metallurgy' | 'Field Dispatch' | 'Regulatory Alert' | 'Intelligence Briefing' | 'Market Update';
   summary: string;
   body: string;
   author: string;
   authorRole?: string;
+  reviewer?: string;
+  reviewerRole?: string;
   date: string;
+  updatedDate?: string;
   published: boolean;
   imageUrl?: string;
+  imageAlt?: string;
   readTime?: string;
   tags?: string[];
+  sources?: string[];
+  limitations?: string;
+  nextStepLabel?: string;
+  nextStepPath?: string;
 }
 
 export interface PhotoItem {

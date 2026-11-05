@@ -1,4 +1,4 @@
-import { ContentPost, PhotoItem, StaffMember, FieldLog, PaymentRecord, ExpeditionRegistration, DocumentVerification, BoardMember, AboutContent, AdminAuditLog } from '../types';
+import type { ContentPost, PhotoItem, StaffMember, FieldLog, PaymentRecord, ExpeditionRegistration, DocumentVerification, BoardMember, AboutContent, AdminAuditLog } from '../types.ts';
 
 export const INITIAL_ABOUT_CONTENT: AboutContent = {
   headline: 'Sovereign Physical Due Diligence & Anti-Fraud Intelligence Across East Africa',
@@ -486,8 +486,8 @@ export const INITIAL_AUDIT_LOGS: AdminAuditLog[] = [
     actorRole: 'admin',
     category: 'content_update',
     action: 'Published Intelligence Article',
-    targetId: 'post-1',
-    details: 'Published article "Forensic Deconstruction: Why 15%–25% Gold Discounts in East Africa Are Always Advance-Fee Traps" to public Insights library.'
+    targetId: 'gold-discount-advance-fee-traps',
+    details: 'Published article "Why deep gold discounts demand independent verification" to public Insights library.'
   },
   {
     id: 'AUDIT-2026-9011',

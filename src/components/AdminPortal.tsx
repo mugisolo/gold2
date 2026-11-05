@@ -378,9 +378,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [showPostModal, setShowPostModal] = useState(false);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [postTitle, setPostTitle] = useState('');
-  const [postCategory, setPostCategory] = useState<
-    'Field Dispatch' | 'Regulatory Alert' | 'Intelligence Briefing' | 'Market Update'
-  >('Intelligence Briefing');
+  const [postCategory, setPostCategory] = useState<ContentPost['category']>(
+    'Offer Risk'
+  );
   const [postSummary, setPostSummary] = useState('');
   const [postBody, setPostBody] = useState('');
   const [postAuthor, setPostAuthor] = useState('Mugisa Solomon Byakutaaga');

@@ -53,11 +53,11 @@ const ExpeditionsSubnav: React.FC<{
 }> = ({ activePath, onNavigate }) => {
   const items = [
     { label: 'Overview', path: '/expeditions' },
-    { label: 'Professional Trader', path: '/expeditions/professional' },
-    { label: 'Academic & Research', path: '/expeditions/academic' },
-    { label: 'Institutional & Private', path: '/expeditions/institutional' },
+    { label: 'Professional Traders', path: '/expeditions/professional-traders' },
+    { label: 'Academic & Research', path: '/expeditions/academic-research' },
+    { label: 'Institutional & VIP', path: '/expeditions/institutional-vip' },
     { label: '7-Day Itinerary', path: '/expeditions/itinerary' },
-    { label: 'Dates & Packages', path: '/expeditions/dates' }
+    { label: 'Dates & Packages', path: '/expeditions/dates-packages' }
   ];
 
   return (
@@ -105,18 +105,18 @@ export const ExpeditionsOverviewPage: React.FC<SharedExpeditionProps> = ({
               7-Day Field Due-Diligence Programme · Uganda
             </p>
             <h1 className="font-serif-display text-3xl sm:text-5xl font-bold text-white tracking-tight leading-[1.12] mb-5">
-              On-the-ground verification across Uganda’s regulated gold supply chain.
+              Field-led gold supply-chain due diligence
             </h1>
             <p className="text-base sm:text-lg text-slate-300 leading-relaxed reading-measure mb-8">
-              Designed for principals, compliance officers, researchers, and institutional delegations who need direct exposure to the mining cadastre, extraction corridors, accredited refineries, customs clearance, and banking standards before committing capital.
+              Guided Uganda field expeditions for traders, researchers and institutions that need to examine licensing, extraction, assay, customs and counterparty risk on the ground.
             </p>
             <div className="flex flex-col sm:flex-row sm:items-center gap-3.5">
               <button
                 type="button"
-                onClick={() => onNavigate('/expeditions/dates')}
+                onClick={() => onNavigate('/expeditions/dates-packages')}
                 className="px-6 py-3.5 rounded-lg bg-[#D4AF37] hover:bg-[#c5a030] text-slate-950 font-semibold text-sm inline-flex items-center justify-center gap-2 transition-colors shadow-md cursor-pointer"
               >
-                <span>Compare Dates & Packages</span>
+                <span>Dates &amp; Packages</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
               <button
@@ -124,7 +124,7 @@ export const ExpeditionsOverviewPage: React.FC<SharedExpeditionProps> = ({
                 onClick={() => onNavigate('/expeditions/itinerary')}
                 className="px-6 py-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white border border-slate-700 font-semibold text-sm inline-flex items-center justify-center gap-2 transition-colors cursor-pointer"
               >
-                <span>Inspect Full 7-Day Itinerary</span>
+                <span>7-Day Itinerary</span>
               </button>
             </div>
           </div>
@@ -162,7 +162,7 @@ export const ExpeditionsOverviewPage: React.FC<SharedExpeditionProps> = ({
                   <Briefcase className="w-5 h-5" />
                 </div>
                 <h3 className="font-serif-display text-xl font-bold text-slate-900 mb-2">
-                  Professional Trader Expedition
+                  Professional Traders
                 </h3>
                 <p className="text-sm text-slate-600 leading-relaxed mb-5">
                   For bullion buyers, commodity desks, and private principals evaluating active counterparties, refinery procedures, and compliant contract structures.
@@ -174,20 +174,20 @@ export const ExpeditionsOverviewPage: React.FC<SharedExpeditionProps> = ({
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-[#9A7418] shrink-0 mt-0.5" />
-                    <span>5-Star Kampala Serena Hotel & dedicated 4x4 SUV convoy</span>
+                    <span>5-Star Kampala Serena Hotel &amp; dedicated 4x4 SUV convoy</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-[#9A7418] shrink-0 mt-0.5" />
-                    <span>Hands-on fire assay, DGSM registry & banking roundtable</span>
+                    <span>Hands-on fire assay, DGSM registry &amp; banking roundtable</span>
                   </li>
                 </ul>
               </div>
               <button
                 type="button"
-                onClick={() => onNavigate('/expeditions/professional')}
+                onClick={() => onNavigate('/expeditions/professional-traders')}
                 className="w-full py-3 px-4 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs uppercase tracking-wider inline-flex items-center justify-center gap-2 transition-colors cursor-pointer"
               >
-                <span>View Professional Programme</span>
+                <span>Professional Traders</span>
                 <ArrowRight className="w-4 h-4 text-[#D4AF37]" />
               </button>
             </div>
@@ -197,7 +197,7 @@ export const ExpeditionsOverviewPage: React.FC<SharedExpeditionProps> = ({
               <div>
                 <div className="flex items-center justify-between gap-2 mb-4">
                   <span className="text-xs font-mono uppercase tracking-wider font-semibold px-2.5 py-1 rounded bg-stone-200/80 text-slate-700">
-                    Tier 01 · Research & ESG
+                    Tier 01 · Research &amp; ESG
                   </span>
                   <span className="text-sm font-mono font-bold text-slate-900">
                     {formatCurrencyPrice(8000, selectedCurrency)} / person
@@ -207,7 +207,7 @@ export const ExpeditionsOverviewPage: React.FC<SharedExpeditionProps> = ({
                   <GraduationCap className="w-5 h-5" />
                 </div>
                 <h3 className="font-serif-display text-xl font-bold text-slate-900 mb-2">
-                  Academic & Research Expedition
+                  Academic &amp; Research
                 </h3>
                 <p className="text-sm text-slate-600 leading-relaxed mb-5">
                   For policy analysts, ESG auditors, university faculties, and supply-chain researchers studying mineral governance and artisanal-to-industrial flows.
@@ -215,11 +215,11 @@ export const ExpeditionsOverviewPage: React.FC<SharedExpeditionProps> = ({
                 <ul className="space-y-2.5 text-xs text-slate-700 mb-6 border-t border-stone-200/80 pt-4">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-[#9A7418] shrink-0 mt-0.5" />
-                    <span>Cadastre briefings, artisanal pithead & refinery observation</span>
+                    <span>Cadastre briefings, artisanal pithead &amp; refinery observation</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-[#9A7418] shrink-0 mt-0.5" />
-                    <span>4-Star business hotel & escorted group executive transport</span>
+                    <span>4-Star business hotel &amp; escorted group executive transport</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-[#9A7418] shrink-0 mt-0.5" />
@@ -229,15 +229,15 @@ export const ExpeditionsOverviewPage: React.FC<SharedExpeditionProps> = ({
               </div>
               <button
                 type="button"
-                onClick={() => onNavigate('/expeditions/academic')}
+                onClick={() => onNavigate('/expeditions/academic-research')}
                 className="w-full py-3 px-4 rounded-lg bg-white hover:bg-stone-100 text-slate-900 border border-stone-300 font-semibold text-xs uppercase tracking-wider inline-flex items-center justify-center gap-2 transition-colors cursor-pointer"
               >
-                <span>View Academic Programme</span>
+                <span>Academic &amp; Research</span>
                 <ArrowRight className="w-4 h-4 text-[#9A7418]" />
               </button>
             </div>
 
-            {/* Institutional & Private Delegations */}
+            {/* Institutional & VIP */}
             <div className="surface-ivory-card rounded-2xl p-6 sm:p-7 flex flex-col justify-between shadow-sm hover:border-[#9A7418] transition-colors">
               <div>
                 <div className="flex items-center justify-between gap-2 mb-4">
@@ -252,7 +252,7 @@ export const ExpeditionsOverviewPage: React.FC<SharedExpeditionProps> = ({
                   <Building2 className="w-5 h-5" />
                 </div>
                 <h3 className="font-serif-display text-xl font-bold text-slate-900 mb-2">
-                  Institutional & Private Delegations
+                  Institutional &amp; VIP
                 </h3>
                 <p className="text-sm text-slate-600 leading-relaxed mb-5">
                   For sovereign funds, central bank observers, family office principals, and corporate boards requiring discrete movement and custom scoping.
@@ -260,7 +260,7 @@ export const ExpeditionsOverviewPage: React.FC<SharedExpeditionProps> = ({
                 <ul className="space-y-2.5 text-xs text-slate-700 mb-6 border-t border-stone-200/80 pt-4">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-[#9A7418] shrink-0 mt-0.5" />
-                    <span>B6 armored executive motorcade & diplomatic airport clearance</span>
+                    <span>B6 armored executive motorcade &amp; diplomatic airport clearance</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-[#9A7418] shrink-0 mt-0.5" />
@@ -268,16 +268,16 @@ export const ExpeditionsOverviewPage: React.FC<SharedExpeditionProps> = ({
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-[#9A7418] shrink-0 mt-0.5" />
-                    <span>Private ministerial briefings & Lake Victoria Villa suite</span>
+                    <span>Private ministerial briefings &amp; Lake Victoria Villa suite</span>
                   </li>
                 </ul>
               </div>
               <button
                 type="button"
-                onClick={() => onNavigate('/expeditions/institutional')}
+                onClick={() => onNavigate('/expeditions/institutional-vip')}
                 className="w-full py-3 px-4 rounded-lg bg-white hover:bg-stone-100 text-slate-900 border border-stone-300 font-semibold text-xs uppercase tracking-wider inline-flex items-center justify-center gap-2 transition-colors cursor-pointer"
               >
-                <span>View Institutional Programme</span>
+                <span>Institutional &amp; VIP</span>
                 <ArrowRight className="w-4 h-4 text-[#9A7418]" />
               </button>
             </div>
@@ -316,15 +316,15 @@ export const ExpeditionsOverviewPage: React.FC<SharedExpeditionProps> = ({
                   onClick={() => onNavigate('/expeditions/itinerary')}
                   className="px-5 py-2.5 rounded-lg bg-[#D4AF37] hover:bg-[#c5a030] text-slate-950 font-semibold text-xs uppercase tracking-wider inline-flex items-center gap-2 transition-colors cursor-pointer"
                 >
-                  <span>Full 7-Day Itinerary</span>
+                  <span>7-Day Itinerary</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
                 <button
                   type="button"
-                  onClick={() => onNavigate('/expeditions/dates')}
+                  onClick={() => onNavigate('/expeditions/dates-packages')}
                   className="px-5 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 font-semibold text-xs uppercase tracking-wider transition-colors cursor-pointer"
                 >
-                  Dates & Packages
+                  Dates &amp; Packages
                 </button>
               </div>
             </div>
@@ -403,7 +403,7 @@ export const ProfessionalExpeditionPage: React.FC<SharedExpeditionProps> = ({
   return (
     <div className="min-h-screen bg-[#0B0F17] text-slate-200 pb-24">
       <IndependenceBanner />
-      <ExpeditionsSubnav activePath="/expeditions/professional" onNavigate={onNavigate} />
+      <ExpeditionsSubnav activePath="/expeditions/professional-traders" onNavigate={onNavigate} />
 
       <section className="py-14 lg:py-20 border-b border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -413,10 +413,10 @@ export const ProfessionalExpeditionPage: React.FC<SharedExpeditionProps> = ({
                 <span>Tier 02 · Commercial Due Diligence</span>
               </div>
               <h1 className="font-serif-display text-3xl sm:text-5xl font-bold text-white tracking-tight leading-[1.12] mb-5">
-                Professional Trader Expedition
+                Field due diligence for professional gold traders
               </h1>
               <p className="text-base sm:text-lg text-slate-300 leading-relaxed reading-measure mb-6">
-                Built for physical gold buyers, commodity desk directors, and private principals who want to verify active offers, understand refinery and customs workflows, and establish vetted legal and banking channels in Uganda.
+                A field expedition for bullion traders, commodity desks and family offices assessing counterparties, offers, assays and export controls across Uganda’s physical supply chain.
               </p>
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-4 pt-2">
@@ -644,20 +644,20 @@ export const AcademicExpeditionPage: React.FC<SharedExpeditionProps> = ({
   return (
     <div className="min-h-screen bg-[#0B0F17] text-slate-200 pb-24">
       <IndependenceBanner />
-      <ExpeditionsSubnav activePath="/expeditions/academic" onNavigate={onNavigate} />
+      <ExpeditionsSubnav activePath="/expeditions/academic-research" onNavigate={onNavigate} />
 
       <section className="py-14 lg:py-20 border-b border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
             <div className="lg:col-span-7">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-slate-800 border border-slate-700 text-slate-200 text-xs font-mono uppercase tracking-widest mb-4">
-                <span>Tier 01 · Field Research & Supply-Chain Governance</span>
+                <span>Tier 01 · Field Research &amp; Supply-Chain Governance</span>
               </div>
               <h1 className="font-serif-display text-3xl sm:text-5xl font-bold text-white tracking-tight leading-[1.12] mb-5">
-                Academic & Research Expedition
+                Study gold supply chains where they operate
               </h1>
               <p className="text-base sm:text-lg text-slate-300 leading-relaxed reading-measure mb-6">
-                An empirical 7-day field curriculum for university researchers, ESG and supply-chain auditors, development economists, and regulatory policy specialists examining East African mineral governance and traceability.
+                A structured Uganda field programme for researchers, compliance students and policy teams studying gold supply chains, regulatory licensing, and due diligence across artisanal and industrial corridors.
               </p>
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-4 pt-2">
@@ -848,20 +848,20 @@ export const InstitutionalExpeditionPage: React.FC<SharedExpeditionProps> = ({
   return (
     <div className="min-h-screen bg-[#0B0F17] text-slate-200 pb-24">
       <IndependenceBanner />
-      <ExpeditionsSubnav activePath="/expeditions/institutional" onNavigate={onNavigate} />
+      <ExpeditionsSubnav activePath="/expeditions/institutional-vip" onNavigate={onNavigate} />
 
       <section className="py-14 lg:py-20 border-b border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
             <div className="lg:col-span-7">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] text-xs font-mono uppercase tracking-widest mb-4">
-                <span>Tier 03 · Bespoke Governance & Diplomatic Protocol</span>
+                <span>Tier 03 · Bespoke Governance &amp; Diplomatic Protocol</span>
               </div>
               <h1 className="font-serif-display text-3xl sm:text-5xl font-bold text-white tracking-tight leading-[1.12] mb-5">
-                Institutional & Private Delegations
+                Confidential field delegations for institutions
               </h1>
               <p className="text-base sm:text-lg text-slate-300 leading-relaxed reading-measure mb-6">
-                Confidential field scoping, ministerial and regulatory access, and close-protection logistics for sovereign wealth funds, central bank observers, institutional investment committees, and private family offices.
+                Confidential Uganda field delegations for institutions and VIP principals requiring tailored supply-chain, compliance and counterparty review under private scoping protocols.
               </p>
 
               {/* Primary CTA: Request a Confidential Briefing (No public checkout as main action) */}
@@ -1074,10 +1074,10 @@ export const ItineraryPage: React.FC<SharedExpeditionProps> = ({
                 Full Seven-Day Schedule
               </p>
               <h1 className="font-serif-display text-3xl sm:text-5xl font-bold text-white tracking-tight mb-4">
-                Seven-Day Field Verification Itinerary
+                Seven days across the physical supply chain
               </h1>
               <p className="text-sm sm:text-base text-slate-300 leading-relaxed reading-measure">
-                A structured progression from the national mineral registry in Entebbe to artisanal pits, industrial processing plants, accredited refineries, customs clearance, and institutional banking compliance.
+                Review the seven-day field itinerary covering regulatory checks at the DGSM cadastre, document analysis, mine visits in Mubende and Busia, refinery assay, customs compliance and deal review.
               </p>
             </div>
             <div className="shrink-0">
@@ -1291,19 +1291,19 @@ export const DatesPackagesPage: React.FC<SharedExpeditionProps> = ({
   return (
     <div className="min-h-screen bg-[#0B0F17] text-slate-200 pb-24">
       <IndependenceBanner />
-      <ExpeditionsSubnav activePath="/expeditions/dates" onNavigate={onNavigate} />
+      <ExpeditionsSubnav activePath="/expeditions/dates-packages" onNavigate={onNavigate} />
 
       <section className="py-12 lg:py-16 border-b border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             <p className="text-xs font-mono uppercase tracking-widest text-[#D4AF37] mb-2">
-              2027 Cohort Calendar & Package Matrix
+              2027 Cohort Calendar &amp; Package Matrix
             </p>
             <h1 className="font-serif-display text-3xl sm:text-5xl font-bold text-white tracking-tight mb-4">
-              Dates, Packages, and Inclusions
+              Choose the right expedition format
             </h1>
             <p className="text-sm sm:text-base text-slate-300 leading-relaxed reading-measure">
-              Select a scheduled 7-day cohort below and compare inclusions across our three participant tiers. All packages include statutory KYC/PEP screening and field permits.
+              Compare expedition formats, inclusions, scheduled cohorts and application requirements for professional traders, academic researchers and institutional visitors.
             </p>
           </div>
 

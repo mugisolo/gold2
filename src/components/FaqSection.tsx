@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ChevronDown,
   Search,
@@ -21,9 +21,9 @@ const FAQ_ITEMS: FaqItem[] = [
     id: 'faq-sc-1',
     category: 'supply_chain',
     categoryLabel: 'Gold Supply Chain',
-    question: 'Why are Full Corporate Offers (FCOs) offering 15%–25% discounts below LBMA spot always fraudulent?',
+    question: 'Why do Full Corporate Offers (FCOs) advertising 15%–25% discounts below LBMA spot warrant independent scrutiny?',
     answer:
-      'Physical gold is a Tier-1 global monetary asset with instant liquidity. Across Uganda’s licensed mining districts—including Mubende, Kassanda, Busia, and Karamoja—licensed local aggregators and bonded refineries compete daily to buy raw sponge gold and Dore bars for immediate cash at 98% to 99.2% of the international LBMA fix. No legitimate mine owner or license holder ever needs to sell physical gold at a 15%–25% discount to a foreign buyer, nor do they require a buyer to advance "export tax" or "customs clearance" funds. Deep discounts are psychological bait engineered exclusively for advance-fee fraud.',
+      'Physical gold is a globally liquid monetary asset. Across Uganda’s licensed mining districts—including Mubende, Kassanda, Busia, and Karamoja—licensed local aggregators and refineries actively compete to purchase raw doré near international spot rates after accounting for purity, refining charges, and statutory export levies. When an unsolicited offer proposes a 15%–25% discount alongside requests for upfront buyer payments for purported export taxes, customs clearance, or legal escrow fees, those terms are strong advance-fee risk indicators that warrant independent verification.',
     statutoryRef: 'LBMA Physical Bullion Parity & Bank of Uganda Settlement Standards'
   },
   {
@@ -131,8 +131,40 @@ export const FaqSection: React.FC<FaqSectionProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<
     'all' | 'supply_chain' | 'due_diligence' | 'travel_logistics'
   >('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('q') || '';
+    }
+    return '';
+  });
   const [openIds, setOpenIds] = useState<string[]>(['faq-sc-1', 'faq-dd-1', 'faq-tl-1']);
+
+  useEffect(() => {
+    const syncFromUrl = () => {
+      const qParam = new URLSearchParams(window.location.search).get('q');
+      if (qParam !== null) {
+        setSearchQuery(qParam);
+        setSelectedCategory('all');
+        const lower = qParam.trim().toLowerCase();
+        if (lower) {
+          const matchedIds = localizedFaqs
+            .filter(
+              (item) =>
+                item.question.toLowerCase().includes(lower) ||
+                item.answer.toLowerCase().includes(lower) ||
+                item.categoryLabel.toLowerCase().includes(lower)
+            )
+            .map((item) => item.id);
+          if (matchedIds.length > 0) {
+            setOpenIds(matchedIds);
+          }
+        }
+      }
+    };
+    syncFromUrl();
+    window.addEventListener('popstate', syncFromUrl);
+    return () => window.removeEventListener('popstate', syncFromUrl);
+  }, [localizedFaqs]);
 
   const toggleItem = (id: string) => {
     setOpenIds((prev) =>

@@ -96,58 +96,78 @@ export const RiskComplianceHubPage: React.FC<SharedRiskProps> = ({
   selectedCurrency,
   onNavigate
 }) => {
-  const [openTopic, setOpenTopic] = useState<string | null>('supply-chain');
+  const [openTopic, setOpenTopic] = useState<string | null>('counterparty-identity');
 
   const topics = [
     {
-      id: 'supply-chain',
-      title: '1. How Uganda’s gold supply chain works',
+      id: 'counterparty-identity',
+      title: '1. Counterparty identity',
       summary:
-        'Legitimate gold moves through four verifiable nodes: licensed extraction (artisanal or industrial), DGSM-licensed mineral dealers, accredited Kampala/Entebbe refineries for induction smelting and fire assay, and URA customs clearance at Entebbe International Airport.',
+        'Verify the legal existence, corporate registration, tax identification, and beneficial ownership of the offering entity before reviewing commercial terms or visiting vaults.',
       statutoryReference:
-        'Uganda Mining and Minerals Act 2022 (Part VII — Mineral Licensing & Dealing); ICGLR Regional Certification Mechanism (RCM) Chain-of-Custody Standards; OECD Due Diligence Guidance for Responsible Supply Chains of Minerals from Conflict-Affected and High-Risk Areas (Annex II).',
+        'Uganda Companies Act, 2012 (administered by the Uganda Registration Services Bureau — URSB); Uganda Revenue Authority (URA) Tax Identification Number (TIN) Registry; Anti-Money Laundering Act, 2013 (as amended, enforced by the Financial Intelligence Authority — FIA).',
       methodologyNote:
-        'Verified through direct cadastre lookups at DGSM Entebbe headquarters and physical inspection of smelting and customs records.'
+        'Internal methodology: Our due-diligence desk cross-checks corporate incorporation numbers, registered directors, and signatory authority against URSB filings and URA TIN records prior to commercial engagement.'
     },
     {
-      id: 'deep-discounts',
-      title: '2. Why deep-discount offers are red flags',
+      id: 'licence-verification',
+      title: '2. Licence verification',
       summary:
-        'Refined gold is a globally liquid monetary asset. Licensed aggregators and bonded refineries in Kampala and Entebbe purchase doré and bullion daily within 1% to 3% of international spot prices. Any proposal offering 10%, 15%, or 25% discounts to an overseas buyer is designed to induce upfront fee payments.',
+        'Confirm that the seller or supplier holds an active, category-appropriate mineral right or dealing licence issued by the Directorate of Geological Survey and Mines (DGSM) in Entebbe.',
       statutoryReference:
-        'London Bullion Market Association (LBMA) Global Precious Metals Code; Bank of Uganda Foreign Exchange & Settlement Guidelines. Market pricing observations conducted across Mubende, Kassanda, Busia, and Kampala trading desks (2024–2026).',
+        'The Mining and Minerals Act, 2022 (Republic of Uganda Gazette, enacted October 2022) — governing Exploration Licences (EL), Location Licences, Mining Leases (ML), Mineral Dealer Licences (MDL), and Refining Licences.',
       methodologyNote:
-        'Field price benchmarking at artisanal pitheads and licensed buying centers confirms local cash liquidity near spot parity.'
+        'Internal methodology: Because static PDF certificates can be altered or reference expired non-precious quarry permits, we verify licence serial numbers, holder identity, coordinates, and validity dates directly against the DGSM Mineral Cadastre in Entebbe.'
     },
     {
-      id: 'doc-payment-frauds',
-      title: '3. Common documentation and payment frauds',
+      id: 'chain-of-custody',
+      title: '3. Chain of custody',
       summary:
-        'Counterfeit transactions typically rely on PDF documents sent via messaging apps—including altered mineral dealer licenses, non-existent "UN transit clearances," or requests to wire export taxes and logistics deposits to private law-firm accounts rather than official government payment portals.',
+        'Trace physical mineral lots from licensed pithead extraction or documented regional import through aggregation, transport, and refinery intake logs.',
       statutoryReference:
-        'Uganda Revenue Authority (URA) ASYCUDA World Statutory Payment Protocol (Payment Registration Numbers issued directly to the Uganda Consolidated Fund); Financial Intelligence Authority (FIA) Anti-Money Laundering Act regulations.',
+        'International Conference on the Great Lakes Region (ICGLR) Regional Certification Mechanism (RCM) Manual (2nd Edition); Uganda Mining and Minerals Act, 2022 mineral movement and traceability provisions.',
       methodologyNote:
-        'Document verification compares submitted serial numbers, tax receipts, and signatures against official registry archives.'
+        'Internal methodology: We audit mine-site production logs, mineral movement permits, and refinery lot-intake books to verify whether claimed volumes align with physical mine and processing capacity.'
     },
     {
-      id: 'assay-basics',
-      title: '4. Assay and metallurgical verification basics',
+      id: 'assay-and-sampling',
+      title: '4. Assay and sampling',
       summary:
-        'Handheld X-ray fluorescence (XRF) spectrometers only read 10 to 50 micrometers into the surface of a bar and cannot detect tungsten rods or copper-alloy cores beneath a gold outer layer. Reliable verification requires full homogeneous induction melting, dual core sampling, and fire assay (cupellation) at 1,050°C.',
+        'Distinguish rapid non-destructive surface screening from definitive metallurgical assay. Handheld XRF only measures 10 to 50 micrometers into the surface skin and cannot detect internal tungsten or base-metal cores.',
       statutoryReference:
-        'ISO 11426: Determination of gold in gold jewelry alloys and bullion — Cupellation method (fire assay); East African Community (EAC) Metallurgical Laboratory Accreditation Standards.',
+        'ISO 11426:2021 (Determination of gold — Cupellation method / fire assay); ASTM E1316 (Ultrasonic Pulse-Echo Testing); LBMA Good Delivery Technical Specifications for Homogeneous Melting and Vacuum Pin-Tube / Drill Sampling.',
       methodologyNote:
-        'All physical verification sessions are conducted inside accredited refineries with independent sample custody.'
+        'Internal methodology: Before settlement, our protocol requires multi-axis ultrasonic velocity screening followed by full induction melting of the doré lot, representative dual sampling, and 1,050°C fire assay cupellation at an accredited laboratory.'
     },
     {
-      id: 'licensing-customs',
-      title: '5. Licensing, customs, and export compliance',
+      id: 'sanctions-and-pep-screening',
+      title: '5. Sanctions and PEP screening',
       summary:
-        'Every legal export requires an active Mineral Dealer License (MDL) or refining license, an official assay certificate, an ICGLR regional certificate of origin, and a URA ASYCUDA customs declaration (with the statutory 5% export levy settled via official PRN).',
+        'Screen all named counterparties, beneficial owners, intermediaries, and logistics agents against international sanctions lists and Politically Exposed Person (PEP) databases.',
       statutoryReference:
-        'Uganda Mining and Minerals Act 2022; Uganda Revenue Authority Customs Management Act; International Conference on the Great Lakes Region (ICGLR) Regional Initiative against the Illegal Exploitation of Natural Resources.',
+        'United Nations Security Council Consolidated List; US Treasury OFAC Sanctions Lists; UK HM Treasury (OFSI) Consolidated List; European Union Financial Sanctions; Uganda FIA AML/CFT Guidelines.',
       methodologyNote:
-        'Cross-checked prior to shipment release at Entebbe International Airport customs control.'
+        'Internal methodology: Every verification dossier and expedition registration includes automated and analyst-reviewed screening across OFAC, UN, UK HMT, EU sanctions, and PEP registries.'
+    },
+    {
+      id: 'customs-and-export-evidence',
+      title: '6. Customs and export evidence',
+      summary:
+        'Validate export declarations, airway bills, customs seals, and statutory tax assessments through official Uganda Revenue Authority (URA) channels rather than third-party escrow accounts.',
+      statutoryReference:
+        'East African Community Customs Management Act, 2004; Uganda Revenue Authority (URA) ASYCUDA World Export Procedures & Official Payment Registration Number (PRN) Rules.',
+      methodologyNote:
+        'Internal methodology: We verify that export levies and customs duties are assessed through verifiable URA ASYCUDA declarations and paid via official government PRNs—never through private law firm or broker accounts.'
+    },
+    {
+      id: 'responsible-sourcing',
+      title: '7. Responsible sourcing',
+      summary:
+        'Evaluate conflict-free origin, environmental and mercury-management practices, occupational safety, and community governance across artisanal and industrial supply chains.',
+      statutoryReference:
+        'OECD Due Diligence Guidance for Responsible Supply Chains of Minerals from Conflict-Affected and High-Risk Areas (3rd Edition, Annex II & Supplement on Gold); Minamata Convention on Mercury National Action Plan frameworks.',
+      methodologyNote:
+        'Internal methodology: During field expeditions and site audits in Mubende, Kassanda, and Busia, our team documents observable site conditions, cooperative governance, and OECD five-step alignment.'
     }
   ];
 
@@ -206,18 +226,18 @@ export const RiskComplianceHubPage: React.FC<SharedRiskProps> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             <p className="text-xs font-mono uppercase tracking-widest text-[#D4AF37] mb-3">
-              Risk & Compliance Learning Hub
+              Risk &amp; Compliance Review Framework · Uganda
             </p>
             <h1 className="font-serif-display text-3xl sm:text-5xl font-bold text-white tracking-tight leading-[1.12] mb-5">
-              Practical due-diligence standards for East African gold transactions.
+              Evidence-led gold risk and compliance review
             </h1>
             <p className="text-base sm:text-lg text-slate-300 leading-relaxed reading-measure mb-8">
-              Understand how the legal supply chain operates, why common intermediary pitches fail statutory scrutiny, and how documents, licenses, and bullion are verified before capital is committed.
+              Understand licensing, sanctions screening, chain of custody, assay validation and responsible-sourcing controls for East African gold supply chains.
             </p>
             <div className="flex flex-wrap gap-3.5">
               <button
                 type="button"
-                onClick={() => onNavigate('/verification')}
+                onClick={() => onNavigate('/offer-verification')}
                 className="px-6 py-3.5 rounded-lg bg-[#D4AF37] hover:bg-[#c5a030] text-slate-950 font-semibold text-sm inline-flex items-center gap-2 transition-colors shadow-md cursor-pointer"
               >
                 <span>Verify an Active Offer (24–72h)</span>
@@ -228,7 +248,7 @@ export const RiskComplianceHubPage: React.FC<SharedRiskProps> = ({
                 onClick={() => onNavigate('/risk-compliance/supply-chain')}
                 className="px-5 py-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 font-semibold text-sm transition-colors cursor-pointer"
               >
-                Explore Supply-Chain Stages & Map
+                Explore Supply-Chain Stages &amp; Map
               </button>
               <button
                 type="button"
@@ -242,20 +262,20 @@ export const RiskComplianceHubPage: React.FC<SharedRiskProps> = ({
         </div>
       </section>
 
-      {/* Core Educational Topics (Plain-Language Summaries First + Expandable Statutory Details) */}
+      {/* Core Educational Topics (7 Progressive Sections + Statutory vs Internal Methodology + Limitations) */}
       <section className="py-16 surface-ivory border-b border-stone-200/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             <div className="lg:col-span-7 space-y-4">
               <div className="mb-6">
                 <span className="text-xs font-mono uppercase tracking-widest text-[#9A7418] block mb-1">
-                  Progressive Reference Guide
+                  Progressive Compliance Architecture
                 </span>
                 <h2 className="font-serif-display text-2xl sm:text-3xl font-bold text-slate-900">
-                  Five pillars of supply-chain and counterparty verification
+                  Seven controls for gold supply-chain and counterparty due diligence
                 </h2>
                 <p className="text-sm text-slate-600 mt-2">
-                  Read the plain-language summary for each topic below, or expand any item to inspect statutory references and verification methodology.
+                  Each section separates statutory legal requirements from our internal verification methodology. Expand any control below to inspect cited regulations and field procedures.
                 </p>
               </div>
 
@@ -309,6 +329,18 @@ export const RiskComplianceHubPage: React.FC<SharedRiskProps> = ({
                   </div>
                 );
               })}
+              {/* Reviewer, Last-Reviewed Date & Limitations Notice */}
+              <div className="surface-ivory-card rounded-xl p-5 sm:p-6 border border-amber-700/30 bg-amber-50/40 mt-6 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-slate-700 border-b border-stone-200 pb-3">
+                  <span>
+                    Reviewed by: <strong>Adv. David Kigozi</strong> (Legal Compliance Counsel) &amp; <strong>Dr. Michael Ssemwogerere</strong> (Metallurgical Forensic Lead)
+                  </span>
+                  <span className="text-[#9A7418] font-bold">Last reviewed: May 2026</span>
+                </div>
+                <p className="text-xs text-slate-700 leading-relaxed">
+                  <strong>Methodological Limitation Statement:</strong> Document review and registry verification identify counterparty and licensing irregularities, but document review alone does not prove physical gold ownership, purity, origin, or immediate availability. Confirming bullion fineness and weight requires physical custody, full homogeneous melting, and laboratory fire assay cupellation.
+                </p>
+              </div>
             </div>
 
             {/* Glossary Sidebar */}
@@ -316,10 +348,10 @@ export const RiskComplianceHubPage: React.FC<SharedRiskProps> = ({
               <div className="surface-ivory-card rounded-2xl p-6 sm:p-7 sticky top-24">
                 <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#9A7418] mb-2">
                   <BookOpen className="w-4 h-4" />
-                  <span>Regulatory & Technical Glossary</span>
+                  <span>Regulatory &amp; Technical Glossary</span>
                 </div>
                 <h3 className="font-serif-display text-xl font-bold text-slate-900 mb-4">
-                  Key Terms & Institutions
+                  Key Terms &amp; Institutions
                 </h3>
                 <dl className="space-y-4 divide-y divide-stone-200">
                   {glossaryItems.map((item) => (
@@ -789,7 +821,7 @@ export const ScamCheckPage: React.FC<SharedRiskProps> = ({
 
                 <button
                   type="button"
-                  onClick={() => onNavigate('/verification')}
+                  onClick={() => onNavigate('/offer-verification')}
                   className="w-full py-3.5 px-5 rounded-lg bg-[#D4AF37] hover:bg-[#c5a030] text-slate-950 font-semibold text-xs uppercase tracking-wider inline-flex items-center justify-center gap-2 transition-colors cursor-pointer"
                 >
                   <span>Proceed to 24–72-Hour Offer Verification</span>
@@ -837,13 +869,13 @@ export const ContactBriefingPage: React.FC<SharedRiskProps> = ({ onNavigate }) =
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             <p className="text-xs font-mono uppercase tracking-widest text-[#D4AF37] mb-3">
-              Kampala & Entebbe Directorate
+              Kampala &amp; Entebbe Directorate
             </p>
             <h1 className="font-serif-display text-3xl sm:text-5xl font-bold text-white tracking-tight mb-4">
-              Contact & Executive Briefing Requests
+              Discuss your verification or field brief
             </h1>
             <p className="text-base text-slate-300 leading-relaxed reading-measure">
-              Request a confidential briefing for an institutional or private delegation, enquire about academic group arrangements, or contact our due-diligence desk regarding an active verification.
+              Contact Uganda Gold Expedition about offer verification, field expeditions, research visits or institutional due-diligence briefings.
             </p>
           </div>
         </div>
@@ -860,7 +892,7 @@ export const ContactBriefingPage: React.FC<SharedRiskProps> = ({ onNavigate }) =
                       <CheckCircle2 className="w-6 h-6" />
                     </div>
                     <h2 className="font-serif-display text-2xl font-bold text-slate-900">
-                      Enquiry & Briefing Request Received
+                      Enquiry &amp; Briefing Request Received
                     </h2>
                     <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
                       Thank you, <strong>{fullName}</strong>. Your request has been logged with our Kampala Secretariat. A directorate officer will respond to <strong>{email}</strong> within one business day.
@@ -875,7 +907,7 @@ export const ContactBriefingPage: React.FC<SharedRiskProps> = ({ onNavigate }) =
                       </button>
                       <button
                         type="button"
-                        onClick={() => onNavigate('/verification')}
+                        onClick={() => onNavigate('/offer-verification')}
                         className="px-5 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold cursor-pointer"
                       >
                         Go to Offer Verification

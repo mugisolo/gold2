@@ -21,12 +21,12 @@ export const PricingPackages: React.FC<PricingPackagesProps> = ({
 }) => {
   const t = translations[currentLang];
   const localizedPackages = getLocalizedPackages(currentLang);
-  const currencies: Currency[] = ['USD', 'EUR', 'AED', 'GBP', 'CNY', 'UGX'];
+  const currencies: Currency[] = ['USD'];
 
   return (
     <section id="packages" className="py-10 sm:py-12 bg-[#0B0F17] border-b border-slate-800 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Top Row: Section Header & Currency Switcher */}
+        {/* Top Row: Section Header & USD Currency Badge */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 text-xs font-semibold tracking-wider text-[#D4AF37] uppercase mb-1.5">
@@ -42,7 +42,7 @@ export const PricingPackages: React.FC<PricingPackagesProps> = ({
             </p>
           </div>
 
-          {/* Multi-Currency Selector */}
+          {/* USD Currency Display */}
           <div className="flex items-center gap-2 self-start md:self-auto bg-[#111722] p-1.5 rounded-lg border border-slate-800">
             <span className="text-[11px] font-mono-data text-slate-400 px-2 uppercase">
               {t.packagesCurrencyLabel}
@@ -51,13 +51,9 @@ export const PricingPackages: React.FC<PricingPackagesProps> = ({
               <button
                 key={curr}
                 onClick={() => onCurrencyChange(curr)}
-                className={`px-2.5 py-1 rounded text-xs font-mono-data font-bold transition-colors ${
-                  selectedCurrency === curr
-                    ? 'bg-[#D4AF37] text-[#0B0F17]'
-                    : 'text-slate-400 hover:text-white'
-                }`}
+                className="px-2.5 py-1 rounded text-xs font-mono-data font-bold bg-[#D4AF37] text-[#0B0F17]"
               >
-                {curr}
+                {curr} ($)
               </button>
             ))}
           </div>

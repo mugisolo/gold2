@@ -106,19 +106,10 @@ export const GoldPriceTrendsChart: React.FC<GoldPriceTrendsChartProps> = ({
 
   const formatPriceValue = (val: number, code: Currency = selectedCurrency) => {
     const meta = CURRENCY_RATES[code] || CURRENCY_RATES.USD;
-    if (code === 'UGX') {
-      if (val >= 1_000_000) {
-        return `${meta.symbol} ${(val / 1_000_000).toFixed(2)}M`;
-      }
-      return `${meta.symbol} ${val.toLocaleString()}`;
-    }
     return `${meta.symbol}${val.toLocaleString()}`;
   };
 
   const formatYAxisTick = (val: number) => {
-    if (selectedCurrency === 'UGX') {
-      return `${(val / 1_000_000).toFixed(0)}M`;
-    }
     if (val >= 1000) {
       return `${currencyMeta.symbol}${(val / 1000).toFixed(0)}k`;
     }
@@ -135,8 +126,8 @@ export const GoldPriceTrendsChart: React.FC<GoldPriceTrendsChartProps> = ({
               <TrendingUp className="w-3.5 h-3.5" />
               <span>
                 {portalContext === 'admin'
-                  ? 'ADMIN TREASURY & FORENSIC BENCHMARK TELEMETRY'
-                  : 'CLIENT MULTI-CURRENCY BULLION BENCHMARK'}
+                  ? 'ADMIN TREASURY & FORENSIC BENCHMARK TELEMETRY (USD)'
+                  : 'CLIENT USD BULLION BENCHMARK'}
               </span>
             </span>
             <span className="text-xs font-mono-data text-emerald-400 flex items-center gap-1">
@@ -145,31 +136,21 @@ export const GoldPriceTrendsChart: React.FC<GoldPriceTrendsChartProps> = ({
             </span>
           </div>
           <h3 className="font-cinzel text-lg sm:text-xl font-bold text-white">
-            Historical Gold Price Trends & Kampala Physical Settlement Spread ({selectedCurrency})
+            Historical Gold Price Trends & Kampala Physical Settlement Spread (USD)
           </h3>
           <p className="text-xs text-slate-400 mt-0.5">
             Compare LBMA International Spot against Accredited Kampala Refinery Cash Settlement (98.5%), URA 5% Export Cleared Value, and Illicit FCO Scam Bait (-18%).
           </p>
         </div>
 
-        {/* Interactive Currency, Unit & Timeframe Controls */}
+        {/* Interactive USD, Unit & Timeframe Controls */}
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-          {/* Currency Selector Pills */}
+          {/* USD Badge */}
           <div className="flex items-center bg-[#0B0F17] p-1 rounded-lg border border-slate-800">
             <Globe className="w-3.5 h-3.5 text-[#D4AF37] ml-2 mr-1.5 shrink-0" />
-            {(Object.keys(CURRENCY_RATES) as Currency[]).map((code) => (
-              <button
-                key={code}
-                onClick={() => setSelectedCurrency(code)}
-                className={`px-2.5 py-1 rounded text-xs font-mono-data font-bold transition-colors ${
-                  selectedCurrency === code
-                    ? 'bg-[#D4AF37] text-[#0B0F17]'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                {code}
-              </button>
-            ))}
+            <span className="px-2.5 py-1 rounded text-xs font-mono-data font-bold bg-[#D4AF37] text-[#0B0F17]">
+              USD ($)
+            </span>
           </div>
 
           {/* Weight Unit Toggle (1 kg vs 1 oz) */}
@@ -437,13 +418,13 @@ export const GoldPriceTrendsChart: React.FC<GoldPriceTrendsChartProps> = ({
           </ResponsiveContainer>
         </div>
 
-        {/* Multi-Currency Live Parity Matrix Table */}
+        {/* USD Live Parity Matrix Table */}
         <div className="mt-6 pt-5 border-t border-slate-800">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
             <h4 className="text-xs font-mono-data uppercase tracking-wider text-slate-300 font-bold flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
               <span>
-                Cross-Currency Physical Bullion Parity Matrix ({weightUnit === 'kg' ? 'Per 1 KG Bar · 999.9 Fine' : 'Per 1 Troy Oz'})
+                USD Physical Bullion Parity Matrix ({weightUnit === 'kg' ? 'Per 1 KG Bar · 999.9 Fine' : 'Per 1 Troy Oz'})
               </span>
             </h4>
             <span className="text-[11px] text-slate-400 flex items-center gap-1.5">

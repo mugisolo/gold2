@@ -1,9 +1,20 @@
-import express, { type Request, type Response } from 'express';
+import express, { type Request, type Response, type NextFunction } from 'express';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI, Type } from '@google/genai';
+import { INITIAL_ABOUT_CONTENT, INITIAL_BOARD_MEMBERS, INITIAL_POSTS } from './src/data/portalData.ts';
+import {
+  PUBLIC_SEO_ROUTES,
+  PERMANENT_REDIRECTS,
+  PRIVATE_NOINDEX_PREFIXES,
+  EDITORIAL_CONTENT_BRIEFS,
+  getRedirectDestination,
+  injectSeoHeadIntoHtml,
+  generateSitemapXml,
+  generateRobotsTxt
+} from './src/data/seoRoutes.ts';
 
 dotenv.config();
 
@@ -32,127 +43,12 @@ const getGeminiClient = () => {
   });
 };
 
-// Portal in-memory storage
-let aboutContent = {
-  headline: 'Sovereign Physical Due Diligence & Anti-Fraud Intelligence Across East Africa',
-  subheadline: 'Founded to eliminate advance-fee bullion fraud and equip institutional principals, family offices, and sovereign treasuries with verifiable, on-the-ground supply chain reality.',
-  missionStatement: 'We do not broker, buy, or sell gold. Our sole mandate is independent physical verification, metallurgical assay validation, and statutory compliance auditing under the Uganda Mining and Minerals Act 2022.',
-  overviewParagraphs: [
-    'The East African gold corridor—centered around Uganda’s licensed refineries, Entebbe customs vaults, and regional artisanal belts in Mubende, Kassanda, Busia, and Karamoja—has become one of Africa’s most dynamic bullion hubs. Yet international capital allocators lose hundreds of millions of dollars annually to sophisticated advance-fee syndicates peddling fabricated 15%–25% LBMA discounts, forged DGSM mineral licenses, and counterfeit URA customs declarations.',
-    'Uganda Gold Expedition was established by a multidisciplinary board of forensic investigators, minerals trade specialists, and field operations strategists to create an impenetrable firewall between legitimate institutional buyers and criminal syndicates. Before a principal wires a single dollar, our directorate walks them physically through the Directorate of Geological Survey and Mines (DGSM) cadastre in Entebbe, licensed Kampala fire-assay laboratories, and active pithead operations.',
-    'Operating under a strict Non-Transaction Charter, our independence guarantees zero commercial conflict of interest. Every verification dossier, laboratory cupellation test, and 7-day field immersion is governed by empirical evidence, statutory registry verification, and chain-of-custody discipline.'
-  ],
-  statutoryMandate: 'Aligned with the Uganda Mining and Minerals Act 2022, ICGLR Regional Certification Mechanism (RCM), URA ASYCUDA World Customs Protocols, and OECD Due Diligence Guidance for Responsible Supply Chains of Minerals from Conflict-Affected and High-Risk Areas.',
-  headquarters: 'Uganda Gold Expeditions, P.O Box 122234, Bugonga, Entebbe, Uganda (URA TIN 1019482710) & Amber House Secretariat, Kampala',
-  establishedYear: '2019'
-};
+// Portal in-memory storage initialized from canonical portalData
+let aboutContent = { ...INITIAL_ABOUT_CONTENT };
 
-let boardMembers = [
-  {
-    id: 'board-1',
-    name: 'Mugisa Solomon Byakutaaga',
-    role: 'Lead Forensics Expert',
-    designation: 'Board of Directors',
-    specialty: 'Bullion Counterfeit Deconstruction, Metallurgical Assay Auditing & Financial Crime Intelligence',
-    bio: 'Mugisa Solomon Byakutaaga serves as Board Director and Lead Forensics Expert for the Uganda Gold Expedition. He directs the forensic examination of Full Corporate Offers (FCOs), Sales & Purchase Agreements (SPAs), DGSM mineral dealer licenses, and physical Dore bar metallurgy. Under his leadership, our forensic desk has intercepted over $140M in fraudulent advance-fee contracts and exposed sintered tungsten-core bullion counterfeits across the Great Lakes corridor.',
-    credentials: [
-      'Lead Architect, Scam Immunity Matrix & 24–72 Hour Forensic Document Verification Protocol',
-      'Senior Specialist in XRF Surface vs. Ultrasonic & Fire Assay Cupellation Auditing',
-      'Statutory Counterparty Due Diligence & AML/KYC Compliance Lead'
-    ],
-    imageUrl: '/src/assets/images/scam_academy_forensics_1793632189342.jpg',
-    linkedinUrl: 'https://www.linkedin.com/'
-  },
-  {
-    id: 'board-2',
-    name: 'Kamanzai Kaijuka',
-    role: 'Minerals Trade Expert',
-    designation: 'Board of Directors',
-    specialty: 'Cross-Border Bullion Economics, ICGLR Certification & LBMA Spot Parity Structuring',
-    bio: 'Kamanzai Kaijuka serves on the Board of Directors as Minerals Trade Expert, overseeing regional bullion market structure, refinery offtake economics, and statutory export compliance. With deep institutional command of East African mineral flows, URA 5% export levy frameworks, and international bullion settlement mechanics, he advises visiting delegations on distinguishing legitimate aggregator margins from economically impossible discount decoys.',
-    credentials: [
-      'Board Advisor on Uganda Mining & Minerals Act 2022 Commercial Compliance',
-      'Specialist in ICGLR Regional Certification Mechanism (RCM) & Refinery Chain-of-Custody',
-      'Senior Analyst on Great Lakes Artisanal & Industrial Gold Pricing Dynamics'
-    ],
-    imageUrl: '/src/assets/images/hero_uganda_gold_expedition_1793632188698.jpg',
-    linkedinUrl: 'https://www.linkedin.com/'
-  },
-  {
-    id: 'board-3',
-    name: 'Ronnie Mugarura',
-    role: 'Operations, Logistics and Strategy',
-    designation: 'Board of Directors',
-    specialty: 'Sovereign Field Security, B6 Armored Convoy Operations & Diplomatic Protocol',
-    bio: 'Ronnie Mugarura serves on the Board of Directors leading Operations, Logistics and Strategy. He orchestrates the end-to-end execution of our 7-day physical supply chain expeditions—coordinating Entebbe VIP diplomatic clearances, dedicated B6 armored executive motorcades, close-protection tactical details to Busia and Mubende concessions, and secure entry into bonded refineries and government ministries.',
-    credentials: [
-      'Director of Sovereign Expedition Logistics & B6 Armored Convoy Operations',
-      'Strategic Liaison for Concession Site Access across Mubende, Kassanda & Busia',
-      'Architect of Multi-Tier Executive Delegation Operations & Close-Protection Tactical Detail'
-    ],
-    imageUrl: '/src/assets/images/sovereign_helicopter_expedition_1793632188506.jpg',
-    linkedinUrl: 'https://www.linkedin.com/'
-  }
-];
+let boardMembers = [...INITIAL_BOARD_MEMBERS];
 
-let posts = [
-  {
-    id: 'post-1',
-    title: 'Forensic Deconstruction: Why 15%–25% Gold Discounts in East Africa Are Always Advance-Fee Traps',
-    category: 'Intelligence Briefing',
-    summary: 'Lead Forensics Expert Mugisa Solomon Byakutaaga breaks down the mathematical and metallurgical reality of physical Dore bar settlements in Kampala and Entebbe.',
-    body: `Every week, our forensic desk in Kampala receives urgent inquiries from European, Middle Eastern, and Asian principals holding glossy Full Corporate Offers (FCOs) promising 50kg to 500kg of 97%+ pure Au Dore bars at discounts of 15% to 25% below LBMA spot.\n\nHere is the unvarnished economic reality: gold is global tier-1 money. In Uganda's licensed artisanal and industrial mining belts—from Mubende and Kassanda to Busia and Karamoja—licensed aggregators and bonded refineries compete daily to buy raw sponge gold and Dore bars with immediate spot cash at 98% to 99.2% of the London fix.\n\nNo legitimate miner or license holder in Uganda or the wider Great Lakes region ever needs to discount physical gold by 18% to attract a foreign buyer, nor do they lack the working capital to clear customs. The artificial "deep discount" is engineered for one psychological purpose: to induce a foreign buyer to pay $35,000 to $150,000 upfront for fabricated URA 5% export taxes, DGSM documentation fees, or private legal escrow retainers before a single gram of gold is fire-assayed at an accredited refinery.\n\nBefore wiring a single dollar, demand verified DGSM Mineral Cadastre coordinates and independent fire-assay cupellation under buyer supervision.`,
-    author: 'Mugisa Solomon Byakutaaga',
-    authorRole: 'Director · Lead Forensics Expert',
-    date: '2026-05-02',
-    published: true,
-    imageUrl: '/src/assets/images/scam_academy_forensics_1793632189342.jpg',
-    readTime: '6 min read',
-    tags: ['Forensic Audit', 'Advance-Fee Fraud', 'LBMA Pricing', 'Due Diligence']
-  },
-  {
-    id: 'post-2',
-    title: 'Navigating the Uganda Mining and Minerals Act 2022: ICGLR Certification & URA Export Compliance',
-    category: 'Regulatory Alert',
-    summary: 'Minerals Trade Expert Kamanzai Kaijuka outlines the mandatory statutory chain of custody required for lawful gold export through Entebbe International Airport.',
-    body: `The enactment of the Uganda Mining and Minerals Act 2022 fundamentally modernized how precious minerals are licensed, smelted, taxed, and exported from the Republic of Uganda. For institutional commodity buyers and sovereign funds, understanding the statutory architecture is the primary defense against counterfeit paperwork.\n\nFirst, every lawful gold transaction must originate from a verifiable license in the Directorate of Geological Survey and Mines (DGSM) online Mineral Cadastre in Entebbe. Paper PDFs sent over WhatsApp or email bearing scanned stamps are routinely forged using expired quarry or exploration numbers.\n\nSecond, regional origin traceability is governed by the International Conference on the Great Lakes Region (ICGLR) Regional Certification Mechanism (RCM). Legitimate bonded refineries in Kampala and Entebbe maintain strict chain-of-custody logs matched with Uganda Revenue Authority (URA) ASYCUDA World customs assessments.\n\nCrucially, statutory export levies (5% on refined/unrefined gold exports) are assessed directly through official URA government payment portals generated via ASYCUDA PRNs—never through private commercial law firm bank accounts or third-party logistics agents.`,
-    author: 'Kamanzai Kaijuka',
-    authorRole: 'Director · Minerals Trade Expert',
-    date: '2026-04-28',
-    published: true,
-    imageUrl: '/src/assets/images/hero_uganda_gold_expedition_1793632188698.jpg',
-    readTime: '5 min read',
-    tags: ['Mining Act 2022', 'ICGLR', 'URA Customs', 'Trade Compliance']
-  },
-  {
-    id: 'post-3',
-    title: 'Field Dispatch: Executing Secure Multi-Site Concession Audits Across Busia and Kassanda',
-    category: 'Field Dispatch',
-    summary: 'Director of Operations Ronnie Mugarura details how physical pithead inspections and B6 armored convoy operations eliminate broker smoke-and-mirrors.',
-    body: `Fraudulent gold syndicates thrive in the gap between five-star hotel lobbies in Kampala and the actual geological realities of Uganda's mining districts. Brokers routinely stage theatrical meetings in rented boardrooms while claiming ownership of massive industrial concessions they have never set foot on.\n\nDuring our 7-Day Uganda Gold Expedition, our Operations & Strategy Directorate eliminates this information asymmetry by taking principals directly to the source. Utilizing diplomatic protocol clearances, dedicated B6 armored executive motorcades, and close-protection tactical details from Entebbe, delegates inspect active greenstone belt hard-rock mines in Busia and alluvial/eluvial operations in Mubende and Kassanda.\n\nOn the ground, delegates witness gravity concentrators, ball mills, and carbon-in-leach (CIL) circuits in real time, interviewing licensed mine engineers and verifying geological output capacity against the tonnage promised in seller offers. Walking the physical supply chain transforms abstract paper risk into verifiable operational certainty.`,
-    author: 'Ronnie Mugarura',
-    authorRole: 'Director · Operations, Logistics and Strategy',
-    date: '2026-04-24',
-    published: true,
-    imageUrl: '/src/assets/images/sovereign_helicopter_expedition_1793632188506.jpg',
-    readTime: '5 min read',
-    tags: ['Field Logistics', 'Busia Gold Belt', 'Concession Audit', 'Operations']
-  },
-  {
-    id: 'post-4',
-    title: 'Metallurgical Alert: Detecting Sintered Tungsten-Core Dore Bars Beyond Surface XRF Scans',
-    category: 'Intelligence Briefing',
-    summary: 'Why handheld X-Ray Fluorescence (XRF) analyzers fail on thick gold-cladded counterfeit bars—and why destructive fire assay cupellation is non-negotiable.',
-    body: `Our Entebbe forensic laboratory recently deconstructed three counterfeit Dore bars presented to a visiting European family office. On a standard handheld XRF spectrometer, the bars registered 99.6% Au purity.\n\nWhy did the XRF pass a counterfeit bar? X-Ray Fluorescence is strictly a surface-level diagnostic tool; its beam penetrates only 10 to 50 micrometers into the metal skin. Criminal metallurgists increasingly electroplate or fuse a 1.5mm jacket of genuine 24-karat gold around a core of sintered tungsten rods—chosen because tungsten's atomic density (19.25 g/cm³) is virtually identical to pure gold (19.32 g/cm³), defeating basic weight-and-displacement checks.\n\nTo guarantee metallurgical integrity, our protocol mandates two non-negotiable procedures at a licensed Kampala or Entebbe refinery: (1) Ultrasonic pulse-echo velocity scanning across all axes to detect internal acoustic impedance boundaries, and (2) full homogeneous melting in an induction furnace followed by dual-sample drillings and 1050°C Fire Assay Cupellation before any financial settlement is authorized.`,
-    author: 'Mugisa Solomon Byakutaaga & Dr. Michael Ssemwogerere',
-    authorRole: 'Forensic Metallurgy Desk',
-    date: '2026-04-19',
-    published: true,
-    imageUrl: '/src/assets/images/hero_uganda_gold_expedition_1793632188698.jpg',
-    readTime: '7 min read',
-    tags: ['Metallurgy', 'XRF vs Fire Assay', 'Tungsten Counterfeit', 'Lab Protocol']
-  }
-];
+let posts = [...INITIAL_POSTS];
 
 let photos = [
   {
@@ -204,13 +100,13 @@ let documentVerifications = [
     aiAnalysis: {
       riskScore: 98,
       verdict: 'CRITICAL COUNTERFEIT RISK',
-      executiveSummary: 'AI Forensic Deconstruction confirms textbook Advance-Fee Gold Fraud. A 22% discount on liquid bullion is economically impossible, and URA never collects export tax via private attorney escrow accounts.',
+      executiveSummary: 'Forensic document review indicates high-risk advance-fee indicators. A 22% discount on liquid bullion combined with upfront tax routing to a private attorney account contradicts standard Ugandan export procedure.',
       redFlags: [
-        '22% below LBMA spot discount is a mathematical impossibility in physical bullion markets.',
+        '22% below LBMA spot discount diverges sharply from observable Kampala and Entebbe refinery purchasing margins.',
         'Upfront $65,000 fee routed to a private lawyer account instead of official URA ASYCUDA tax portal.',
         'Seller entity "Victoria Nile Gold Syndicate Ltd" does not hold an active Mineral Dealer License (MDL) in the DGSM Cadastre.'
       ],
-      statutoryCrossCheck: 'Violates Section 142 of the Uganda Mining and Minerals Act 2022 & URA Single Customs Territory statutory payment rules.',
+      statutoryCrossCheck: 'Inconsistent with Section 142 of the Uganda Mining and Minerals Act 2022 & URA Single Customs Territory statutory payment rules.',
       staffActionPlan: [
         'Staff Officer 1 to pull official DGSM negative registry certificate for client dossier.',
         'Cross-reference attorney escrow bank coordinates with FIA financial intelligence alert list.',
@@ -397,9 +293,9 @@ let auditLogs = [
       | 'ux_config'
       | 'data_export',
     action: 'Published Intelligence Article',
-    targetId: 'post-1',
+    targetId: 'gold-discount-advance-fee-traps',
     details:
-      'Published article "Forensic Deconstruction: Why 15%–25% Gold Discounts in East Africa Are Always Advance-Fee Traps" to public Insights library.'
+      'Published article "Why deep gold discounts demand independent verification" to public Insights library.'
   },
   {
     id: 'AUDIT-2026-9011',
@@ -1331,51 +1227,40 @@ app.get('/api/geo/detect', (req: Request, res: Response) => {
   const euroCountries = ['DE', 'IT', 'ES', 'NL', 'AT', 'IE', 'PT', 'FI', 'GR', 'FR', 'BE', 'LU'];
 
   let proposedLang: 'EN' | 'AR' | 'ZH' | 'FR' = 'EN';
-  let proposedCurrency: 'USD' | 'EUR' | 'AED' | 'GBP' | 'CNY' | 'UGX' = 'USD';
+  const proposedCurrency: 'USD' = 'USD';
   let countryName = 'Global / International';
 
   if (countryCode === 'UG') {
     proposedLang = 'EN';
-    proposedCurrency = 'UGX';
     countryName = 'Uganda (East Africa)';
   } else if (arabCountries.includes(countryCode)) {
     proposedLang = 'AR';
-    proposedCurrency = 'AED';
     countryName = countryCode === 'AE' ? 'United Arab Emirates' : `MENA Region (${countryCode})`;
   } else if (chineseCountries.includes(countryCode)) {
     proposedLang = 'ZH';
-    proposedCurrency = 'CNY';
     countryName = countryCode === 'CN' ? 'China' : countryCode === 'HK' ? 'Hong Kong SAR' : `Asia-Pacific (${countryCode})`;
   } else if (countryCode === 'GB' || countryCode === 'UK') {
     proposedLang = 'EN';
-    proposedCurrency = 'GBP';
     countryName = 'United Kingdom';
   } else if (frenchCountries.includes(countryCode)) {
     proposedLang = 'FR';
-    proposedCurrency = euroCountries.includes(countryCode) || countryCode === 'CH' ? 'EUR' : 'USD';
     countryName = countryCode === 'FR' ? 'France' : countryCode === 'CH' ? 'Switzerland' : `Francophone Region (${countryCode})`;
   } else if (euroCountries.includes(countryCode)) {
     proposedLang = 'EN';
-    proposedCurrency = 'EUR';
     countryName = `European Union (${countryCode})`;
   } else {
-    // Fallback to Accept-Language header analysis if proxy country header is not set
     const lowerLang = acceptLang.toLowerCase();
     if (lowerLang.startsWith('ar')) {
       proposedLang = 'AR';
-      proposedCurrency = 'AED';
       countryName = 'Middle East / Gulf Hub';
     } else if (lowerLang.startsWith('zh')) {
       proposedLang = 'ZH';
-      proposedCurrency = 'CNY';
       countryName = 'Greater China / Asia Hub';
     } else if (lowerLang.startsWith('fr')) {
       proposedLang = 'FR';
-      proposedCurrency = 'EUR';
       countryName = 'Francophone / European Hub';
     } else if (lowerLang.includes('en-gb')) {
       proposedLang = 'EN';
-      proposedCurrency = 'GBP';
       countryName = 'United Kingdom';
     }
   }
@@ -1493,31 +1378,137 @@ ${JSON.stringify(batchToTranslate)}`,
   }
 });
 
-// Mount Vite or static dist
+// SEO Technical Endpoints: /sitemap.xml, /robots.txt, /api/seo/routes
+app.get('/sitemap.xml', (_req: Request, res: Response) => {
+  res
+    .status(200)
+    .set('Content-Type', 'application/xml; charset=utf-8')
+    .set('Cache-Control', 'public, max-age=3600')
+    .send(generateSitemapXml());
+});
+
+app.get('/robots.txt', (_req: Request, res: Response) => {
+  res
+    .status(200)
+    .set('Content-Type', 'text/plain; charset=utf-8')
+    .set('Cache-Control', 'public, max-age=3600')
+    .send(generateRobotsTxt());
+});
+
+app.get('/api/seo/routes', (_req: Request, res: Response) => {
+  res.status(200).json({
+    canonicalOrigin: 'https://goldsafaris.com',
+    publicRoutes: PUBLIC_SEO_ROUTES,
+    permanentRedirects: PERMANENT_REDIRECTS,
+    privateNoIndexPrefixes: PRIVATE_NOINDEX_PREFIXES,
+    editorialContentBriefs: EDITORIAL_CONTENT_BRIEFS
+  });
+});
+
+// Fast health check endpoint for Cloud Run startup/liveness probes
+app.get('/healthz', (_req: Request, res: Response) => {
+  res.status(200).type('text/plain').send('OK');
+});
+
+// Mount Vite or static dist with server-side SEO metadata injection, 301 redirects & 404 status handling
 async function setupServer() {
   const distPath = path.resolve(__dirname, 'dist');
-  const isProduction =
-    process.env.NODE_ENV === 'production' ||
-    process.env.npm_lifecycle_event === 'start' ||
-    Boolean(process.env.K_SERVICE);
+  const indexFile = path.join(distPath, 'index.html');
+  const publicPath = path.resolve(__dirname, 'public');
+  const srcAssetsPath = path.resolve(__dirname, 'src/assets');
+  const isDevCommand = process.env.npm_lifecycle_event === 'dev';
+  const useStaticDist = fs.existsSync(indexFile) && !isDevCommand;
 
-  if (!isProduction || !fs.existsSync(path.join(distPath, 'index.html'))) {
-    const { createServer: createViteServer } = await import('vite');
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
+  // Permanent 301 redirects for legacy routes and trailing slashes on public pages
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      return next();
+    }
+    if (
+      req.path.startsWith('/api/') ||
+      req.path.startsWith('/@') ||
+      req.path.startsWith('/src/') ||
+      req.path.startsWith('/node_modules/')
+    ) {
+      return next();
+    }
+    const redirectDest = getRedirectDestination(req.path);
+    if (redirectDest) {
+      const queryIndex = req.originalUrl.indexOf('?');
+      const querySuffix = queryIndex !== -1 ? req.originalUrl.slice(queryIndex) : '';
+      return res.redirect(301, `${redirectDest}${querySuffix}`);
+    }
+    return next();
+  });
+
+  // Serve static assets from /src/assets and /public first
+  app.use('/src/assets', express.static(srcAssetsPath, { maxAge: '7d' }));
+  app.use(express.static(publicPath, { index: false, maxAge: '1d' }));
+
+  if (useStaticDist) {
+    const cachedDistTemplate = fs.readFileSync(indexFile, 'utf-8');
+    app.use(express.static(distPath, { index: false, maxAge: '7d' }));
+
+    app.get('*', (req: Request, res: Response) => {
+      const ext = path.extname(req.path).toLowerCase();
+      if (ext && ext !== '.html') {
+        return res.status(404).type('text/plain').send('404 Not Found');
+      }
+
+      const { html, status, isNoIndex } = injectSeoHeadIntoHtml(cachedDistTemplate, req.path);
+
+      if (isNoIndex) {
+        res.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+      }
+      return res
+        .status(status)
+        .set({ 'Content-Type': 'text/html; charset=utf-8' })
+        .send(html);
     });
-    app.use(vite.middlewares);
-  } else {
-    app.use('/src/assets', express.static(path.resolve(__dirname, 'src/assets')));
-    app.use(express.static(distPath));
-    app.get('*', (_req: Request, res: Response) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server listening on port ${PORT} (production static dist)`);
     });
+    return;
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  // Start listening on PORT immediately in dev mode too while Vite initializes
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server listening on port ${PORT}`);
+  });
+
+  const { createServer: createViteServer } = await import('vite');
+  const vite = await createViteServer({
+    server: { middlewareMode: true, hmr: server ? false : false },
+    appType: 'custom',
+  });
+  app.use(vite.middlewares);
+
+  app.use(async (req: Request, res: Response, next: NextFunction) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      return next();
+    }
+    const ext = path.extname(req.path).toLowerCase();
+    if (ext && ext !== '.html') {
+      return res.status(404).type('text/plain').send('404 Not Found');
+    }
+
+    try {
+      const templatePath = path.resolve(__dirname, 'index.html');
+      const rawTemplate = fs.readFileSync(templatePath, 'utf-8');
+      const transformedTemplate = await vite.transformIndexHtml(req.originalUrl, rawTemplate);
+      const { html, status, isNoIndex } = injectSeoHeadIntoHtml(transformedTemplate, req.path);
+
+      if (isNoIndex) {
+        res.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+      }
+      return res
+        .status(status)
+        .set({ 'Content-Type': 'text/html; charset=utf-8' })
+        .send(html);
+    } catch (err) {
+      return next(err);
+    }
   });
 }
 
